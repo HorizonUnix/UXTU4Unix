@@ -1,7 +1,7 @@
 # RielUXTU4Mac
 ## For AMD Ryzen APUs, Hackintosh ... still in early stages
 ## Belong to the Project AppleOSX
-## Maybe ( not sure ) exclusived to M413IA users
+## Preview
 
 ## ECO Preset ( Ported from UXTU )
 ![IMG_0124](https://github.com/gorouflex/RielUXTU4Mac/assets/98001973/1d67984a-1166-4551-a1b6-04865b72c53b)
