@@ -16,6 +16,11 @@ jobs:
           LATEST_TAG="$(grep -m 1 -o '## \[.*\]' Changelog.md | awk -F'[][]' '{print $2}')"
           echo "TAG=$LATEST_TAG" >> "$GITHUB_ENV"
 
+      - name: Make file executable
+        run: |
+            chmod +x RielUXTU/ryzenadj
+            chmod +x start-macOS.command
+
       - name: Zip folder
         run: |
           zip -r RielUXTU.zip RielUXTU
