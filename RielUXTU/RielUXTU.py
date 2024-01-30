@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import time
+import os
 
 PRESETS = {
     "Eco": (
@@ -61,14 +62,16 @@ PRESETS = {
     )
 }
 
+def clear():
+    _ = os.system('cls') if os.name == 'nt' else os.system('clear')
+    
 def run_command(args):
     command = ["sudo", "./ryzenadj"] + args.split()
     while True:
-        result = subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        if result.returncode != 1 and result.returncode != 255:
-            print("Applied preset failed!")
-            print(result.returncode)
+        subprocess.run(command)
         time.sleep(3)
+        print("Script will reapplied every 3 seconds since RyzenAdj can easily reset just like UXTU")
+        clear()
 
 
 if len(sys.argv) > 1:
