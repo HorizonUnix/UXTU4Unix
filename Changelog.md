@@ -1,3 +1,11 @@
+## [0.0.4]
+
+### Change log
+- Support CFU
+- Support R&W config file
+- Dropped supported for custom arg ( tempo )
+
+
 ## [0.0.3]
 
 - Turn verbose on for debugging
