@@ -1,6 +1,8 @@
 ## [0.0.3]
+
 - Turn verbose on for debugging
 - Add a clear screen function
+- Fix GitHub file type
 
 ## [0.0.2]
 
