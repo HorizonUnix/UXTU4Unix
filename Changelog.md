@@ -1,3 +1,11 @@
+## [0.0.5]
+
+### Change log
+- Simplified and optimized code
+- Now save password for the next run without require sudo password again
+- Show current preset every loop
+
+
 ## [0.0.4]
 
 ### Change log
