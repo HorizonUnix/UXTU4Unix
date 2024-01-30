@@ -1,3 +1,7 @@
+## [0.0.3]
+- Turn verbose on for debugging
+- Add a clear screen function
+
 ## [0.0.2]
 
 ### Change log
