@@ -6,7 +6,12 @@
 #
 
 ### For M413IA's user
-- 1.3.0 Beta 3 [EFI](https://github.com/gorouflex/M413IA/releases/tag/1.3.0b3) now support `RielUXTU4Mac` 
+- 1.3.0 Beta 3 [EFI](https://github.com/gorouflex/M413IA/releases/tag/1.3.0b3) now support `RielUXTU4Mac`
+### For other user
+- Add kext
+- Disable SIP
+- Add `debug=0x144` to boot-args
+  
 ## Preview
 
 ### ECO Preset ( Ported from UXTU )
