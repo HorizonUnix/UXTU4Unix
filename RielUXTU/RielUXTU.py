@@ -65,7 +65,7 @@ def run_command(args):
     command = ["sudo", "./ryzenadj"] + args.split()
     while True:
         result = subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        if result.returncode != 255:
+        if result.returncode != 1 or result.returncode != 255:
             print("Applied preset failed!")
             print(result.returncode)
         time.sleep(3)
