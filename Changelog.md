@@ -1,3 +1,14 @@
+## [0.0.6]
+
+### v0.0.6 introduces a new way for you to use `RielUXTU4Mac`
+### This might the last version of `0.0.x` series
+### With the support of @NotchApple1703 i will support GUI soon
+### Change log
+- New CLI
+- New About menu
+- New `skipwelcome` in config to skip welcome menuu
+- Adjust args for `Balance` and `Extreme` Preset
+
 ## [0.0.5]
 
 ### Change log
