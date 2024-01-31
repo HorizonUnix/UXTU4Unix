@@ -23,3 +23,5 @@
 ### Special thanks to
 - [b00t0x](https://github.com/b00t0x) for guide
 - [JamesCJ60](https://github.com/JamesCJ60) for [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility)
+
+### I'm still waiting for AMDPlatformPlugin kext but kinda long 
