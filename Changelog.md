@@ -6,7 +6,7 @@
 ### Change log
 - New CLI
 - New About menu
-- New `skipwelcome` in config to skip welcome menuu
+- New `skipwelcome` in config to skip welcome menu
 - Adjust args for `Balance` and `Extreme` Preset
 
 ## [0.0.5]
