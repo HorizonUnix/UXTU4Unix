@@ -8,15 +8,17 @@ import urllib.request
 from configparser import ConfigParser
 
 PRESETS = {
-    "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
+    "Eco (force)": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
     "Balance": "--power-saving",
-    "Performance": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
+    "Balance (force)": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=22000 --fast-limit=24000 --stapm-time=64 --slow-limit=22000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
+    "Performance (force)": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=20000 --fast-limit=24000 --stapm-time=64 --slow-limit=22000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
+    "Extreme (force)": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=30000  --fast-limit=34000 --stapm-time=64 --slow-limit=32000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
     "Extreme": "--max-performance"
 }
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/gorouflex/rieluxtu4mac/releases/latest"
-LOCAL_VERSION = "0.0.6"
+LOCAL_VERSION = "0.0.7"
 
 def print_logo():
     print(r"""
@@ -25,8 +27,9 @@ def print_logo():
  | |__) |_  ___| | |  | |\ V /   | |  | |  | | || |_| \  / | __ _  ___ 
  |  _  /| |/ _ \ | |  | | > <    | |  | |  | |__   _| |\/| |/ _` |/ __|
  | | \ \| |  __/ | |__| |/ . \   | |  | |__| |  | | | |  | | (_| | (__ 
- |_|  \_\_|\___|_|\____//_/ \_\  |_|   \____/   |_| |_|  |_|\__,_|\___|                                                                                                                                                                                   
-Version 0.0.6 Stable - CLI Mode""")
+ |_|  \_\_|\___|_|\____//_/ \_\  |_|   \____/   |_| |_|  |_|\__,_|\___|
+ 
+Version 0.0.7 Stable - CLI Mode""")
 
 def print_main_menu():
     clear()
@@ -57,11 +60,14 @@ def print_about_menu():
 def create_config() -> None:
     cfg = ConfigParser()
     cfg.add_section('User')
-    print("------ First-time setup ------")
+    print("------ Settings ------")
     print("Preset power plan")
     for i, mode in enumerate(PRESETS, start=1):
         print(f"{i}. {mode}")
-
+    
+    print()
+    print("(force): Force your CPU to apply the current profile, whether it is plugged in with AC or not")
+    print("Others not labeled as 'force' means it's behavior depends on CPU generation, plugged in with AC or not, device, and manufacturer")
     choice = input("Choose your preset power plan by pressing number: ")
     password = getpass.getpass("Enter your login password: ")
     skip_welcome = input("Do you want to skip the welcome menu? (y/n): ").lower()
@@ -77,6 +83,8 @@ def create_config() -> None:
             cfg.write(config_file)
     except ValueError:
         print("Invalid input. Please enter a number.")
+    print("Please restart this tool after changing Setting")
+    sys.exit(-1)
 
 def read_config() -> str:
     cfg = ConfigParser()
