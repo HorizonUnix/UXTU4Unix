@@ -9,7 +9,7 @@
 
 - Add kext
 - Disable SIP ( <7F080000> )
-- Add `debug=0x144` to boot-args
+- Add `debug=0x44` to boot-args
 - [OPTIONAL] Disable CPS in BIOS using UMAF to get better temp but will sacrifice a lot of performance
 - Run `start-macOS.command`
   
