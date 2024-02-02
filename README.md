@@ -9,7 +9,7 @@
 - 1.3.0 Beta 3 [EFI](https://github.com/gorouflex/M413IA/releases/tag/1.3.0b3) now support `RielUXTU4Mac`
 ### For other user
 - Add kext
-- Disable SIP ( 03080000 )
+- Disable SIP ( <7F080000> )
 - Add `debug=0x144` to boot-args
   
 ## Preview
