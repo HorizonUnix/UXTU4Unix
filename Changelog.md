@@ -1,3 +1,13 @@
+## [0.0.7]
+
+### Change log
+
+- Fix args for `Performance` preset
+- Add 3 `force` option for `Eco`, `Balance`, and `Extreme`
+
+![image](https://github.com/gorouflex/RielUXTU4Mac/assets/98001973/05609b0d-94f7-4db8-9a2f-42739a38020c)
+
+
 ## [0.0.6]
 
 ### v0.0.6 introduces a new way for you to use `RielUXTU4Mac`
