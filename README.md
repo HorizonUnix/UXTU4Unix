@@ -1,16 +1,17 @@
 <picture><img align="left" src="/Img/Logo.png" width="20%"/></picture>
 <h1>RielUXTU4Mac - Project AppleOSX</h1>
 <h3>UXTU but for macOS</h3></h3>
-<h4>Supported for AMD Ryzen APUs (hackintosh)...still in early stages</h4>
+<h4>Supported for AMD Ryzen APUs (hackintosh)</h4>
 
 #
 
-### For M413IA's user
-- 1.3.0 Beta 3 [EFI](https://github.com/gorouflex/M413IA/releases/tag/1.3.0b3) now support `RielUXTU4Mac`
-### For other user
+## Usage
+
 - Add kext
 - Disable SIP ( <7F080000> )
 - Add `debug=0x144` to boot-args
+- Disable CPS in BIOS using UMAF to get better temp but will sacrifice some performance
+- Run `start-macOS.command`
   
 ## Preview
 
