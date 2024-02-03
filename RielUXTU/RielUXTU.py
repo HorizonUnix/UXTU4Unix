@@ -8,12 +8,9 @@ import urllib.request
 from configparser import ConfigParser
 
 PRESETS = {
-    "Eco (force)": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
-    "Balance": "--power-saving",
-    "Balance (force)": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=22000 --fast-limit=24000 --stapm-time=64 --slow-limit=22000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
-    "Performance (force)": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=20000 --fast-limit=24000 --stapm-time=64 --slow-limit=22000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
-    "Extreme (force)": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=30000  --fast-limit=34000 --stapm-time=64 --slow-limit=32000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
-    "Extreme": "--max-performance"
+    "Performance": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=30000  --fast-limit=34000 --stapm-time=64 --slow-limit=32000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
+    "Extreme": "--max-performance",
+    "Auto": "--power-saving"
 }
 
 CONFIG_PATH = 'config.ini'
@@ -66,8 +63,7 @@ def create_config() -> None:
         print(f"{i}. {mode}")
     
     print()
-    print("(force): Force your CPU to apply the current profile, whether it is plugged in with AC or not")
-    print("Others not labeled as 'force' means it's behavior depends on CPU generation, plugged in with AC or not, device, and manufacturer")
+    print("I recommend to use Auto preset for normal task, and Extreme preset for unlocking full potenial performance")
     choice = input("Choose your preset power plan by pressing number: ")
     password = getpass.getpass("Enter your login password: ")
     skip_welcome = input("Do you want to skip the welcome menu? (y/n): ").lower()
