@@ -3,7 +3,7 @@
 ### Change log
 
 - Removed useless Preset
-- Add new Preset
+- Add new `Auto` preset
 
 
 ## [0.0.7]
