@@ -15,7 +15,7 @@ PRESETS = {
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/gorouflex/rieluxtu4mac/releases/latest"
-LOCAL_VERSION = "0.0.7"
+LOCAL_VERSION = "0.0.8"
 
 def print_logo():
     print(r"""
@@ -25,8 +25,7 @@ def print_logo():
  |  _  /| |/ _ \ | |  | | > <    | |  | |  | |__   _| |\/| |/ _` |/ __|
  | | \ \| |  __/ | |__| |/ . \   | |  | |__| |  | | | |  | | (_| | (__ 
  |_|  \_\_|\___|_|\____//_/ \_\  |_|   \____/   |_| |_|  |_|\__,_|\___|
- 
-Version 0.0.7 Stable - CLI Mode""")
+ """)
 
 def print_main_menu():
     clear()
