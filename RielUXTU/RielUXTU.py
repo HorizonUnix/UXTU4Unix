@@ -63,7 +63,7 @@ def create_config() -> None:
         print(f"{i}. {mode}")
     
     print()
-    print("I recommend to use Auto preset for normal task, and Extreme preset for unlocking full potenial performance")
+    print("I recommend to use Auto preset for normal task and better power management, and Extreme preset for unlocking full potenial performance")
     choice = input("Choose your preset power plan by pressing number: ")
     password = getpass.getpass("Enter your login password: ")
     skip_welcome = input("Do you want to skip the welcome menu? (y/n): ").lower()
