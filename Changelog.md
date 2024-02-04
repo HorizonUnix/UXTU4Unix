@@ -1,4 +1,4 @@
-## [0.0.10]
+## [0.0.91]
 
 - Optimize code
 - Fix an issue when tool cannot instanly update config file

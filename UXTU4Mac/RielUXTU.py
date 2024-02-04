@@ -15,21 +15,22 @@ PRESETS = {
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.0.9"
+LOCAL_VERSION = "0.0.91"
 
-def print_logo():
-    print(r"""
-██╗   ██╗██╗  ██╗████████╗██╗   ██╗██╗  ██╗███╗   ███╗ █████╗  ██████╗
-██║   ██║╚██╗██╔╝╚══██╔══╝██║   ██║██║  ██║████╗ ████║██╔══██╗██╔════╝
-██║   ██║ ╚███╔╝    ██║   ██║   ██║███████║██╔████╔██║███████║██║     
-██║   ██║ ██╔██╗    ██║   ██║   ██║╚════██║██║╚██╔╝██║██╔══██║██║     
-╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝     ██║██║ ╚═╝ ██║██║  ██║╚██████╗
- ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝      ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝
- """)
+def clr_print_logo():
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print("""
+    ██╗   ██╗██╗  ██╗████████╗██╗   ██╗██╗  ██╗███╗   ███╗ █████╗  ██████╗
+    ██║   ██║╚██╗██╔╝╚══██╔══╝██║   ██║██║  ██║████╗ ████║██╔══██╗██╔════╝
+    ██║   ██║ ╚███╔╝    ██║   ██║   ██║███████║██╔████╔██║███████║██║
+    ██║   ██║ ██╔██╗    ██║   ██║   ██║╚════██║██║╚██╔╝██║██╔══██║██║
+    ╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝     ██║██║ ╚═╝ ██║██║  ██║╚██████╗
+     ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝      ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝
+    Version: {}
+    """.format(LOCAL_VERSION))
 
-def print_main_menu():
-    clear()
-    print_logo()
+def main_menu():
+    clr_print_logo()
     print("1. Apply preset")
     print("2. Settings")
     print()
@@ -37,33 +38,35 @@ def print_main_menu():
     print()
     print("Q. Quit")
 
-def print_about_menu():
-    clear()
-    print_logo()
+def about_menu():
+    clr_print_logo()
     print()
     print("About UXTU4Mac")
     print()
+    print("Latest version on GitHub: {}".format(get_latest_ver()))
+    print("----------------------------")
     print("Main developer: GorouFlex")
     print("CLI: GorouFlex")
     print("GUI: NotchApple1703")
-    print(f"Latest version on GitHub: {get_latest_version()}")
+    print("----------------------------")
     print()
     print("1. Open GitHub")
     print("2. Change logs")
     print()
     print("B. Back")
 
-def create_config() -> None:
+def create_cfg() -> None:
     cfg = ConfigParser()
     cfg.add_section('User')
+    clr_print_logo()
     print("------ Settings ------")
     print("Preset power plan")
     for i, mode in enumerate(PRESETS, start=1):
         print(f"{i}. {mode}")
     
     print()
-    print("We recommend to use Auto preset for normal task and better power management, and Extreme preset for unlocking full potenial performance")
-    choice = input("Choose your preset power plan by pressing number: ")
+    print("We recommend using Auto preset for normal tasks and better power management, and Extreme preset for unlocking full potential performance")
+    choice = input("Choose your preset power plan by pressing a number followed by the preset: ")
     password = getpass.getpass("Enter your login password: ")
     skip_welcome = input("Do you want to skip the welcome menu? (y/n): ").lower()
 
@@ -78,36 +81,35 @@ def create_config() -> None:
             cfg.write(config_file)
     except ValueError:
         print("Invalid input. Please enter a number.")
-    print("Please restart this tool after changing Setting")
-    sys.exit(-1)
+        sys.exit(-1)
 
-def read_config() -> str:
+def read_cfg() -> str:
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     return cfg.get('User', 'Mode', fallback='')
 
-def check_skip_welcome() -> bool:
+def skip_welcome() -> bool:
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
-    return cfg.get('User', 'SkipWelcome', fallback='0') == '1'
+    return cfg.getboolean('User', 'SkipWelcome', fallback=False)
 
-def check_config_integrity() -> None:
+def check_cfg_integrity() -> None:
     if not os.path.isfile(CONFIG_PATH) or os.stat(CONFIG_PATH).st_size == 0:
-        create_config()
+        create_cfg()
         return
 
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     
     if not cfg.has_section('User'):
-        create_config()
+        create_cfg()
 
-def get_latest_version():
+def get_latest_ver():
     latest_version = urllib.request.urlopen(LATEST_VERSION_URL).geturl()
     return latest_version.split("/")[-1]
 
-def check_for_updates():
-    latest_version = get_latest_version()
+def check_updates():
+    latest_version = get_latest_ver()
 
     if LOCAL_VERSION < latest_version:
         print("A new update is available! Please visit the following link for details:")
@@ -120,27 +122,25 @@ def check_for_updates():
         if result != "y":
             sys.exit()
 
-def run_command(args, user_mode):
+def run_cmd(args, user_mode):
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     password = cfg.get('User', 'Password', fallback='')
     command = ["sudo", "-S", "./ryzenadj"] + args.split()
     while True:
-        proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = proc.communicate(password.encode())
-        print(stdout.decode())  
-        if stderr:
-            print(f"Error: {stderr.decode()}")
+        result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        print(result.stdout.decode())
+        if result.stderr:
+            print(f"Error: {result.stderr.decode()}")
         time.sleep(3)
-        clear()
-        print_logo()
+        clr_print_logo()
         print(f"Using mode: {user_mode}")
         print("Script will be reapplied every 3 seconds just like UXTU")
         print("------ RyzenAdj Log ------")
 
 def info():
     while True:
-        print_about_menu()
+        about_menu()
         choice = input("Option: ")
         if choice == "1":
             open_github()
@@ -155,27 +155,24 @@ def open_github():
     webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac")
 
 def open_releases():
-    webbrowser.open(f"https://github.com/AppleOSX/UXTU4Mac/releases/tag/{get_latest_version()}")
-
-def clear():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    webbrowser.open("https://github.com/AppleOSX/UXTU4Mac/releases/tag/{}".format(get_latest_ver()))
 
 def main():
-    check_for_updates()
-    check_config_integrity()
-    user_mode = read_config()
+    check_updates()
+    check_cfg_integrity()
+    user_mode = read_cfg()
 
-    if not check_skip_welcome():
+    if not skip_welcome():
         while True:
-            print_main_menu()
-            choice = input("Enter your choice: ")
+            main_menu()
+            choice = input("Option: ")
 
             if choice == "1":
-                clear()
-                run_command(PRESETS[user_mode], user_mode)
+                clr_print_logo()
+                run_cmd(PRESETS[read_cfg()], read_cfg())
             elif choice == "2":
-                clear()
-                create_config()
+                clr_print_logo()
+                create_cfg()
             elif choice.lower() == "a":
                 info()
             elif choice.lower() == "q":
@@ -184,8 +181,9 @@ def main():
                 print("Invalid choice. Please enter a valid option.")
     else:
         if user_mode:
+            clr_print_logo()
             print(f"Using mode: {user_mode}")
-            run_command(PRESETS[user_mode], user_mode)
+            run_cmd(PRESETS[user_mode], user_mode)
         else:
             print("Config file is missing or invalid. Please run the script again.")
 
