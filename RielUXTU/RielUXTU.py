@@ -14,17 +14,17 @@ PRESETS = {
 }
 
 CONFIG_PATH = 'config.ini'
-LATEST_VERSION_URL = "https://github.com/gorouflex/rieluxtu4mac/releases/latest"
-LOCAL_VERSION = "0.0.8"
+LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
+LOCAL_VERSION = "0.0.9"
 
 def print_logo():
     print(r"""
-  _____  _      _ _    ___   _________ _    _ _  _   __  __            
- |  __ \(_)    | | |  | \ \ / /__   __| |  | | || | |  \/  |           
- | |__) |_  ___| | |  | |\ V /   | |  | |  | | || |_| \  / | __ _  ___ 
- |  _  /| |/ _ \ | |  | | > <    | |  | |  | |__   _| |\/| |/ _` |/ __|
- | | \ \| |  __/ | |__| |/ . \   | |  | |__| |  | | | |  | | (_| | (__ 
- |_|  \_\_|\___|_|\____//_/ \_\  |_|   \____/   |_| |_|  |_|\__,_|\___|
+██╗   ██╗██╗  ██╗████████╗██╗   ██╗██╗  ██╗███╗   ███╗ █████╗  ██████╗
+██║   ██║╚██╗██╔╝╚══██╔══╝██║   ██║██║  ██║████╗ ████║██╔══██╗██╔════╝
+██║   ██║ ╚███╔╝    ██║   ██║   ██║███████║██╔████╔██║███████║██║     
+██║   ██║ ██╔██╗    ██║   ██║   ██║╚════██║██║╚██╔╝██║██╔══██║██║     
+╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝     ██║██║ ╚═╝ ██║██║  ██║╚██████╗
+ ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝      ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝
  """)
 
 def print_main_menu():
@@ -41,11 +41,11 @@ def print_about_menu():
     clear()
     print_logo()
     print()
-    print("About RielUXTU4Mac")
+    print("About UXTU4Mac")
     print()
     print("Main developer: GorouFlex")
-    print("GUI developer: NotchApple1703")
     print("CLI: GorouFlex")
+    print("GUI: NotchApple1703")
     print(f"Latest version on GitHub: {get_latest_version()}")
     print()
     print("1. Open GitHub")
@@ -62,7 +62,7 @@ def create_config() -> None:
         print(f"{i}. {mode}")
     
     print()
-    print("I recommend to use Auto preset for normal task and better power management, and Extreme preset for unlocking full potenial performance")
+    print("We recommend to use Auto preset for normal task and better power management, and Extreme preset for unlocking full potenial performance")
     choice = input("Choose your preset power plan by pressing number: ")
     password = getpass.getpass("Enter your login password: ")
     skip_welcome = input("Do you want to skip the welcome menu? (y/n): ").lower()
@@ -152,10 +152,10 @@ def info():
             print("Invalid choice. Please enter a valid option.")
 
 def open_github():
-    webbrowser.open("https://www.github.com/gorouflex/RielUXTU4Mac")
+    webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac")
 
 def open_releases():
-    webbrowser.open(f"https://github.com/gorouflex/RielUXTU4Mac/releases/tag/{get_latest_version()}")
+    webbrowser.open(f"https://github.com/AppleOSX/UXTU4Mac/releases/tag/{get_latest_version()}")
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
