@@ -5,6 +5,7 @@
 
 #
 
+## Due some issue we'll delay version 0.1.x ( with introduces GUI ) to 3 weeks
 ## Supported CPU/APU
 
 | Codename| Name |
