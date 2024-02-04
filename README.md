@@ -5,6 +5,21 @@
 
 #
 
+## Supported CPU/APU
+
+| Codename| Name/Gen |
+|    :---:  |    :---:   |
+| Raven (Ridge) | 2xxxU/H/G/GE |
+| Picasso | 3xxxU/H/G/GE |
+| Dali | 3xxxU/G |
+| Renoir | 4xxxU/H/HS/G/GE |
+| Lucienne | 5xxxU |
+| Cezanne	| 5xxxU/H/HS/HX/G/GE |
+| Rembrandt | 6xxx (N/A) |
+
+> [!NOTE]
+> If your CPU/APU supported [NootedRed](https://github.com/ChefKissInc/NootedRed)/[UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility), you can also utilize this tool too
+
 ## Usage
 
 - Add kext
