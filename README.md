@@ -1,5 +1,5 @@
 <picture><img align="left" src="/Img/Logo.png" width="20%"/></picture>
-<h1>UXTU4Mac - AppleOSX</h1>
+<h1>UXTU4Mac</h1>
 <h3>UXTU but for macOS</h3></h3>
 <h4>Supported for AMD Ryzen APUs (hackintosh)</h4>
 
@@ -7,7 +7,7 @@
 
 ## Supported CPU/APU
 
-| Codename| Name/Gen |
+| Codename| Name |
 |    :---:  |    :---:   |
 | Raven (Ridge) | 2xxxU/H/G/GE |
 | Picasso | 3xxxU/H/G/GE |
