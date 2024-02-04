@@ -18,8 +18,8 @@ jobs:
 
       - name: Make file executable
         run: |
-            chmod +x RielUXTU/ryzenadj
-            chmod +x RielUXTU/start-macOS.command
+            chmod +x UXTU4Mac/ryzenadj
+            chmod +x UXTU4Mac/start-macOS.command
 
       - name: Zip folder
         run: |
