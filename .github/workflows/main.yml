@@ -23,7 +23,7 @@ jobs:
 
       - name: Zip folder
         run: |
-          zip -r RielUXTU.zip RielUXTU
+          zip -r UXTU4Mac.zip UXTU4Mac
         env:
           TAG: ${{ env.TAG }}
 
