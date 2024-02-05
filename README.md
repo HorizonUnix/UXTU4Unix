@@ -1,8 +1,7 @@
 <picture><img align="left" src="/Img/Logo.png" width="20%"/></picture>
-<h2>UXTU4Mac (WIP)</h2>
-<h4>UXTU but for macOS</h4>
-<h5>Based on RyzenAdj</h5>
-<h5>Supported for various AMD Ryzen APUs</h5>
+<h1>UXTU4Mac (WIP)</h1>
+<h3>UXTU but for macOS</h3>
+<h3>Based on RyzenAdj</h3>
 
 ---
 
