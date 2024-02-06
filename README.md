@@ -35,8 +35,7 @@
 ## For advanced user please visit [Custom.md](Custom.md)
 ## Check if `DirectHW.kext` is being loaded or not?
 
-<img align="left" src="/Img/ck_kext1.png"/>
-<img align="right" src="/Img/ck_kext2.png"/>
+<p><img align="center" src="/Img/ck_kext1.png"/><img align="center" src="/Img/ck_kext2.png"/></p>
 
 ### Auto preset results in better power management (2:30 hours of my battery usage).
 ### The Extreme preset yields the full potential performance that my Ryzen 5 4500U (Renoir) can handle but only lasts for 1:30 hours of my battery usage. To achieve maximum performance, please plug in with AC.
