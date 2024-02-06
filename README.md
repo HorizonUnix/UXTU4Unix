@@ -32,6 +32,7 @@
 - Run `start-macOS.command`.
 - Follow the instructions.
 
+## For advanced user please visit [Custom.md](Custom.md)
 ### Auto preset results in better power management (2:30 hours of my battery usage).
 ### The Extreme preset yields the full potential performance that my Ryzen 5 4500U (Renoir) can handle but only lasts for 1:30 hours of my battery usage. To achieve maximum performance, please plug in with AC.
 ### [Removed] ECO Preset

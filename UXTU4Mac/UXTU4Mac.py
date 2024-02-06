@@ -15,7 +15,7 @@ PRESETS = {
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.0.91"
+LOCAL_VERSION = "0.0.92"
 
 def clr_print_logo():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -35,7 +35,6 @@ def main_menu():
     print("2. Settings")
     print()
     print("A. About")
-    print()
     print("Q. Quit")
 
 def about_menu():
@@ -112,10 +111,12 @@ def check_updates():
     latest_version = get_latest_ver()
 
     if LOCAL_VERSION < latest_version:
+        clr_print_logo()
         print("A new update is available! Please visit the following link for details:")
         print(LATEST_VERSION_URL)
         sys.exit()
     elif LOCAL_VERSION > latest_version:
+        clr_print_logo()
         print("Welcome to RielUXTU4Mac Beta Program.")
         print("This build may not be as stable as expected. Only for testing purposes!")
         result = input("Do you want to continue? (y/n): ").lower()
@@ -166,10 +167,33 @@ def main():
         while True:
             main_menu()
             choice = input("Option: ")
-
             if choice == "1":
                 clr_print_logo()
-                run_cmd(PRESETS[read_cfg()], read_cfg())
+                print("Apply Preset:")
+                print("1. Load from config file")
+                print("2. Custom preset")
+                print()
+                print("B. Back")
+                preset_choice = input("Option: ")
+
+                if preset_choice == "1":
+                    user_mode = read_cfg()
+                    if user_mode:
+                        clr_print_logo()
+                        print(f"Using mode: {user_mode}")
+                        run_cmd(PRESETS[user_mode], user_mode)
+                    else:
+                        print("Config file is missing or invalid. Please run the script again.")
+                elif preset_choice == "2":
+                    custom_args = input("Custom arguments (preset): ")
+                    user_mode = "Custom"
+                    clr_print_logo()
+                    print(f"Using mode: {user_mode}")
+                    run_cmd(custom_args, user_mode)
+                elif preset_choice.lower() == "b":
+                      continue
+                else:
+                    print("Invalid choice. Please enter a valid option.")
             elif choice == "2":
                 clr_print_logo()
                 create_cfg()

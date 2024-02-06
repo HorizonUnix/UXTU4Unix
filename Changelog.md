@@ -1,3 +1,10 @@
+## [0.0.92]
+
+- Supported for custom preset
+- Fix image not being shown on CFU
+- Rework structure
+
+
 ## [0.0.91]
 
 - Optimize code
