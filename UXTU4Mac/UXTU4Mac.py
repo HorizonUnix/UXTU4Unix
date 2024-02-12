@@ -8,14 +8,15 @@ import urllib.request
 from configparser import ConfigParser
 
 PRESETS = {
-    "Performance": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=30000  --fast-limit=34000 --stapm-time=64 --slow-limit=32000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
+    "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
+    "Performance": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=28000 --fast-limit=28000 --stapm-time=64 --slow-limit=28000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000 ",
     "Extreme": "--max-performance",
     "Auto": "--power-saving"
 }
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.0.93"
+LOCAL_VERSION = "0.0.94"
 
 def clr_print_logo():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -64,11 +65,11 @@ def create_cfg() -> None:
         print(f"{i}. {mode}")
     
     print()
-    print("We recommend using Auto preset for normal tasks and better power management, and Extreme preset for unlocking full potential performance")
-    choice = input("Choose your preset power plan by pressing a number followed by the preset: ")
+    print("We recommend using Auto preset for normal tasks and better power management,\nand Extreme preset for unlocking full potential performance")
+    choice = input("Choose your preset by pressing a number followed by the preset (1,2,3,4): ")
     password = getpass.getpass("Enter your login password: ")
     skip_welcome = input("Do you want to skip the welcome menu? (y/n): ").lower()
-    start_with_macos = input("Do you want the script to start with macOS? (y/n): ").lower()
+    start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
     
     if start_with_macos == 'y':
         current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -82,7 +83,8 @@ def create_cfg() -> None:
         cfg.set('User', 'Mode', preset_name)
         cfg.set('User', 'Password', password)
         cfg.set('User', 'SkipWelcome', '1' if skip_welcome == 'y' else '0')
-
+        cfg.set('User', 'SkipCFU', '0')
+                
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
     except ValueError:
@@ -135,7 +137,7 @@ def run_cmd(args, user_mode):
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     password = cfg.get('User', 'Password', fallback='')
-    command = ["sudo", "-S", "./ryzenadj"] + args.split()
+    command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
     while True:
         result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print(result.stdout.decode())
@@ -169,7 +171,19 @@ def open_releases():
     )
 
 def main():
-    check_updates()
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    try:
+      if cfg.get('User', 'skipcfu', fallback = '0') == '0':
+         try:
+           check_updates()
+         except:
+           clr_print_logo()
+           print("No internet connection, failed to fetch update. Try again")
+           sys.exit()
+    except:
+        create_cfg()
+        
     check_cfg_integrity()
     user_mode = read_cfg()
 

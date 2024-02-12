@@ -1,3 +1,10 @@
+## [0.0.94]
+
+- Bring back some UXTU preset
+- Add a `SkipCFU` in config file to skip CFU when start (user customized)
+- Adjust some guide
+
+
 ## [0.0.93]
 
 - Support for Login Items in macOS ( aka Startup App )
