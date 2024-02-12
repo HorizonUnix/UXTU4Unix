@@ -18,7 +18,7 @@ jobs:
 
       - name: Make file executable
         run: |
-            chmod +x UXTU4Mac/ryzenadj
+            chmod +x UXTU4Mac/Assets/ryzenadj
             chmod +x UXTU4Mac/UXTU4Mac.command
 
       - name: Zip folder
