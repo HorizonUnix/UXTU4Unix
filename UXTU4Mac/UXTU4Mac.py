@@ -42,7 +42,7 @@ def about_menu():
     print()
     print("About UXTU4Mac")
     print()
-    print("Latest version on GitHub: {}".format(get_latest_ver()))
+    print(f"Latest version on GitHub: {get_latest_ver()}")
     print("----------------------------")
     print("Main developer: GorouFlex")
     print("CLI: GorouFlex")
@@ -164,7 +164,9 @@ def open_github():
     webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac")
 
 def open_releases():
-    webbrowser.open("https://github.com/AppleOSX/UXTU4Mac/releases/tag/{}".format(get_latest_ver()))
+    webbrowser.open(
+        f"https://github.com/AppleOSX/UXTU4Mac/releases/tag/{get_latest_ver()}"
+    )
 
 def main():
     check_updates()
@@ -185,8 +187,7 @@ def main():
                 preset_choice = input("Option: ")
 
                 if preset_choice == "1":
-                    user_mode = read_cfg()
-                    if user_mode:
+                    if user_mode := read_cfg():
                         clr_print_logo()
                         print(f"Using mode: {user_mode}")
                         run_cmd(PRESETS[user_mode], user_mode)
@@ -194,8 +195,8 @@ def main():
                         print("Config file is missing or invalid. Please run the script again.")
                 elif preset_choice == "2":
                     custom_args = input("Custom arguments (preset): ")
-                    user_mode = "Custom"
                     clr_print_logo()
+                    user_mode = "Custom"
                     print(f"Using mode: {user_mode}")
                     run_cmd(custom_args, user_mode)
                 elif preset_choice.lower() == "b":
@@ -211,13 +212,12 @@ def main():
                 sys.exit()
             else:
                 print("Invalid choice. Please enter a valid option.")
+    elif user_mode:
+        clr_print_logo()
+        print(f"Using mode: {user_mode}")
+        run_cmd(PRESETS[user_mode], user_mode)
     else:
-        if user_mode:
-            clr_print_logo()
-            print(f"Using mode: {user_mode}")
-            run_cmd(PRESETS[user_mode], user_mode)
-        else:
-            print("Config file is missing or invalid. Please run the script again.")
+        print("Config file is missing or invalid. Please run the script again.")
 
 if __name__ == "__main__":
     main()
