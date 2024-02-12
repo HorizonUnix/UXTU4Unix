@@ -38,25 +38,30 @@ def get_system_info(command):
 
 def print_system_info():
     logging.info("Device Information:")
-    logging.info("  Name: {}".format(get_system_info("scutil --get ComputerName")))
-    logging.info("  Model: {}".format(get_system_info("sysctl -n hw.model")))
-    logging.info("  macOS version: {}".format(get_system_info("sysctl -n kern.osrelease")))
+    logging.info(f'  Name: {get_system_info("scutil --get ComputerName")}')
+    logging.info(f'  Model: {get_system_info("sysctl -n hw.model")}')
+    logging.info(f'  macOS version: {get_system_info("sysctl -n kern.osrelease")}')
 
     logging.info("\nProcessor Information:")
-    logging.info("  Processor: {}".format(get_system_info("sysctl -n machdep.cpu.brand_string")))
-    logging.info("  Cores: {}".format(get_system_info("sysctl -n hw.physicalcpu")))
-    logging.info("  Threads: {}".format(get_system_info("sysctl -n hw.logicalcpu")))
+    logging.info(
+        f'  Processor: {get_system_info("sysctl -n machdep.cpu.brand_string")}'
+    )
+    logging.info(f'  Cores: {get_system_info("sysctl -n hw.physicalcpu")}')
+    logging.info(f'  Threads: {get_system_info("sysctl -n hw.logicalcpu")}')
     base_clock = float(get_system_info("sysctl -n hw.cpufrequency_max")) / (10**9)
     logging.info("  Base clock: {:.2f} GHz".format(base_clock))
-    logging.info("  Features: {}".format(get_system_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]))
-    logging.info("  Vendor: {}".format(get_system_info("sysctl -n machdep.cpu.vendor")))
-    logging.info("  Family: {}".format(get_system_info("sysctl -n machdep.cpu.family")))
+    logging.info(
+        f'  Features: {get_system_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]}'
+    )
+    logging.info(f'  Vendor: {get_system_info("sysctl -n machdep.cpu.vendor")}')
+    logging.info(f'  Family: {get_system_info("sysctl -n machdep.cpu.family")}')
 
     logging.info("\nMemory Information:")
     memory = float(get_system_info("sysctl -n hw.memsize")) / (1024**3)
     logging.info("  Memory: {:.2f} GB".format(memory))
-    has_battery = get_system_info("system_profiler SPPowerDataType | grep 'Battery Information'")
-    if has_battery:
+    if has_battery := get_system_info(
+        "system_profiler SPPowerDataType | grep 'Battery Information'"
+    ):
         logging.info("\nBattery Information:")
         logging.info("  Health: {}".format(get_system_info("pmset -g batt | egrep '([0-9]+\\%).*' -o --colour=auto | cut -f1 -d';'")))
         logging.info("  Cycles: {}".format(get_system_info("system_profiler SPPowerDataType | grep 'Cycle Count' | awk '{print $3}'")))
