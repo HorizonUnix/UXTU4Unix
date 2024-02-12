@@ -15,7 +15,7 @@ PRESETS = {
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.0.92"
+LOCAL_VERSION = "0.0.93"
 
 def clr_print_logo():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -72,7 +72,7 @@ def create_cfg() -> None:
     
     if start_with_macos == 'y':
         current_dir = os.path.dirname(os.path.realpath(__file__))
-        command_file = os.path.join(current_dir, 'start-macOS.command')
+        command_file = os.path.join(current_dir, 'UXTU4Mac.command')
         command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
         subprocess.call(command, shell=True)
         
