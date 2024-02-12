@@ -29,7 +29,7 @@
 - Add `debug=0x44` or `debug=0x144` to `boot-args`.
 - Reboot and reset NVRAM to take effect.
 - [Optional] Disable `Core Performance Boost` in BIOS using [Smokeless_UMAF](https://github.com/DavidS95/Smokeless_UMAF) to get better temperature but sacrifice a lot of performance.
-- Run `start-macOS.command`.
+- Run `UXTU4Mac.command`.
 - Follow the instructions.
 
 ## For advanced user please visit [Custom.md](Custom.md)
