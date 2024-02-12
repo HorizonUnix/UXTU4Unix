@@ -15,7 +15,7 @@ PRESETS = {
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.0.92"
+LOCAL_VERSION = "0.0.93"
 
 def clr_print_logo():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -42,7 +42,7 @@ def about_menu():
     print()
     print("About UXTU4Mac")
     print()
-    print("Latest version on GitHub: {}".format(get_latest_ver()))
+    print(f"Latest version on GitHub: {get_latest_ver()}")
     print("----------------------------")
     print("Main developer: GorouFlex")
     print("CLI: GorouFlex")
@@ -68,7 +68,14 @@ def create_cfg() -> None:
     choice = input("Choose your preset power plan by pressing a number followed by the preset: ")
     password = getpass.getpass("Enter your login password: ")
     skip_welcome = input("Do you want to skip the welcome menu? (y/n): ").lower()
-
+    start_with_macos = input("Do you want the script to start with macOS? (y/n): ").lower()
+    
+    if start_with_macos == 'y':
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        command_file = os.path.join(current_dir, 'UXTU4Mac.command')
+        command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+        subprocess.call(command, shell=True)
+        
     try:
         preset_number = int(choice)
         preset_name = list(PRESETS.keys())[preset_number - 1]
@@ -81,6 +88,7 @@ def create_cfg() -> None:
     except ValueError:
         print("Invalid input. Please enter a number.")
         sys.exit(-1)
+
 
 def read_cfg() -> str:
     cfg = ConfigParser()
@@ -156,7 +164,9 @@ def open_github():
     webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac")
 
 def open_releases():
-    webbrowser.open("https://github.com/AppleOSX/UXTU4Mac/releases/tag/{}".format(get_latest_ver()))
+    webbrowser.open(
+        f"https://github.com/AppleOSX/UXTU4Mac/releases/tag/{get_latest_ver()}"
+    )
 
 def main():
     check_updates()
@@ -177,8 +187,7 @@ def main():
                 preset_choice = input("Option: ")
 
                 if preset_choice == "1":
-                    user_mode = read_cfg()
-                    if user_mode:
+                    if user_mode := read_cfg():
                         clr_print_logo()
                         print(f"Using mode: {user_mode}")
                         run_cmd(PRESETS[user_mode], user_mode)
@@ -186,8 +195,8 @@ def main():
                         print("Config file is missing or invalid. Please run the script again.")
                 elif preset_choice == "2":
                     custom_args = input("Custom arguments (preset): ")
-                    user_mode = "Custom"
                     clr_print_logo()
+                    user_mode = "Custom"
                     print(f"Using mode: {user_mode}")
                     run_cmd(custom_args, user_mode)
                 elif preset_choice.lower() == "b":
@@ -203,13 +212,12 @@ def main():
                 sys.exit()
             else:
                 print("Invalid choice. Please enter a valid option.")
+    elif user_mode:
+        clr_print_logo()
+        print(f"Using mode: {user_mode}")
+        run_cmd(PRESETS[user_mode], user_mode)
     else:
-        if user_mode:
-            clr_print_logo()
-            print(f"Using mode: {user_mode}")
-            run_cmd(PRESETS[user_mode], user_mode)
-        else:
-            print("Config file is missing or invalid. Please run the script again.")
+        print("Config file is missing or invalid. Please run the script again.")
 
 if __name__ == "__main__":
     main()

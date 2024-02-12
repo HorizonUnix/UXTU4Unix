@@ -1,3 +1,9 @@
+## [0.0.93]
+
+- Support for Login Items in macOS ( aka Startup App )
+- Refactored code
+
+
 ## [0.0.92]
 
 - Supported for custom preset
