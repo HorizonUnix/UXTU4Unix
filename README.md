@@ -3,6 +3,8 @@
 <h3>UXTU but for macOS</h3>
 <h3>Based on RyzenAdj</h3>
 
+![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/AppleOSX/UXTU4Mac/total)
+
 ---
 
 ## Due to some issues, we'll delay version 0.1.x (which introduces a new GUI) to 3 weeks
