@@ -37,13 +37,11 @@
 
 <p><img align="center" src="/Img/ck_kext1.png"/><img align="center" src="/Img/ck_kext2.png"/></p>
 
+# Preview
 ### Auto preset results in better power management (2:30 hours of my battery usage).
 ### The Extreme preset yields the full potential performance that my Ryzen 5 4500U (Renoir) can handle but only lasts for 1:30 hours of my battery usage. To achieve maximum performance, please plug in with AC.
-### [Removed] ECO Preset
-![IMG_0124](https://github.com/gorouflex/RielUXTU4Mac/assets/98001973/1d67984a-1166-4551-a1b6-04865b72c53b)
-
-### [Replaced with another args] Extreme Preset
-![IMG_0123](https://github.com/gorouflex/RielUXTU4Mac/assets/98001973/46565c9a-8abd-4b9f-ad2e-5bde5c39a4c1)
+### Extreme Preset
+![Screenshot 2024-02-12 at 15 52 16](https://github.com/AppleOSX/UXTU4Mac/assets/98001973/19e1481a-07ae-4efb-9b50-fac0cf137e0a)
 
 ### Special thanks to
 - [NotchApple1703](https://github.com/NotchApple1703) for the GUI (after ver 0.1.x)
