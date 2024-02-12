@@ -17,7 +17,7 @@ PRESETS = {
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.0.94"
+LOCAL_VERSION = "0.0.95"
 
 if not os.path.exists('Logs'):
     os.mkdir('Logs')
