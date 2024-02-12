@@ -68,7 +68,14 @@ def create_cfg() -> None:
     choice = input("Choose your preset power plan by pressing a number followed by the preset: ")
     password = getpass.getpass("Enter your login password: ")
     skip_welcome = input("Do you want to skip the welcome menu? (y/n): ").lower()
-
+    start_with_macos = input("Do you want the script to start with macOS? (y/n): ").lower()
+    
+    if start_with_macos == 'y':
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        command_file = os.path.join(current_dir, 'start-macOS.command')
+        command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+        subprocess.call(command, shell=True)
+        
     try:
         preset_number = int(choice)
         preset_name = list(PRESETS.keys())[preset_number - 1]
@@ -81,6 +88,7 @@ def create_cfg() -> None:
     except ValueError:
         print("Invalid input. Please enter a number.")
         sys.exit(-1)
+
 
 def read_cfg() -> str:
     cfg = ConfigParser()
