@@ -1,3 +1,12 @@
+## [0.0.95]
+
+- Support Hardware Information reader
+- Switched to logging method
+- Support logging to file ( Stored in `Logs` folder )
+### This will be the last update for `0.0.x` series
+![Screenshot 2024-02-12 at 22 30 00](https://github.com/gorouflex/UXTU4Mac/assets/98001973/c7faee7b-3f5c-49d7-9362-776206858795)
+
+
 ## [0.0.94]
 
 - Bring back some UXTU preset
