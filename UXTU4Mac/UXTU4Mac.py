@@ -4,6 +4,7 @@ import time
 import subprocess
 import getpass
 import webbrowser
+import logging
 import urllib.request
 from configparser import ConfigParser
 
@@ -18,9 +19,57 @@ CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 LOCAL_VERSION = "0.0.94"
 
+if not os.path.exists('Logs'):
+    os.mkdir('Logs')
+
+logging.basicConfig(filename='Logs/UXTU4Mac.log', filemode='w', encoding='utf-8',
+                    level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
+                    datefmt='%d/%m/%Y %H:%M:%S')
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+
+logging.getLogger().addHandler(console_handler)
+
+def get_system_info(command):
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+    output, error = process.communicate()
+    return output.decode('utf-8').strip()
+
+def print_system_info():
+    logging.info("Device Information:")
+    logging.info("  Name: {}".format(get_system_info("scutil --get ComputerName")))
+    logging.info("  Model: {}".format(get_system_info("sysctl -n hw.model")))
+    logging.info("  macOS version: {}".format(get_system_info("sysctl -n kern.osrelease")))
+
+    logging.info("\nProcessor Information:")
+    logging.info("  Processor: {}".format(get_system_info("sysctl -n machdep.cpu.brand_string")))
+    logging.info("  Cores: {}".format(get_system_info("sysctl -n hw.physicalcpu")))
+    logging.info("  Threads: {}".format(get_system_info("sysctl -n hw.logicalcpu")))
+    base_clock = float(get_system_info("sysctl -n hw.cpufrequency_max")) / (10**9)
+    logging.info("  Base clock: {:.2f} GHz".format(base_clock))
+    logging.info("  Features: {}".format(get_system_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]))
+    logging.info("  Vendor: {}".format(get_system_info("sysctl -n machdep.cpu.vendor")))
+    logging.info("  Family: {}".format(get_system_info("sysctl -n machdep.cpu.family")))
+
+    logging.info("\nMemory Information:")
+    memory = float(get_system_info("sysctl -n hw.memsize")) / (1024**3)
+    logging.info("  Memory: {:.2f} GB".format(memory))
+    has_battery = get_system_info("system_profiler SPPowerDataType | grep 'Battery Information'")
+    if has_battery:
+        logging.info("\nBattery Information:")
+        logging.info("  Health: {}".format(get_system_info("pmset -g batt | egrep '([0-9]+\\%).*' -o --colour=auto | cut -f1 -d';'")))
+        logging.info("  Cycles: {}".format(get_system_info("system_profiler SPPowerDataType | grep 'Cycle Count' | awk '{print $3}'")))
+        logging.info("  Capacity: {}".format(get_system_info("system_profiler SPPowerDataType | grep 'Full Charge Capacity' | awk '{print $5}'")))
+
+def print_hardware_info():
+    clr_print_logo()
+    print_system_info()
+    input("Press Enter to go back to the main menu...")
+    
 def clr_print_logo():
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("""
+    logging.info("""
     ██╗   ██╗██╗  ██╗████████╗██╗   ██╗██╗  ██╗███╗   ███╗ █████╗  ██████╗
     ██║   ██║╚██╗██╔╝╚══██╔══╝██║   ██║██║  ██║████╗ ████║██╔══██╗██╔════╝
     ██║   ██║ ╚███╔╝    ██║   ██║   ██║███████║██╔████╔██║███████║██║
@@ -32,40 +81,41 @@ def clr_print_logo():
 
 def main_menu():
     clr_print_logo()
-    print("1. Apply preset")
-    print("2. Settings")
-    print()
-    print("A. About")
-    print("Q. Quit")
+    logging.info("1. Apply preset")
+    logging.info("2. Settings")
+    logging.info("")
+    logging.info("H. Hardware Information")
+    logging.info("A. About")
+    logging.info("Q. Quit")
 
 def about_menu():
     clr_print_logo()
-    print()
-    print("About UXTU4Mac")
-    print()
-    print(f"Latest version on GitHub: {get_latest_ver()}")
-    print("----------------------------")
-    print("Main developer: GorouFlex")
-    print("CLI: GorouFlex")
-    print("GUI: NotchApple1703")
-    print("----------------------------")
-    print()
-    print("1. Open GitHub")
-    print("2. Change logs")
-    print()
-    print("B. Back")
+    logging.info("")
+    logging.info("About UXTU4Mac")
+    logging.info("")
+    logging.info(f"Latest version on GitHub: {get_latest_ver()}")
+    logging.info("----------------------------")
+    logging.info("Main developer: GorouFlex")
+    logging.info("CLI: GorouFlex")
+    logging.info("GUI: NotchApple1703")
+    logging.info("----------------------------")
+    logging.info("")
+    logging.info("1. Open GitHub")
+    logging.info("2. Change logs")
+    logging.info("")
+    logging.info("B. Back")
 
 def create_cfg() -> None:
     cfg = ConfigParser()
     cfg.add_section('User')
     clr_print_logo()
-    print("------ Settings ------")
-    print("Preset power plan")
+    logging.info("------ Settings ------")
+    logging.info("Preset power plan")
     for i, mode in enumerate(PRESETS, start=1):
-        print(f"{i}. {mode}")
+        logging.info(f"{i}. {mode}")
     
-    print()
-    print("We recommend using Auto preset for normal tasks and better power management,\nand Extreme preset for unlocking full potential performance")
+    logging.info("")
+    logging.info("We recommend using Auto preset for normal tasks and better power management,\nand Extreme preset for unlocking full potential performance")
     choice = input("Choose your preset by pressing a number followed by the preset (1,2,3,4): ")
     password = getpass.getpass("Enter your login password: ")
     skip_welcome = input("Do you want to skip the welcome menu? (y/n): ").lower()
@@ -88,7 +138,7 @@ def create_cfg() -> None:
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
     except ValueError:
-        print("Invalid input. Please enter a number.")
+        logging.info("Invalid input. Please enter a number.")
         sys.exit(-1)
 
 
@@ -122,13 +172,13 @@ def check_updates():
 
     if LOCAL_VERSION < latest_version:
         clr_print_logo()
-        print("A new update is available! Please visit the following link for details:")
-        print(LATEST_VERSION_URL)
+        logging.info("A new update is available! Please visit the following link for details:")
+        logging.info(LATEST_VERSION_URL)
         sys.exit()
     elif LOCAL_VERSION > latest_version:
         clr_print_logo()
-        print("Welcome to RielUXTU4Mac Beta Program.")
-        print("This build may not be as stable as expected. Only for testing purposes!")
+        logging.info("Welcome to RielUXTU4Mac Beta Program.")
+        logging.info("This build may not be as stable as expected. Only for testing purposes!")
         result = input("Do you want to continue? (y/n): ").lower()
         if result != "y":
             sys.exit()
@@ -140,14 +190,14 @@ def run_cmd(args, user_mode):
     command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
     while True:
         result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print(result.stdout.decode())
+        logging.info(result.stdout.decode())
         if result.stderr:
-            print(f"Error: {result.stderr.decode()}")
+            logging.info(f"Error: {result.stderr.decode()}")
         time.sleep(3)
         clr_print_logo()
-        print(f"Using mode: {user_mode}")
-        print("Script will be reapplied every 3 seconds just like UXTU")
-        print("------ RyzenAdj Log ------")
+        logging.info(f"Using mode: {user_mode}")
+        logging.info("Script will be reapplied every 3 seconds just like UXTU")
+        logging.info("------ RyzenAdj Log ------")
 
 def info():
     while True:
@@ -160,7 +210,7 @@ def info():
         elif choice.lower() == "b":
             break
         else:
-            print("Invalid choice. Please enter a valid option.")
+            logging.info("Invalid choice. Please enter a valid option.")
 
 def open_github():
     webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac")
@@ -179,7 +229,7 @@ def main():
            check_updates()
          except:
            clr_print_logo()
-           print("No internet connection, failed to fetch update. Try again")
+           logging.info("No internet connection, failed to fetch update. Try again")
            sys.exit()
     except:
         create_cfg()
@@ -193,45 +243,47 @@ def main():
             choice = input("Option: ")
             if choice == "1":
                 clr_print_logo()
-                print("Apply Preset:")
-                print("1. Load from config file")
-                print("2. Custom preset")
-                print()
-                print("B. Back")
+                logging.info("Apply Preset:")
+                logging.info("1. Load from config file")
+                logging.info("2. Custom preset")
+                logging.info("")
+                logging.info("B. Back")
                 preset_choice = input("Option: ")
 
                 if preset_choice == "1":
                     if user_mode := read_cfg():
                         clr_print_logo()
-                        print(f"Using mode: {user_mode}")
+                        logging.info(f"Using mode: {user_mode}")
                         run_cmd(PRESETS[user_mode], user_mode)
                     else:
-                        print("Config file is missing or invalid. Please run the script again.")
+                        logging.info("Config file is missing or invalid. Please run the script again.")
                 elif preset_choice == "2":
                     custom_args = input("Custom arguments (preset): ")
                     clr_print_logo()
                     user_mode = "Custom"
-                    print(f"Using mode: {user_mode}")
+                    logging.info(f"Using mode: {user_mode}")
                     run_cmd(custom_args, user_mode)
                 elif preset_choice.lower() == "b":
                       continue
                 else:
-                    print("Invalid choice. Please enter a valid option.")
+                    logging.info("Invalid choice. Please enter a valid option.")
             elif choice == "2":
                 clr_print_logo()
                 create_cfg()
+            elif choice.lower() == "h":
+                print_hardware_info()
             elif choice.lower() == "a":
                 info()
             elif choice.lower() == "q":
                 sys.exit()
             else:
-                print("Invalid choice. Please enter a valid option.")
+                logging.info("Invalid choice. Please enter a valid option.")
     elif user_mode:
         clr_print_logo()
-        print(f"Using mode: {user_mode}")
+        logging.info(f"Using mode: {user_mode}")
         run_cmd(PRESETS[user_mode], user_mode)
     else:
-        print("Config file is missing or invalid. Please run the script again.")
+        logging.info("Config file is missing or invalid. Please run the script again.")
 
 if __name__ == "__main__":
     main()

@@ -1,3 +1,11 @@
+## [0.0.95]
+
+- Support Hardware Information reader
+- Switched to logging method
+- Support logging to file ( Stored in Logs folder )
+### This will be the last update for `0.0.x` series
+
+
 ## [0.0.94]
 
 - Bring back some UXTU preset
