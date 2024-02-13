@@ -228,16 +228,13 @@ def open_releases():
 def main():
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
-    try:
-      if cfg.get('User', 'skipcfu', fallback = '0') == '0':
-         try:
-           check_updates()
-         except:
-           clr_print_logo()
-           logging.info("No internet connection, failed to fetch update. Try again")
-           sys.exit()
-    except:
-        create_cfg()
+    if cfg.get('User', 'skipcfu', fallback = '0') == '0':
+       try:
+         check_updates()
+       except:
+         clr_print_logo()
+         logging.info("No internet connection, failed to fetch update. Try again")
+         sys.exit()
         
     check_cfg_integrity()
     user_mode = read_cfg()
