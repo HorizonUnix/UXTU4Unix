@@ -205,7 +205,9 @@ def print_system_info():
     logging.info("Device Information:")
     logging.info(f'  Name: {get_system_info("scutil --get ComputerName")}')
     logging.info(f'  Model (SMBios): {get_system_info("sysctl -n hw.model")}')
-    logging.info("  {}".format(get_system_info("system_profiler SPHardwareDataType | grep 'Serial Number'")))
+    logging.info(
+        f"""  {get_system_info("system_profiler SPHardwareDataType | grep 'Serial Number'")}"""
+    )
     logging.info(f'  macOS: {get_system_info("sysctl -n kern.osproductversion")}')
 
     logging.info("\nProcessor Information:")
@@ -220,8 +222,12 @@ def print_system_info():
 
     logging.info(f'  Cores: {get_system_info("sysctl -n hw.physicalcpu")}')
     logging.info(f'  Threads: {get_system_info("sysctl -n hw.logicalcpu")}')
-    logging.info("  {}".format(get_system_info("system_profiler SPHardwareDataType | grep 'L2'")))
-    logging.info("  {}".format(get_system_info("system_profiler SPHardwareDataType | grep 'L3'")))
+    logging.info(
+        f"""  {get_system_info("system_profiler SPHardwareDataType | grep 'L2'")}"""
+    )
+    logging.info(
+        f"""  {get_system_info("system_profiler SPHardwareDataType | grep 'L3'")}"""
+    )
     base_clock = float(get_system_info("sysctl -n hw.cpufrequency_max")) / (10**9)
     logging.info("  Base clock: {:.2f} GHz".format(base_clock))
     logging.info(f'  Vendor: {get_system_info("sysctl -n machdep.cpu.vendor")}')
@@ -238,36 +244,56 @@ def print_system_info():
 
     slot_info = []
     try:
-       for i, line in enumerate(ram_info_lines):  
-          if any(slot_name in line for slot_name in ram_slot_names): 
-            slot_name = line.strip()
-            size = ram_info_lines[i+2].strip().split(":")[1].strip()
-            type = ram_info_lines[i+3].strip().split(":")[1].strip()
-            speed = ram_info_lines[i+4].strip().split(":")[1].strip()
-            manufacturer = ram_info_lines[i+5].strip().split(":")[1].strip()
-            part_number = ram_info_lines[i+6].strip().split(":")[1].strip()
-            serial_number = ram_info_lines[i+7].strip().split(":")[1].strip()
-            slot_info.append((slot_name, size, type, speed, manufacturer, part_number, serial_number))
+        for i, line in enumerate(ram_info_lines):  
+           if any(slot_name in line for slot_name in ram_slot_names): 
+             slot_name = line.strip()
+             size = ram_info_lines[i+2].strip().split(":")[1].strip()
+             type = ram_info_lines[i+3].strip().split(":")[1].strip()
+             speed = ram_info_lines[i+4].strip().split(":")[1].strip()
+             manufacturer = ram_info_lines[i+5].strip().split(":")[1].strip()
+             part_number = ram_info_lines[i+6].strip().split(":")[1].strip()
+             serial_number = ram_info_lines[i+7].strip().split(":")[1].strip()
+             slot_info.append((slot_name, size, type, speed, manufacturer, part_number, serial_number))
 
-       for i in range(0, len(slot_info), 2):
-          logging.info("  Size: {}/{}".format(slot_info[i][1], slot_info[i+1][1] if i+1 < len(slot_info) else 'N/A'))
-          logging.info("  Type: {}/{}".format(slot_info[i][2], slot_info[i+1][2] if i+1 < len(slot_info) else 'N/A'))
-          logging.info("  Speed: {}/{}".format(slot_info[i][3], slot_info[i+1][3] if i+1 < len(slot_info) else 'N/A'))
-          logging.info("  Manufacturer: {}/{}".format(slot_info[i][5], slot_info[i+1][5] if i+1 < len(slot_info) else 'N/A'))
-          logging.info("  Serial Number: {}/{}".format(slot_info[i][6], slot_info[i+1][6] if i+1 < len(slot_info) else 'N/A'))
+        for i in range(0, len(slot_info), 2):
+            logging.info(
+                f"  Size: {slot_info[i][1]}/{slot_info[i + 1][1] if i + 1 < len(slot_info) else 'N/A'}"
+            )
+            logging.info(
+                f"  Type: {slot_info[i][2]}/{slot_info[i + 1][2] if i + 1 < len(slot_info) else 'N/A'}"
+            )
+            logging.info(
+                f"  Speed: {slot_info[i][3]}/{slot_info[i + 1][3] if i + 1 < len(slot_info) else 'N/A'}"
+            )
+            logging.info(
+                f"  Manufacturer: {slot_info[i][5]}/{slot_info[i + 1][5] if i + 1 < len(slot_info) else 'N/A'}"
+            )
+            logging.info(
+                f"  Serial Number: {slot_info[i][6]}/{slot_info[i + 1][6] if i + 1 < len(slot_info) else 'N/A'}"
+            )
     except:
         logging.info("Pardon me for my horrible search for displaying RAM information")
-        
+
     if has_battery := get_system_info(
         "system_profiler SPPowerDataType | grep 'Battery Information'"
     ):
         logging.info("\nBattery Information:")
-        logging.info("  {}".format(get_system_info("system_profiler SPPowerDataType | grep 'Manufacturer'")))
-        logging.info("  {}".format(get_system_info("system_profiler SPPowerDataType | grep 'Device'")))
+        logging.info(
+            f"""  {get_system_info("system_profiler SPPowerDataType | grep 'Manufacturer'")}"""
+        )
+        logging.info(
+            f"""  {get_system_info("system_profiler SPPowerDataType | grep 'Device'")}"""
+        )
         logging.info("  State of Charge (%): {}".format(get_system_info("pmset -g batt | egrep '([0-9]+\\%).*' -o --colour=auto | cut -f1 -d';'")))
-        logging.info("  {}".format(get_system_info("system_profiler SPPowerDataType | grep 'Cycle Count'")))
-        logging.info("  {}".format(get_system_info("system_profiler SPPowerDataType | grep 'Full Charge Capacity'")))
-        logging.info("  {}".format(get_system_info("system_profiler SPPowerDataType | grep 'Condition'")))
+        logging.info(
+            f"""  {get_system_info("system_profiler SPPowerDataType | grep 'Cycle Count'")}"""
+        )
+        logging.info(
+            f"""  {get_system_info("system_profiler SPPowerDataType | grep 'Full Charge Capacity'")}"""
+        )
+        logging.info(
+            f"""  {get_system_info("system_profiler SPPowerDataType | grep 'Condition'")}"""
+        )
 
 def print_hardware_info():
     clr_print_logo()
