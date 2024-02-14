@@ -2,7 +2,6 @@
 
 - Support for more hardware information
 - Fix a issue when no internet connection result a config override
-- Support `.pkg` file ( will install to Applications folder ) 
 ### This will be the last update for `0.0.x` series
 
 
