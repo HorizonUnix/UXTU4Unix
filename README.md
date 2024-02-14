@@ -7,8 +7,7 @@
 
 ---
 
-## Due to some issues, we'll delay version 0.1.x (which introduces a new GUI) to 3 weeks
-## Supported CPU/APU
+## Supported CPU/APU, [refer to this](https://github.com/AppleOSX/UXTU4Mac/blob/f1b05576a091e28c857a780e2e90ea61d1efb194/UXTU4Mac/UXTU4Mac.py#L23)
 
 | Codename | Name |
 | :---: | :---: |
