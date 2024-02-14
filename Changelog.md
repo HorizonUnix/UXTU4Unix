@@ -1,3 +1,10 @@
+## [0.0.96]
+
+- Support for more hardware information
+- Fix a issue when no internet connection result a config override
+### This will be the last update for `0.0.x` series
+
+
 ## [0.0.95]
 
 - Support Hardware Information reader
