@@ -39,7 +39,7 @@ jobs:
         run: |
           create-dmg \
           --volname "UXTU4Mac" \
-          --volicon "/Img/Logo.img" \
+          --volicon "Img/Logo.img" \
           --window-pos 200 120 \
           --window-size 800 400 \
           --icon-size 100 \
