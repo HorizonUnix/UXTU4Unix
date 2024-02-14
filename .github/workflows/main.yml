@@ -27,6 +27,25 @@ jobs:
         env:
           TAG: ${{ env.TAG }}
 
+      - name: Install create-dmg
+        run: |
+          brew install create-dmg
+
+      - name: Create dmg
+        run: |
+          create-dmg \
+          --volname "UXTU4Mac" \
+          --volicon "/Img/Logo.img" \
+          --window-pos 200 120 \
+          --window-size 800 400 \
+          --icon-size 100 \
+          --icon UXTU4Mac 200 190 \
+          --hide-extension UXTU4Mac \
+          --app-drop-link 600 185 \
+          --hdiutil-quiet \
+          --symbolic-link "/Applications" \
+          UXTU4Mac.dmg UXTU4Mac/
+
       - id: generate-notes
         name: Generate Release Notes
         shell: bash
@@ -42,6 +61,8 @@ jobs:
           name: v${{ env.TAG }}
           tag_name: ${{ env.TAG }}
           body_path: ${{ github.workspace }}-RELEASE_NOTES.txt
-          files: UXTU4Mac.zip
+          files: |
+            UXTU4Mac.zip
+            UXTU4Mac.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
