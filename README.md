@@ -24,6 +24,7 @@
 
 ## Usage
 
+- Install Python
 - Download from [Releases](https://github.com/AppleOSX/UXTU4Mac/releases).
 - Add `DirectHW.kext` to `EFI\OC\Kexts` and snapshot to `config.plist`.
 - Disable SIP (<7F080000>) at `csr-active-config` (this flag can be known as `csrutil disable`).
