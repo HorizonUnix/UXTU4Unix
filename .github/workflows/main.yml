@@ -31,6 +31,10 @@ jobs:
         run: |
           brew install create-dmg
 
+      - name: Create symbolic link
+        run: |
+          ln -s /Applications UXTU4Mac/Applications
+
       - name: Create dmg
         run: |
           create-dmg \
@@ -43,8 +47,8 @@ jobs:
           --hide-extension UXTU4Mac \
           --app-drop-link 600 185 \
           --hdiutil-quiet \
-          --symbolic-link "/Applications" \
           UXTU4Mac.dmg UXTU4Mac/
+
 
       - id: generate-notes
         name: Generate Release Notes
