@@ -39,13 +39,13 @@
 
 |  | UXTU | UXTU4Mac |  
 |    :---:     |    :---:   |    :---:   |
-| GUI | ✅ | ❌ No, currently just CLI |
+| GUI | ✅ | ❌ No, currently only for CLI |
 | Adjust power management settings | ✅ | ✅ |
 | Premade preset | ✅ | ✅ |
 | Custom preset | ✅ | ✅ |
-| Adaptive mode | ✅ | ❌ |
-| Games mode | ✅ | ❌ |
-| Auto mode | ✅ | ❌ |
+| Adaptive mode tracking | ✅ | ❌ |
+| Games mode tracking | ✅ | ❌ |
+| Auto mode | ✅ | ✅ |
 | Support for many hardware | ✅ | ❌ Just for some AMD Ryzen CPU/APU model, [see here](#supported-cpuapu) |
 
 
