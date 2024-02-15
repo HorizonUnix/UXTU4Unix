@@ -1,3 +1,10 @@
+## [0.0.97]
+
+- Supported for CPU codename and SMU version properly ( replace for the long dict in `0.0.96` )
+- Add some warning and note
+- Fix and add some hardware information
+
+
 ## [0.0.96]
 
 - Support for more hardware information
