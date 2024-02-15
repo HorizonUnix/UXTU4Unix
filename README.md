@@ -26,7 +26,7 @@
 - Install Python from [here](https://www.python.org)
 - Download from [Releases](https://github.com/AppleOSX/UXTU4Mac/releases).
 - Add `DirectHW.kext` to `EFI\OC\Kexts` and snapshot to `config.plist`.
-- Disable SIP (<7F080000>) at `csr-active-config` (this flag can be known as `csrutil disable`).
+- Disable SIP (<`7F080000`>) at `csr-active-config` (this flag can be known as `csrutil disable`, and support for patching WiFi on Sonoma)
 - Add `debug=0x44` or `debug=0x144` to `boot-args`.
 - Reboot and reset NVRAM to take effect.
 - [Optional] Disable `Core Performance Boost` in BIOS using [Smokeless_UMAF](https://github.com/DavidS95/Smokeless_UMAF) to get better temperature but sacrifice a lot of performance.
