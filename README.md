@@ -9,7 +9,7 @@
 
 ## Supported CPU/APU
 > [!NOTE]
-> If your CPU/APU is supported by [NootedRed](https://github.com/ChefKissInc/NootedRed)/[UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility), you can also use this tool too.
+> If your AMD CPU/APU is supported by [NootedRed](https://github.com/ChefKissInc/NootedRed)/[UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility), you can also use this tool too.
 
 ## Usage
 
