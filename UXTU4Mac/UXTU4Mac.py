@@ -11,7 +11,7 @@ from configparser import ConfigParser
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.0.96"
+LOCAL_VERSION = "0.0.97"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -150,7 +150,7 @@ def print_system_info():
 def print_hardware_info():
     clr_print_logo()
     print_system_info()
-    logging.info("If you failed to get your hardware information, do sudo purge \nor remove RestrictedEvent.kext")
+    logging.info("If you failed to get your hardware information, do `sudo purge` \nor remove RestrictedEvent.kext")
     input("Press Enter to go back to the main menu...")
     
 def clr_print_logo():
