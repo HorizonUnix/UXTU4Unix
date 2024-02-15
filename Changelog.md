@@ -3,6 +3,7 @@
 - Supported for CPU codename and SMU version properly ( replace for the long dict in `0.0.96` )
 - Add some warning and note
 - Fix and add some hardware information
+- Make output look cleaner
 
 
 ## [0.0.96]
