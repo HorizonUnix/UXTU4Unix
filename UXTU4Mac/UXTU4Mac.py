@@ -5,13 +5,12 @@ import subprocess
 import getpass
 import webbrowser
 import logging
-import re
 import urllib.request
 from configparser import ConfigParser
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.0.97"
+LOCAL_VERSION = "0.0.98"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -47,9 +46,8 @@ def get_system_info(command, use_sudo=False):
 
     return output.decode('utf-8').strip()
 
-
-
 def print_system_info():
+    clr_print_logo()
     logging.info("Device Information:")
     logging.info(f' - Name: {get_system_info("scutil --get ComputerName")}')
     logging.info(f' - Model (SMBios): {get_system_info("sysctl -n hw.model")}')
@@ -146,15 +144,11 @@ def print_system_info():
         logging.info(
             f""" - {get_system_info("system_profiler SPPowerDataType | grep 'Condition'")}"""
         )
-
-def print_hardware_info():
-    clr_print_logo()
-    print_system_info()
-    logging.info("If you failed to get your hardware information, do `sudo purge` \nor remove RestrictedEvent.kext")
+    logging.info("If you failed to get your hardware information, do `sudo purge` \nor remove RestrictEvents.kext")
     input("Press Enter to go back to the main menu...")
-    
+
 def clr_print_logo():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    os.system('clear')
     logging.info("""
     ██╗   ██╗██╗  ██╗████████╗██╗   ██╗██╗  ██╗███╗   ███╗ █████╗  ██████╗
     ██║   ██║╚██╗██╔╝╚══██╔══╝██║   ██║██║  ██║████╗ ████║██╔══██╗██╔════╝
@@ -181,13 +175,13 @@ def about_menu():
     logging.info("")
     logging.info(f"Latest version on GitHub: {get_latest_ver()}")
     logging.info("----------------------------")
-    logging.info("Main developer: GorouFlex")
+    logging.info("Maintainer: GorouFlex")
     logging.info("CLI: GorouFlex")
     logging.info("GUI: NotchApple1703")
     logging.info("----------------------------")
     logging.info("")
-    logging.info("1. Open GitHub")
-    logging.info("2. Change logs")
+    logging.info("1. Open GitHub repo")
+    logging.info("2. Change log")
     logging.info("")
     logging.info("B. Back")
 
@@ -263,7 +257,7 @@ def check_updates():
         sys.exit()
     elif LOCAL_VERSION > latest_version:
         clr_print_logo()
-        logging.info("Welcome to RielUXTU4Mac Beta Program.")
+        logging.info("Welcome to UXTU4Mac Beta Program.")
         logging.info("This build may not be as stable as expected. Only for testing purposes!")
         result = input("Do you want to continue? (y/n): ").lower()
         if result != "y":
@@ -354,7 +348,7 @@ def main():
                 clr_print_logo()
                 create_cfg()
             elif choice.lower() == "h":
-                print_hardware_info()
+                print_system_info()
             elif choice.lower() == "a":
                 info()
             elif choice.lower() == "q":
