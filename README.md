@@ -9,8 +9,8 @@
 
 ## Supported APU/CPU
 > [!NOTE]
-> If your AMD Ryzen APU/CPU is supported by [NootedRed](https://github.com/ChefKissInc/NootedRed) and [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) premade preset, you can also use this tool too.
-> Some `Athlon` APU/CPU also supported by `UXTU4Mac` if the CPU codename are matched with this below list
+> - If your AMD Ryzen APU/CPU is supported by [NootedRed](https://github.com/ChefKissInc/NootedRed) and [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) premade preset, you can also use this tool too.
+> - Some `Athlon` APU/CPU also supported by `UXTU4Mac` if the CPU codename are matched with this below list
 
 | Codename | Product Name |
 | :---: | :---: |
