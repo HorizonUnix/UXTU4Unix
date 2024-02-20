@@ -7,11 +7,12 @@
 
 ---
 
-## Supported CPU/APU
+## Supported APU/CPU
 > [!NOTE]
-> If your AMD CPU/APU is supported by [NootedRed](https://github.com/ChefKissInc/NootedRed)/[UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility), you can also use this tool too.
+> If your AMD Ryzen APU/CPU is supported by [NootedRed](https://github.com/ChefKissInc/NootedRed) and [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) premade preset, you can also use this tool too.
+> Some `Athlon` APU/CPU also supported by `UXTU4Mac` if the CPU codename are matched with this below list
 
-| Codename | Name |
+| Codename | Product Name |
 | :---: | :---: |
 | Raven (Ridge) | 2xxxU/H/G/GE |
 | Picasso | 3xxxU/H/G/GE |
@@ -46,7 +47,7 @@
 | Adaptive mode tracking | ✅ | ❌ |
 | Games mode tracking | ✅ | ❌ |
 | Auto mode | ✅ | ✅ |
-| Support for many hardware | ✅ | ❌ Just for some AMD Ryzen CPU/APU model, [see here](#supported-cpuapu) |
+| Support for many hardware | ✅ | ❌ Just for some AMD Ryzen APU/CPU model, [see here](#supported-cpuapu) |
 
 
 ## Check if `DirectHW.kext` is being loaded or not?
