@@ -146,7 +146,7 @@ def print_system_info():
         )
     logging.info("If you failed to get your hardware information, do `sudo purge` \nor remove RestrictEvents.kext")
     input("Press Enter to go back to the main menu...")
-
+    
 def clr_print_logo():
     os.system('clear')
     logging.info("""
@@ -164,7 +164,7 @@ def main_menu():
     logging.info("1. Apply preset")
     logging.info("2. Settings")
     logging.info("")
-    logging.info("H. Hardware Information")
+    logging.info("H. Hardware Information (Beta)")
     logging.info("A. About")
     logging.info("Q. Quit")
 
@@ -197,8 +197,19 @@ def create_cfg() -> None:
     logging.info("")
     logging.info("We recommend using Auto preset for normal tasks and better power management,\nand Extreme preset for unlocking full potential performance")
     choice = input("Choose your preset by pressing a number followed by the preset (1,2,3,4): ")
-    password = getpass.getpass("Enter your login password: ")
-    skip_welcome = input("Do you want to skip the welcome menu? (y/n): ").lower()
+    
+    while True:
+        subprocess.run("sudo -k", shell=True)
+        password = getpass.getpass("Enter your sudo password: ")
+        sudo_check_command = f"echo '{password}' | sudo -S ls /"
+        sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        if sudo_check_process.returncode == 0:
+            break
+        else:
+            logging.info("Incorrect sudo password. Please try again.")
+
+    skip_welcome = input("Do you want to skip the welcome menu? (NOT RECOMMENDED) (y/n): ").lower()
     start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
     
     if start_with_macos == 'y':
@@ -221,7 +232,17 @@ def create_cfg() -> None:
         logging.info("Invalid input. Please enter a number.")
         sys.exit(-1)
 
+def welcome_tutorial():
+    clr_print_logo()
+    logging.info("Welcome to UXTU4Mac")
+    logging.info("This tool was created by GorouFlex and is still in development.")
+    logging.info("Based on RyzenAdj for AMD APU Ryzen and inspired by UXTU, I've created a version of UXTU specifically for macOS!")
+    logging.info("Since this might be your first time using this tool, let's dive in!")
+    input("Press Enter to continue")
+    clr_print_logo()
+    create_cfg()
 
+    
 def read_cfg() -> str:
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
@@ -234,14 +255,14 @@ def skip_welcome() -> bool:
 
 def check_cfg_integrity() -> None:
     if not os.path.isfile(CONFIG_PATH) or os.stat(CONFIG_PATH).st_size == 0:
-        create_cfg()
+        welcome_tutorial()
         return
 
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     
     if not cfg.has_section('User'):
-        create_cfg()
+        welcome_tutorial()
 
 def get_latest_ver():
     latest_version = urllib.request.urlopen(LATEST_VERSION_URL).geturl()
@@ -308,7 +329,7 @@ def main():
          check_updates()
        except:
          clr_print_logo()
-         logging.info("No internet connection, failed to fetch update. Try again")
+         logging.info("Failed to fetch update. Try again")
          sys.exit()
         
     check_cfg_integrity()
@@ -322,7 +343,7 @@ def main():
                 clr_print_logo()
                 logging.info("Apply Preset:")
                 logging.info("1. Load from config file")
-                logging.info("2. Custom preset")
+                logging.info("2. Custom preset (Beta)")
                 logging.info("")
                 logging.info("B. Back")
                 preset_choice = input("Option: ")
