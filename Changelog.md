@@ -1,3 +1,10 @@
+## [0.0.98]
+
+- Optimize code
+- Add a logic to check sudo password
+- Add a welcome tutorial (beta)
+
+
 ## [0.0.97]
 
 - Supported for CPU codename and SMU version properly ( replace for the long dict in `0.0.96` )
