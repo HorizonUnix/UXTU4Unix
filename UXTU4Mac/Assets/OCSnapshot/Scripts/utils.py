@@ -83,20 +83,20 @@ class Utils:
 
     def pad_length(self, var1, var2, pad = "0"):
         # Pads the vars on the left side to make them equal length
-        pad = "0" if len(str(pad)) < 1 else str(pad)[0]
-        if not type(var1) == type(var2):
+        pad = "0" if not str(pad) else str(pad)[0]
+        if type(var1) != type(var2):
             # Type mismatch! Just return what we got
             return (var1, var2)
         if len(var1) < len(var2):
             if type(var1) is list:
-                var1.extend([str(pad) for x in range(len(var2) - len(var1))])
+                var1.extend([str(pad) for _ in range(len(var2) - len(var1))])
             else:
-                var1 = "{}{}".format((pad*(len(var2)-len(var1))), var1)
+                var1 = f"{pad * (len(var2) - len(var1))}{var1}"
         elif len(var2) < len(var1):
             if type(var2) is list:
-                var2.extend([str(pad) for x in range(len(var1) - len(var2))])
+                var2.extend([str(pad) for _ in range(len(var1) - len(var2))])
             else:
-                var2 = "{}{}".format((pad*(len(var1)-len(var2))), var2)
+                var2 = f"{pad * (len(var1) - len(var2))}{var2}"
         return (var1, var2)
         
     def check_path(self, path):
@@ -138,12 +138,8 @@ class Utils:
         # returning the result
         timeout = kwargs.get("timeout", 0)
         default = kwargs.get("default", None)
-        # If we don't have a timeout - then skip the timed sections
         if timeout <= 0:
-            if sys.version_info >= (3, 0):
-                return input(prompt)
-            else:
-                return str(raw_input(prompt))
+            return input(prompt) if sys.version_info >= (3, 0) else str(raw_input(prompt))
         # Write our prompt
         sys.stdout.write(prompt)
         sys.stdout.flush()
@@ -164,18 +160,13 @@ class Utils:
             if i:
                 i = sys.stdin.readline().strip()
         print('')  # needed to move to next line
-        if len(i) > 0:
-            return i
-        else:
-            return default
+        return i if len(i) > 0 else default
 
     def cls(self):
     	os.system('cls' if os.name=='nt' else 'clear')
 
     def cprint(self, message, **kwargs):
-        strip_colors = kwargs.get("strip_colors", False)
-        if os.name == "nt":
-            strip_colors = True
+        strip_colors = True if os.name == "nt" else kwargs.get("strip_colors", False)
         reset = u"\u001b[0m"
         # Requires sys import
         for c in self.colors:
@@ -216,24 +207,24 @@ class Utils:
 
     # Header drawing method
     def head(self, text = None, width = 55):
-        if text == None:
+        if text is None:
             text = self.name
         self.cls()
-        print("  {}".format("#"*width))
+        print(f'  {"#" * width}')
         mid_len = int(round(width/2-len(text)/2)-2)
-        middle = " #{}{}{}#".format(" "*mid_len, text, " "*((width - mid_len - len(text))-2))
+        middle = f' #{" " * mid_len}{text}{" " * (width - mid_len - len(text) - 2)}#'
         if len(middle) > width+1:
             # Get the difference
             di = len(middle) - width
             # Add the padding for the ...#
             di += 3
             # Trim the string
-            middle = middle[:-di] + "...#"
+            middle = f"{middle[:-di]}...#"
         print(middle)
         print("#"*width)
 
     def resize(self, width, height):
-        print('\033[8;{};{}t'.format(height, width))
+        print(f'\033[8;{height};{width}t')
 
     def custom_quit(self):
         self.head()
