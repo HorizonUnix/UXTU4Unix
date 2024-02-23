@@ -271,21 +271,18 @@ def install_kext_auto():
     logging.info("Installing kext (Auto)...")
 
     script_directory = os.path.dirname(os.path.realpath(__file__))
-    
-    # Define the 'password' variable here
+
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     password = cfg.get('User', 'Password', fallback='')
 
-    # Mount EFI with sudo
     try:
         subprocess.run(["sudo", "-S", "diskutil", "mount", "EFI"], input=password.encode(), check=True)
     except subprocess.CalledProcessError as e:
         logging.error(f"Failed to mount EFI partition: {e}")
         return
 
-    
-    # Move DirectHW.kext to EFI/OC/Kexts with sudo
+
     try:
 
         kext_source_path = os.path.join(script_directory, "Assets/Kexts/DirectHW.kext")
@@ -296,20 +293,17 @@ def install_kext_auto():
         logging.error(f"Failed to move DirectHW.kext: {e}")
         return
 
-    # Check if OC folder exists
     oc_path = os.path.join("/Volumes/EFI/EFI/OC")
     if not os.path.exists(oc_path):
         logging.error("OC folder does not exist!")
         subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
         return
 
-    # Run OCSnapshot with default paths
     config_path = os.path.join("/Volumes/EFI/EFI/OC/config.plist")
     ocsnapshot_script_path = os.path.join(script_directory, "Assets/OCSnapshot/OCSnapshot.py")
 
     subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
 
-    # Unmount EFI with force
     subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
 
     logging.info("Kext installation completed.")
