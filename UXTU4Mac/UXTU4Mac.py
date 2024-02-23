@@ -193,6 +193,7 @@ def about_menu():
 def create_cfg() -> None:
     cfg = ConfigParser()
     cfg.add_section('User')
+    cfg.read(CONFIG_PATH)
     clr_print_logo()
     logging.info("------ Settings ------")
     logging.info("Preset power plan")
@@ -214,14 +215,19 @@ def create_cfg() -> None:
         else:
             logging.info("Incorrect sudo password. Please try again.")
 
-    start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
+    login_items_setting = cfg.get('User', 'LoginItems', fallback='0')
+    if login_items_setting == '0':
+        start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
+
+        if start_with_macos == 'y':
+            cfg.set('User', 'LoginItems', '1')
+            current_dir = os.path.dirname(os.path.realpath(__file__))
+            command_file = os.path.join(current_dir, 'UXTU4Mac.command')
+            command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+            subprocess.call(command, shell=True)
+        else:
+            cfg.set('User', 'LoginItems', '0')
     
-    if start_with_macos == 'y':
-        current_dir = os.path.dirname(os.path.realpath(__file__))
-        command_file = os.path.join(current_dir, 'UXTU4Mac.command')
-        command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
-        subprocess.call(command, shell=True)
-        
     try:
         preset_number = int(choice)
         preset_name = list(PRESETS.keys())[preset_number - 1]
@@ -268,7 +274,7 @@ def install_kext_menu():
     logging.info("B. Back")
     logging.info("")
     logging.info("If you are failed to install kexts and dependencies automatically than you can do it manually")
-    logging.info("1. Add `DirectHW.kext` from `Assets/Kexts` to `EFI\OC\Kexts` and do a snapshot \nto config.plist")
+    logging.info("1. Add `DirectHW.kext` from `Assets/Kexts` to `EFI\\OC\\Kexts` and do a snapshot \nto config.plist")
     logging.info("2. Disable SIP (<`7F080000`>) at `csr-active-config`")
     logging.info("3. Add `debug=0x44` or `debug=0x144` to `boot-args`")
     logging.info("")
@@ -454,8 +460,9 @@ def main():
         if choice == "1":
             clr_print_logo()
             logging.info("Apply Preset:")
-            logging.info("1. Load from config file")
-            logging.info("2. Custom preset (Beta)")
+            logging.info("1. Load saved preset from config file")
+            logging.info("2. Load from available premade preset")
+            logging.info("3. Custom preset (Beta)")
             logging.info("")
             logging.info("B. Back")
             preset_choice = input("Option: ")
@@ -468,11 +475,29 @@ def main():
                 else:
                     logging.info("Config file is missing or invalid. Please run the script again.")
             elif preset_choice == "2":
-                custom_args = input("Custom arguments (preset): ")
                 clr_print_logo()
-                user_mode = "Custom"
-                logging.info(f"Using mode: {user_mode}")
-                run_cmd(custom_args, user_mode)
+                logging.info("Select a premade preset:")
+                for i, mode in enumerate(PRESETS, start=1):
+                  logging.info(f"{i}. {mode}")
+                preset_number = input("Choose a preset by entering the number: ")
+                try:
+                  preset_number = int(preset_number)
+                  if 1 <= preset_number <= len(PRESETS):
+                     selected_preset = list(PRESETS.keys())[preset_number - 1]
+                     clr_print_logo()
+                     user_mode = selected_preset
+                     logging.info(f"Using mode: {user_mode}")
+                     run_cmd(PRESETS[user_mode], user_mode)
+                  else:
+                    logging.info("Invalid number. Please enter a valid option.")
+                except ValueError:
+                 logging.info("Invalid input. Please enter a number.")
+            elif preset_choice == "3":
+              custom_args = input("Custom arguments (preset): ")
+              clr_print_logo()
+              user_mode = "Custom"
+              logging.info(f"Using mode: {user_mode}")
+              run_cmd(custom_args, user_mode)
             elif preset_choice.lower() == "b":
                   continue
             else:
