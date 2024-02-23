@@ -159,7 +159,7 @@ def clr_print_logo():
     ██║   ██║ ██╔██╗    ██║   ██║   ██║╚════██║██║╚██╔╝██║██╔══██║██║
     ╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝     ██║██║ ╚═╝ ██║██║  ██║╚██████╗
      ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝      ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝
-    Special Beta Program 3
+    Special Beta Program 4
     Version: {}
     """.format(LOCAL_VERSION))
 
@@ -168,7 +168,7 @@ def main_menu():
     logging.info("1. Apply preset")
     logging.info("2. Settings")
     logging.info("")
-    logging.info("I. Install Kexts and dependencies (Beta)")
+    logging.info("I. Install kexts and dependencies (Beta)")
     logging.info("H. Hardware Information")
     logging.info("A. About")
     logging.info("Q. Quit")
@@ -322,7 +322,7 @@ def install_kext_auto():
 
     subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
     edit_config(config_path)
-    logging.info("Add boot-args and moodded SIP success")
+    logging.info("Add boot-args and modded SIP success")
     subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
 
     logging.info("Kext and dependencies installation completed.")
@@ -348,17 +348,29 @@ def get_latest_ver():
     latest_version = urllib.request.urlopen(LATEST_VERSION_URL).geturl()
     return latest_version.split("/")[-1]
 
+def run_updater():
+    clr_print_logo()
+    logging.info("A new update is available! Do you want to update? (y/n): ")
+    choice = input("Option: ").lower()
+    
+    if choice == "y":
+        subprocess.run(["python3", "Assets/Updater.py"])
+        logging.info("Update complete. Please restart the application.")
+        sys.exit()
+    elif choice == "n":
+        logging.info("Skipping update...")
+    else:
+        logging.info("Invalid choice.")
+
 def check_updates():
     try:
-      latest_version = get_latest_ver()
+        latest_version = get_latest_ver()
     except:
-      clr_print_logo()
-      logging.info("No Internet connection, try again")
-    if LOCAL_VERSION < latest_version:
         clr_print_logo()
-        logging.info("A new update is available! Please visit the following link for details:")
-        logging.info(LATEST_VERSION_URL)
-        sys.exit()
+        logging.info("No Internet connection, try again")
+        
+    if LOCAL_VERSION < latest_version:
+        run_updater()
     elif LOCAL_VERSION > latest_version:
         clr_print_logo()
         logging.info("Welcome to UXTU4Mac Beta Program.")
