@@ -159,7 +159,7 @@ def clr_print_logo():
     ██║   ██║ ██╔██╗    ██║   ██║   ██║╚════██║██║╚██╔╝██║██╔══██║██║
     ╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝     ██║██║ ╚═╝ ██║██║  ██║╚██████╗
      ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝      ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝
-    Special Beta Program 2
+    Special Beta Program 3
     Version: {}
     """.format(LOCAL_VERSION))
 
@@ -168,8 +168,8 @@ def main_menu():
     logging.info("1. Apply preset")
     logging.info("2. Settings")
     logging.info("")
-    logging.info("I. Install kext (Beta)")
-    logging.info("H. Hardware Information (Beta)")
+    logging.info("I. Install Kexts and dependencies (Beta)")
+    logging.info("H. Hardware Information")
     logging.info("A. About")
     logging.info("Q. Quit")
 
@@ -244,6 +244,8 @@ def welcome_tutorial():
     input("Press Enter to continue")
     clr_print_logo()
     create_cfg()
+    clr_print_logo()
+    install_kext_menu()
 
 def edit_config(config_path):
     with open(config_path, 'rb') as f:
@@ -259,17 +261,24 @@ def edit_config(config_path):
 
 def install_kext_menu():
     clr_print_logo()
-    logging.info("Install kext (Beta):")
-    logging.info("1. Auto (Using default path)")
+    logging.info("Install kext and dependencies (Beta):")
+    logging.info("")
+    logging.info("1. Auto (Using default path e.g /Volumes/EFI/EFI/OC)")
     logging.info("")
     logging.info("B. Back")
+    logging.info("")
+    logging.info("If you are failed to install kexts and dependencies automatically than you can do it manually")
+    logging.info("1. Add `DirectHW.kext` from `Assets/Kexts` to `EFI\OC\Kexts` and do a snapshot \nto config.plist")
+    logging.info("2. Disable SIP (<`7F080000`>) at `csr-active-config`")
+    logging.info("3. Add `debug=0x44` or `debug=0x144` to `boot-args`")
+    logging.info("")
 
-    choice = input("Option: ")
+    choice = input("Option (default is 1): ")
 
     if choice == "1":
         install_kext_auto()
-    elif choice == "2":
-        install_kext_manual()
+   # elif choice == "2":
+     #   install_kext_manual()
     elif choice.lower() == "b":
         return
     else:
@@ -292,7 +301,6 @@ def install_kext_auto():
         logging.error(f"Failed to mount EFI partition: {e}")
         return
 
-
     try:
 
         kext_source_path = os.path.join(script_directory, "Assets/Kexts/DirectHW.kext")
@@ -314,23 +322,16 @@ def install_kext_auto():
 
     subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
     edit_config(config_path)
+    logging.info("Add boot-args and moodded SIP success")
     subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
 
-    logging.info("Kext installation completed.")
-    
-    logging.info("Please add `debug=0x144` to `boot-args` and set csr-config-active to `7F080000` in config.plist before using UXTU4Mac")
+    logging.info("Kext and dependencies installation completed.")
     input("Press Enter to go back main menu")
-
     
 def read_cfg() -> str:
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     return cfg.get('User', 'Mode', fallback='')
-
-def skip_welcome() -> bool:
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
-    return cfg.getboolean('User', 'SkipWelcome', fallback=False)
 
 def check_cfg_integrity() -> None:
     if not os.path.isfile(CONFIG_PATH) or os.stat(CONFIG_PATH).st_size == 0:
@@ -348,8 +349,11 @@ def get_latest_ver():
     return latest_version.split("/")[-1]
 
 def check_updates():
-    latest_version = get_latest_ver()
-
+    try:
+      latest_version = get_latest_ver()
+    except:
+      clr_print_logo()
+      logging.info("No Internet connection, try again")
     if LOCAL_VERSION < latest_version:
         clr_print_logo()
         logging.info("A new update is available! Please visit the following link for details:")
@@ -361,8 +365,7 @@ def check_updates():
         logging.info("This build may not be as stable as expected. Only for testing purposes!")
         result = input("Do you want to continue? (y/n): ").lower()
         if result != "y":
-            sys.exit()
-
+            logging.info("Quitting...")
 
 
 def run_cmd(args, user_mode):
@@ -392,7 +395,7 @@ def run_cmd(args, user_mode):
         time.sleep(3)
         clr_print_logo()
         logging.info(f"Using mode: {user_mode}")
-        logging.info("Script will be reapplied every 3 seconds just like UXTU")
+        logging.info("Script will be reapplied every 3 seconds")
         logging.info("Press B then Enter to go back the main menu")
         logging.info("------ RyzenAdj Log ------")
   #  logging.info("Press B then Enter to go back the main menu")
@@ -423,63 +426,58 @@ def main():
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     if cfg.get('User', 'skipcfu', fallback = '0') == '0':
-       try:
          check_updates()
-       except:
-         clr_print_logo()
-         logging.info("Failed to fetch update. Try again")
-         sys.exit()
         
     check_cfg_integrity()
     user_mode = read_cfg()
 
-    while True:
-            if user_mode := read_cfg():
-                clr_print_logo()
-                logging.info(f"Using mode: {user_mode}")
-                run_cmd(PRESETS[user_mode], user_mode)
-                
-            main_menu()
-            choice = input("Option: ")
-            if choice == "1":
-                clr_print_logo()
-                logging.info("Apply Preset:")
-                logging.info("1. Load from config file")
-                logging.info("2. Custom preset (Beta)")
-                logging.info("")
-                logging.info("B. Back")
-                preset_choice = input("Option: ")
+    if user_mode:
+        clr_print_logo()
+        logging.info(f"Using mode: {user_mode}")
+        run_cmd(PRESETS[user_mode], user_mode)
 
-                if preset_choice == "1":
-                    if user_mode := read_cfg():
-                        clr_print_logo()
-                        logging.info(f"Using mode: {user_mode}")
-                        run_cmd(PRESETS[user_mode], user_mode)
-                    else:
-                        logging.info("Config file is missing or invalid. Please run the script again.")
-                elif preset_choice == "2":
-                    custom_args = input("Custom arguments (preset): ")
+    while True:                
+        main_menu()
+        choice = input("Option: ")
+        if choice == "1":
+            clr_print_logo()
+            logging.info("Apply Preset:")
+            logging.info("1. Load from config file")
+            logging.info("2. Custom preset (Beta)")
+            logging.info("")
+            logging.info("B. Back")
+            preset_choice = input("Option: ")
+
+            if preset_choice == "1":
+                if user_mode := read_cfg():
                     clr_print_logo()
-                    user_mode = "Custom"
                     logging.info(f"Using mode: {user_mode}")
-                    run_cmd(custom_args, user_mode)
-                elif preset_choice.lower() == "b":
-                      continue
+                    run_cmd(PRESETS[user_mode], user_mode)
                 else:
-                    logging.info("Invalid choice. Please enter a valid option.")
-            elif choice == "2":
+                    logging.info("Config file is missing or invalid. Please run the script again.")
+            elif preset_choice == "2":
+                custom_args = input("Custom arguments (preset): ")
                 clr_print_logo()
-                create_cfg()
-            elif choice.lower() == "i":
-               install_kext_menu()
-            elif choice.lower() == "h":
-                print_system_info()
-            elif choice.lower() == "a":
-                info()
-            elif choice.lower() == "q":
-                sys.exit()
+                user_mode = "Custom"
+                logging.info(f"Using mode: {user_mode}")
+                run_cmd(custom_args, user_mode)
+            elif preset_choice.lower() == "b":
+                  continue
             else:
                 logging.info("Invalid choice. Please enter a valid option.")
+        elif choice == "2":
+            clr_print_logo()
+            create_cfg()
+        elif choice.lower() == "i":
+           install_kext_menu()
+        elif choice.lower() == "h":
+            print_system_info()
+        elif choice.lower() == "a":
+            info()
+        elif choice.lower() == "q":
+            sys.exit()
+        else:
+            logging.info("Invalid choice. Please enter a valid option.")
                 
 if __name__ == "__main__":
     main()
