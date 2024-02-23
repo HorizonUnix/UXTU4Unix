@@ -253,10 +253,10 @@ def edit_config(config_path):
             boot_args = config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['boot-args']
             if 'debug=0x144' not in boot_args:
                 config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['boot-args'] = boot_args + ' debug=0x144'
-        config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['csr-active-config'] = 'fwgAAA=='
+        config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['csr-active-config'] = base64.b64decode('fwgAAA==')
     with open(config_path, 'wb') as f:
         plistlib.dump(config, f)
-        
+
 def install_kext_menu():
     clr_print_logo()
     logging.info("Install kext (Beta):")
