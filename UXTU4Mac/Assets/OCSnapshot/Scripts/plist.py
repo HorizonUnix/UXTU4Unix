@@ -29,8 +29,7 @@ except AttributeError:
 ###            ###
 
 def wrap_data(value):
-    if not _check_py3(): return plistlib.Data(value)
-    return value
+    return plistlib.Data(value) if not _check_py3() else value
 
 def extract_data(value):
     if not _check_py3() and isinstance(value,plistlib.Data): return value.data
@@ -68,7 +67,7 @@ def writePlist(value, pathOrFile):
 
 def load(fp, fmt=None, use_builtin_types=None, dict_type=dict):
     if _check_py3():
-        use_builtin_types = True if use_builtin_types == None else use_builtin_types
+        use_builtin_types = True if use_builtin_types is None else use_builtin_types
         # We need to monkey patch this to allow for hex integers - code taken/modified from 
         # https://github.com/python/cpython/blob/3.8/Lib/plistlib.py
         if fmt is None:
@@ -154,7 +153,7 @@ def load(fp, fmt=None, use_builtin_types=None, dict_type=dict):
         parser.ParseFile(fp)
         return p.root
     else:
-        use_builtin_types = False if use_builtin_types == None else use_builtin_types
+        use_builtin_types = False if use_builtin_types is None else use_builtin_types
         try:
             p = _BinaryPlistParser(use_builtin_types=use_builtin_types, dict_type=dict_type)
         except:
@@ -208,12 +207,11 @@ def dump(value, fp, fmt=FMT_XML, sort_keys=True, skipkeys=False):
 def dumps(value, fmt=FMT_XML, skipkeys=False, sort_keys=True):
     if _check_py3():
         return plistlib.dumps(value, fmt=fmt, skipkeys=skipkeys, sort_keys=sort_keys).decode("utf-8")
-    else:
-        # We avoid using writePlistToString() as that uses
-        # cStringIO and fails when Unicode strings are detected
-        f = StringIO()
-        dump(value, f, fmt=fmt, skipkeys=skipkeys, sort_keys=sort_keys)
-        return f.getvalue()
+    # We avoid using writePlistToString() as that uses
+    # cStringIO and fails when Unicode strings are detected
+    f = StringIO()
+    dump(value, f, fmt=fmt, skipkeys=skipkeys, sort_keys=sort_keys)
+    return f.getvalue()
 
 ###                        ###
 # Binary Plist Stuff For Py2 #
@@ -271,7 +269,7 @@ class _BinaryPlistParser:
         if tokenL == 0xF:
             m = ord(self._fp.read(1)[0]) & 0x3
             s = 1 << m
-            f = '>' + _BINARY_FORMAT[s]
+            f = f'>{_BINARY_FORMAT[s]}'
             return struct.unpack(f, self._fp.read(s))[0]
 
         return tokenL
@@ -280,11 +278,10 @@ class _BinaryPlistParser:
         data = self._fp.read(size * n)
         if size in _BINARY_FORMAT:
             return struct.unpack('>' + _BINARY_FORMAT[size] * n, data)
-        else:
-            if not size or len(data) != size * n:
-                raise InvalidFileException()
-            return tuple(int.from_bytes(data[i: i + size], 'big')
-                         for i in range(0, size * n, size))
+        if not size or len(data) != size * n:
+            raise InvalidFileException()
+        return tuple(int.from_bytes(data[i: i + size], 'big')
+                     for i in range(0, size * n, size))
 
     def _read_refs(self, n):
         return self._read_ints(n, self._ref_size)
@@ -312,18 +309,15 @@ class _BinaryPlistParser:
         elif token == 9: # \x09 or 0x09
             result = True
 
-        # The referenced source code also mentions URL (0x0c, 0x0d) and
-        # UUID (0x0e), but neither can be generated using the Cocoa libraries.
-
         elif token == 15: # \x0f or 0x0f
             result = b''
 
         elif tokenH == 0x10:  # int
             result = 0
-            for k in range((2 << tokenL) - 1):
+            for _ in range((2 << tokenL) - 1):
                 result = (result << 8) + ord(self._fp.read(1))
-            # result = int.from_bytes(self._fp.read(1 << tokenL),
-            #                        'big', signed=tokenL >= 3)
+                # result = int.from_bytes(self._fp.read(1 << tokenL),
+                #                        'big', signed=tokenL >= 3)
 
         elif token == 0x22: # real
             result = struct.unpack('>f', self._fp.read(4))[0]
@@ -354,21 +348,12 @@ class _BinaryPlistParser:
             s = self._get_size(tokenL)
             result = self._fp.read(s * 2).decode('utf-16be')
 
-        # tokenH == 0x80 is documented as 'UID' and appears to be used for
-        # keyed-archiving, not in plists.
-
         elif tokenH == 0xA0:  # array
             s = self._get_size(tokenL)
             obj_refs = self._read_refs(s)
             result = []
             self._objects[ref] = result
             result.extend(self._read_object(x) for x in obj_refs)
-
-        # tokenH == 0xB0 is documented as 'ordset', but is not actually
-        # implemented in the Apple reference code.
-
-        # tokenH == 0xC0 is documented as 'set', but sets cannot be used in
-        # plists.
 
         elif tokenH == 0xD0:  # dict
             s = self._get_size(tokenL)
@@ -576,7 +561,7 @@ class _BinaryPlistWriter (object):
                 t = value.encode('utf-16be')
                 self._write_size(0x60, len(t) // 2)
             self._fp.write(t)
-        
+
         elif isinstance(value, (bytes, bytearray)):
             self._write_size(0x40, len(value))
             self._fp.write(value)
@@ -590,11 +575,7 @@ class _BinaryPlistWriter (object):
         elif isinstance(value, dict):
             keyRefs, valRefs = [], []
 
-            if self._sort_keys:
-                rootItems = sorted(value.items())
-            else:
-                rootItems = value.items()
-
+            rootItems = sorted(value.items()) if self._sort_keys else value.items()
             for k, v in rootItems:
                 if not isinstance(k, basestring):
                     if self._skipkeys:

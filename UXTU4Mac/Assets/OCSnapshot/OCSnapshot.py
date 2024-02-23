@@ -29,7 +29,7 @@ class OCSnapshot:
         if match_text != "":
             try:
                 min_list = match_text.split(".")
-                max_list = [x for x in min_list]
+                max_list = list(min_list)
                 min_list += ["0"] * (3-len(min_list)) # pad it out with 0s for min
                 min_list = [x if len(x) else "0" for x in min_list] # Ensure all blanks are 0s too
                 max_list += ["99"] * (3-len(max_list)) # pad it with 99s for max
@@ -54,17 +54,20 @@ class OCSnapshot:
             # Get the last path component of the Path or BundlePath values for the name
             name = os.path.basename(item.get("Path",item.get("BundlePath","Unknown Name")))
             # Check the keys containing "path"
-            for key in item:
-                if "path" in key.lower() and isinstance(item[key],(str,unicode)) and len(item[key])>self.safe_path_length:
-                    paths_too_long.append(key) # Too long - keep a reference of the key
+            paths_too_long.extend(
+                key
+                for key in item
+                if "path" in key.lower()
+                and isinstance(item[key], (str, unicode))
+                and len(item[key]) > self.safe_path_length
+            )
         elif isinstance(item,(str,unicode)):
             name = os.path.basename(item) # Retain the last path component as the name
             # Checking the item itself
             if len(item)>self.safe_path_length:
                 paths_too_long.append(item)
         else: return paths_too_long # Empty list
-        if not paths_too_long: return [] # Return an empty array to allow .extend()
-        return [(item,name,paths_too_long)] # Return a list containing a tuple of the original item, and which paths are too long
+        return [] if not paths_too_long else [(item,name,paths_too_long)]
     
     def snapshot(self, in_file = None, out_file = None, oc_folder = None, clean = False, oc_schema = None, force_update_schema = False):
         oc_folder = self.u.check_path(oc_folder)
