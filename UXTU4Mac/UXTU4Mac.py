@@ -13,7 +13,7 @@ from configparser import ConfigParser
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.0.99"
+LOCAL_VERSION = "0.1.0"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -24,14 +24,11 @@ PRESETS = {
 
 if not os.path.exists('Logs'):
     os.mkdir('Logs')
-
 logging.basicConfig(filename='Logs/UXTU4Mac.log', filemode='w', encoding='utf-8',
                     level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S')
-
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
-
 logging.getLogger().addHandler(console_handler)
 
 def get_system_info(command, use_sudo=False):
@@ -46,12 +43,11 @@ def get_system_info(command, use_sudo=False):
     else:
         process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
         output, error = process.communicate()
-
     return output.decode('utf-8').strip()
 
 def print_system_info():
     clr_print_logo()
-    logging.info("Device Information:")
+    logging.info("Device information:")
     logging.info(f' - Name: {get_system_info("scutil --get ComputerName")}')
     logging.info(f' - Model (SMBios): {get_system_info("sysctl -n hw.model")}')
     logging.info(
@@ -63,13 +59,10 @@ def print_system_info():
     logging.info(
         f' - Processor: {get_system_info("sysctl -n machdep.cpu.brand_string")}'
     )
-
     cpu_family = get_system_info("Assets/ryzenadj -i | grep 'CPU Family'", use_sudo=True).strip()
     smu_version = get_system_info("Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
-    
     logging.info(f' - {cpu_family}')
     logging.info(f' - {smu_version}')
-
     logging.info(f' - Cores: {get_system_info("sysctl -n hw.physicalcpu")}')
     logging.info(f' - Threads: {get_system_info("sysctl -n hw.logicalcpu")}')
     logging.info(
@@ -80,18 +73,17 @@ def print_system_info():
     )
     base_clock = float(get_system_info("sysctl -n hw.cpufrequency_max")) / (10**9)
     logging.info(" - Base clock: {:.2f} GHz".format(base_clock))
-    logging.info(f' - Vendor: {get_system_info("sysctl -n machdep.cpu.vendor")}')
-    logging.info(f' - Family: {get_system_info("sysctl -n machdep.cpu.family")}')
+    logging.info(f' - CPU Vendor: {get_system_info("sysctl -n machdep.cpu.vendor")}')
+    logging.info(f' - Family model: {get_system_info("sysctl -n machdep.cpu.family")}')
     logging.info(
-        f' - Features: {get_system_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]}'
+        f' - CPU instruction: {get_system_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]}'
     )
-    logging.info("\nMemory Information:")
+    logging.info("\nMemory information:")
     memory = float(get_system_info("sysctl -n hw.memsize")) / (1024**3)
-    logging.info(" - Total Ram: {:.2f} GB".format(memory))
+    logging.info(" - Total of Ram: {:.2f} GB".format(memory))
     ram_info = get_system_info("system_profiler SPMemoryDataType")
     ram_info_lines = ram_info.split('\n')
     ram_slot_names = ["BANK","SODIMM","DIMM"]
-
     slot_info = []
     try:
         for i, line in enumerate(ram_info_lines):  
@@ -104,7 +96,6 @@ def print_system_info():
              part_number = ram_info_lines[i+6].strip().split(":")[1].strip()
              serial_number = ram_info_lines[i+7].strip().split(":")[1].strip()
              slot_info.append((slot_name, size, type, speed, manufacturer, part_number, serial_number))
-
         for i in range(0, len(slot_info), 2):
             logging.info(
                 f" - Size: {slot_info[i][1]}/{slot_info[i + 1][1] if i + 1 < len(slot_info) else 'N/A'}"
@@ -126,7 +117,6 @@ def print_system_info():
             )
     except:
         logging.info("Pardon me for my horrible search for displaying RAM information")
-
     if has_battery := get_system_info(
         "system_profiler SPPowerDataType | grep 'Battery Information'"
     ):
@@ -147,9 +137,9 @@ def print_system_info():
         logging.info(
             f""" - {get_system_info("system_profiler SPPowerDataType | grep 'Condition'")}"""
         )
-    logging.info("If you failed to get your hardware information, do `sudo purge` \nor remove RestrictEvents.kext")
+    logging.info("If you fail to retrieve your hardware information, run `sudo purge` \nor remove RestrictEvent.kext")
     input("Press Enter to go back to the main menu...")
-    
+
 def clr_print_logo():
     os.system('clear')
     logging.info("""
@@ -159,7 +149,6 @@ def clr_print_logo():
     ██║   ██║ ██╔██╗    ██║   ██║   ██║╚════██║██║╚██╔╝██║██╔══██║██║
     ╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝     ██║██║ ╚═╝ ██║██║  ██║╚██████╗
      ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝      ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝
-    Special Beta Program 4
     Version: {}
     """.format(LOCAL_VERSION))
 
@@ -169,7 +158,7 @@ def main_menu():
     logging.info("2. Settings")
     logging.info("")
     logging.info("I. Install kexts and dependencies (Beta)")
-    logging.info("H. Hardware information")
+    logging.info("H. Hardware Information")
     logging.info("A. About")
     logging.info("Q. Quit")
 
@@ -182,11 +171,12 @@ def about_menu():
     logging.info("Maintainer: GorouFlex")
     logging.info("CLI: GorouFlex")
     logging.info("GUI: NotchApple1703")
+    logging.info("OCSnapshot: CorpNewt")
     logging.info("----------------------------")
     logging.info("")
     logging.info("1. Open GitHub repo")
     logging.info("2. Change log")
-    logging.info("F. Force to update latest version")
+    logging.info("F. Force update to the latest version")
     logging.info("")
     logging.info("B. Back")
 
@@ -195,15 +185,14 @@ def create_cfg() -> None:
     cfg.add_section('User')
     cfg.read(CONFIG_PATH)
     clr_print_logo()
-    logging.info("------ Settings ------")
-    logging.info("Preset power plan")
+    logging.info("--------- Settings ---------")
+    logging.info("Premade preset:")
     for i, mode in enumerate(PRESETS, start=1):
         logging.info(f"{i}. {mode}")
-    
     logging.info("")
-    logging.info("We recommend using Auto preset for normal tasks and better power management,\nand Extreme preset for unlocking full potential performance")
-    choice = input("Choose your preset by pressing a number followed by the preset (1,2,3,4): ")
-    
+    logging.info("We recommend using the Auto preset for normal tasks and better power management based on your CPU usage, and the Extreme preset for unlocking full")
+    logging.info("potential performance.")
+    choice = input("Choose your preset by pressing a number followed by the preset (1, 2, 3, 4): ")
     while True:
         subprocess.run("sudo -k", shell=True)
         password = getpass.getpass("Enter your sudo password: ")
@@ -214,11 +203,9 @@ def create_cfg() -> None:
             break
         else:
             logging.info("Incorrect sudo password. Please try again.")
-
     login_items_setting = cfg.get('User', 'LoginItems', fallback='0')
     if login_items_setting == '0':
         start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
-
         if start_with_macos == 'y':
             cfg.set('User', 'LoginItems', '1')
             current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -227,14 +214,12 @@ def create_cfg() -> None:
             subprocess.call(command, shell=True)
         else:
             cfg.set('User', 'LoginItems', '0')
-    
     try:
         preset_number = int(choice)
         preset_name = list(PRESETS.keys())[preset_number - 1]
         cfg.set('User', 'Mode', preset_name)
         cfg.set('User', 'Password', password)
         cfg.set('User', 'SkipCFU', '0')
-                
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
     except ValueError:
@@ -243,13 +228,15 @@ def create_cfg() -> None:
 
 def welcome_tutorial():
     clr_print_logo()
-    logging.info("Welcome to UXTU4Mac")
-    logging.info("This tool was created by GorouFlex and is still in development.")
-    logging.info("Based on RyzenAdj for AMD APU Ryzen and inspired by UXTU, I've created a version of UXTU specifically for macOS!")
-    logging.info("Since this might be your first time using this tool, let's dive in!")
-    input("Press Enter to continue")
+    logging.info("Welcome to UXTU4Mac!")
+    logging.info("This tool, created by GorouFlex, is designed for AMD APU Ryzen on macOS.")
+    logging.info("It's based on RyzenAdj and inspired by UXTU, tailored specifically for macOS!")
+    logging.info("Let's get started with some initial setup.")
+    input("Press Enter to continue...")
     clr_print_logo()
     create_cfg()
+    logging.info("Configuration created successfully!")
+    input("Press Enter to proceed to the next step...")
     clr_print_logo()
     install_kext_menu()
 
@@ -269,7 +256,7 @@ def install_kext_menu():
     clr_print_logo()
     logging.info("Install kext and dependencies (Beta):")
     logging.info("")
-    logging.info("1. Auto (Using default path e.g /Volumes/EFI/EFI/OC)")
+    logging.info("1. Auto (Using default path, e.g., /Volumes/EFI/EFI/OC)")
     logging.info("")
     logging.info("B. Back")
     logging.info("")
@@ -294,45 +281,36 @@ def install_kext_menu():
 def install_kext_auto():
     clr_print_logo()
     logging.info("Installling kext and dependencies (Auto)...")
-
     script_directory = os.path.dirname(os.path.realpath(__file__))
-
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     password = cfg.get('User', 'Password', fallback='')
-
     try:
         subprocess.run(["sudo", "-S", "diskutil", "mount", "EFI"], input=password.encode(), check=True)
     except subprocess.CalledProcessError as e:
         logging.error(f"Failed to mount EFI partition: {e}")
         return
-
     try:
-
         kext_source_path = os.path.join(script_directory, "Assets/Kexts/DirectHW.kext")
         kext_destination_path = "/Volumes/EFI/EFI/OC/Kexts"
-
         subprocess.run(["sudo", "-S", "cp", "-r", kext_source_path, kext_destination_path], input=password.encode(), check=True)
     except subprocess.CalledProcessError as e:
         logging.error(f"Failed to move DirectHW.kext: {e}")
         return
-
     oc_path = os.path.join("/Volumes/EFI/EFI/OC")
     if not os.path.exists(oc_path):
         logging.error("OC folder does not exist!")
         subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
         return
-
     config_path = os.path.join("/Volumes/EFI/EFI/OC/config.plist")
     ocsnapshot_script_path = os.path.join(script_directory, "Assets/OCSnapshot/OCSnapshot.py")
-
     subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
     edit_config(config_path)
-    logging.info("Add boot-args and modded SIP success")
+    logging.info("Successfully updated boot-args and SIP settings.")
     subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
-
+    logging.info("EFI partition unmounted successfully.")
     logging.info("Kext and dependencies installation completed.")
-    input("Press Enter to continue")
+    input("Press Enter to continue...")
     
 def read_cfg() -> str:
     cfg = ConfigParser()
@@ -362,7 +340,7 @@ def run_updater():
     if choice == "y":
         subprocess.run(["python3", "Assets/Updater.py"])
         logging.info("Update complete. Please restart the application.")
-        sys.exit()
+        raise SystemExit
     elif choice == "n":
         logging.info("Skipping update...")
     else:
@@ -384,7 +362,7 @@ def check_updates():
         result = input("Do you want to continue? (y/n): ").lower()
         if result != "y":
             logging.info("Quitting...")
-
+            raise SystemExit
 
 def run_cmd(args, user_mode):
     cfg = ConfigParser()
@@ -392,7 +370,6 @@ def run_cmd(args, user_mode):
     password = cfg.get('User', 'Password', fallback='')
     command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
     stop = False
-
     def check_input():
         nonlocal stop
         while True:
@@ -400,12 +377,9 @@ def run_cmd(args, user_mode):
             if i == 'b':
                 stop = True
                 break
-
     thread = threading.Thread(target=check_input)
     thread.start()
-
     while not stop:
-        
         result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logging.info(result.stdout.decode())
         if result.stderr:
@@ -416,7 +390,6 @@ def run_cmd(args, user_mode):
         logging.info("Script will be reapplied every 3 seconds")
         logging.info("Press B then Enter to go back the main menu")
         logging.info("------ RyzenAdj Log ------")
-  #  logging.info("Press B then Enter to go back the main menu")
     thread.join()
 
 def info():
@@ -447,15 +420,12 @@ def main():
     cfg.read(CONFIG_PATH)
     if cfg.get('User', 'skipcfu', fallback = '0') == '0':
          check_updates()
-        
     check_cfg_integrity()
     user_mode = read_cfg()
-
     if user_mode:
         clr_print_logo()
         logging.info(f"Using mode: {user_mode}")
         run_cmd(PRESETS[user_mode], user_mode)
-
     while True:                
         main_menu()
         choice = input("Option: ")
@@ -468,7 +438,6 @@ def main():
             logging.info("")
             logging.info("B. Back")
             preset_choice = input("Option: ")
-
             if preset_choice == "1":
                 if user_mode := read_cfg():
                     clr_print_logo()
