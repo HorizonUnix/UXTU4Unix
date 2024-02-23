@@ -169,13 +169,12 @@ def main_menu():
     logging.info("2. Settings")
     logging.info("")
     logging.info("I. Install kexts and dependencies (Beta)")
-    logging.info("H. Hardware Information")
+    logging.info("H. Hardware information")
     logging.info("A. About")
     logging.info("Q. Quit")
 
 def about_menu():
     clr_print_logo()
-    logging.info("")
     logging.info("About UXTU4Mac")
     logging.info("")
     logging.info(f"Latest version on GitHub: {get_latest_ver()}")
@@ -187,6 +186,7 @@ def about_menu():
     logging.info("")
     logging.info("1. Open GitHub repo")
     logging.info("2. Change log")
+    logging.info("F. Force to update latest version")
     logging.info("")
     logging.info("B. Back")
 
@@ -274,7 +274,7 @@ def install_kext_menu():
     logging.info("B. Back")
     logging.info("")
     logging.info("If you are failed to install kexts and dependencies automatically than you can do it manually")
-    logging.info("1. Add `DirectHW.kext` from `Assets/Kexts` to `EFI\\OC\\Kexts` and do a snapshot \nto config.plist")
+    logging.info("1. Add `DirectHW.kext` from `Assets/Kexts` to `EFI/OC/Kexts` and do a snapshot \nto config.plist")
     logging.info("2. Disable SIP (<`7F080000`>) at `csr-active-config`")
     logging.info("3. Add `debug=0x44` or `debug=0x144` to `boot-args`")
     logging.info("")
@@ -293,7 +293,7 @@ def install_kext_menu():
 
 def install_kext_auto():
     clr_print_logo()
-    logging.info("Installing kext (Auto)...")
+    logging.info("Installling kext and dependencies (Auto)...")
 
     script_directory = os.path.dirname(os.path.realpath(__file__))
 
@@ -332,7 +332,7 @@ def install_kext_auto():
     subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
 
     logging.info("Kext and dependencies installation completed.")
-    input("Press Enter to go back main menu")
+    input("Press Enter to continue")
     
 def read_cfg() -> str:
     cfg = ConfigParser()
@@ -427,6 +427,8 @@ def info():
             open_github()
         elif choice == "2":
             open_releases()
+        elif choice == "F":
+            run_updater()
         elif choice.lower() == "b":
             break
         else:
