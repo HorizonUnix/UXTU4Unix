@@ -159,7 +159,7 @@ def clr_print_logo():
     ██║   ██║ ██╔██╗    ██║   ██║   ██║╚════██║██║╚██╔╝██║██╔══██║██║
     ╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝     ██║██║ ╚═╝ ██║██║  ██║╚██████╗
      ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝      ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝
-    Special Beta Program
+    Special Beta Program 2
     Version: {}
     """.format(LOCAL_VERSION))
 
@@ -214,7 +214,6 @@ def create_cfg() -> None:
         else:
             logging.info("Incorrect sudo password. Please try again.")
 
-    skip_welcome = input("Do you want to skip the welcome menu? (NOT RECOMMENDED) (y/n): ").lower()
     start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
     
     if start_with_macos == 'y':
@@ -228,7 +227,6 @@ def create_cfg() -> None:
         preset_name = list(PRESETS.keys())[preset_number - 1]
         cfg.set('User', 'Mode', preset_name)
         cfg.set('User', 'Password', password)
-        cfg.set('User', 'SkipWelcome', '1' if skip_welcome == 'y' else '0')
         cfg.set('User', 'SkipCFU', '0')
                 
         with open(CONFIG_PATH, 'w') as config_file:
@@ -247,6 +245,18 @@ def welcome_tutorial():
     clr_print_logo()
     create_cfg()
 
+def edit_config(config_path):
+    with open(config_path, 'rb') as f:
+        config = plistlib.load(f)
+    if 'NVRAM' in config and 'Add' in config['NVRAM'] and '7C436110-AB2A-4BBB-A880-FE41995C9F82' in config['NVRAM']['Add']:
+        if 'boot-args' in config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']:
+            boot_args = config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['boot-args']
+            if 'debug=0x144' not in boot_args:
+                config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['boot-args'] = boot_args + ' debug=0x144'
+        config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['csr-active-config'] = 'fwgAAA=='
+    with open(config_path, 'wb') as f:
+        plistlib.dump(config, f)
+        
 def install_kext_menu():
     clr_print_logo()
     logging.info("Install kext (Beta):")
@@ -303,10 +313,11 @@ def install_kext_auto():
     ocsnapshot_script_path = os.path.join(script_directory, "Assets/OCSnapshot/OCSnapshot.py")
 
     subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
-
+    edit_config(config_path)
     subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
 
     logging.info("Kext installation completed.")
+    
     logging.info("Please add `debug=0x144` to `boot-args` and set csr-config-active to `7F080000` in config.plist before using UXTU4Mac")
     input("Press Enter to go back main menu")
 
@@ -422,8 +433,12 @@ def main():
     check_cfg_integrity()
     user_mode = read_cfg()
 
-    if not skip_welcome():
-        while True:
+    while True:
+            if user_mode := read_cfg():
+                clr_print_logo()
+                logging.info(f"Using mode: {user_mode}")
+                run_cmd(PRESETS[user_mode], user_mode)
+                
             main_menu()
             choice = input("Option: ")
             if choice == "1":
@@ -465,12 +480,6 @@ def main():
                 sys.exit()
             else:
                 logging.info("Invalid choice. Please enter a valid option.")
-    elif user_mode:
-        clr_print_logo()
-        logging.info(f"Using mode: {user_mode}")
-        run_cmd(PRESETS[user_mode], user_mode)
-    else:
-        logging.info("Config file is missing or invalid. Please run the script again.")
-
+                
 if __name__ == "__main__":
     main()
