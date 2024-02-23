@@ -1,3 +1,22 @@
+## [0.1.0]
+### Welcome to version series `0.1.x` with a better experience of using UXTU4Mac
+
+- Include a B. Back button when applying the preset
+- Add `I. Install kexts and dependencies (Beta)` to install kexts in `OC/Kexts/` and set SIP and `boot-args` automatically
+- Now, when running the script, it will always apply the preset; users can press B to go back to the main menu
+- Remove `SkipWelcome` in the config file
+- Use OCSnapShot from @corpnewt for snapshot config files
+- When running the script for the first time, it will install kexts automatically
+- Improved welcome setup
+- Cleaned up
+- Fixed a bug with CFU
+- Support Updater
+- Add `LoginItems` to the config file
+- Support force updating to the latest version under About UXTU4Mac
+- Support applying presets from available presets beside loading from the config file
+### Please delete your old `config.ini` since it's from the `0.0.x` series and incompatible with series `0.1.x`
+
+
 ## [0.0.98]
 
 - Optimize code

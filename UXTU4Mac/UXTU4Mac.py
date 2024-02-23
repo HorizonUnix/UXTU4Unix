@@ -247,7 +247,9 @@ def edit_config(config_path):
         if 'boot-args' in config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']:
             boot_args = config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['boot-args']
             if 'debug=0x144' not in boot_args:
-                config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['boot-args'] = boot_args + ' debug=0x144'
+                config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82'][
+                    'boot-args'
+                ] = f'{boot_args} debug=0x144'
         config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['csr-active-config'] = base64.b64decode('fwgAAA==')
     with open(config_path, 'wb') as f:
         plistlib.dump(config, f)
@@ -421,8 +423,7 @@ def main():
     if cfg.get('User', 'skipcfu', fallback = '0') == '0':
          check_updates()
     check_cfg_integrity()
-    user_mode = read_cfg()
-    if user_mode:
+    if user_mode := read_cfg():
         clr_print_logo()
         logging.info(f"Using mode: {user_mode}")
         run_cmd(PRESETS[user_mode], user_mode)
