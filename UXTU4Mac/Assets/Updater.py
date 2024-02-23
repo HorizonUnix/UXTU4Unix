@@ -19,7 +19,6 @@ def update():
     shutil.move(inner_folder, current_dir)
     shutil.rmtree(new_folder)
 
-    # Add executable permissions to the files after the update
     subprocess.call(['chmod', '+x', os.path.join(current_dir, "UXTU4Mac", "UXTU4Mac.command")])
     subprocess.call(['chmod', '+x', os.path.join(current_dir, "UXTU4Mac", "Assets", "ryzenadj")])
 
