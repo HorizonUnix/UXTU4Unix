@@ -6,11 +6,14 @@ import getpass
 import webbrowser
 import logging
 import urllib.request
+import plistlib
+import threading
+import base64
 from configparser import ConfigParser
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.0.98"
+LOCAL_VERSION = "0.0.99"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -156,6 +159,7 @@ def clr_print_logo():
     ██║   ██║ ██╔██╗    ██║   ██║   ██║╚════██║██║╚██╔╝██║██╔══██║██║
     ╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝     ██║██║ ╚═╝ ██║██║  ██║╚██████╗
      ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝      ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝
+    Special Beta Program
     Version: {}
     """.format(LOCAL_VERSION))
 
@@ -164,6 +168,7 @@ def main_menu():
     logging.info("1. Apply preset")
     logging.info("2. Settings")
     logging.info("")
+    logging.info("I. Install kext (Beta)")
     logging.info("H. Hardware Information (Beta)")
     logging.info("A. About")
     logging.info("Q. Quit")
@@ -242,6 +247,75 @@ def welcome_tutorial():
     clr_print_logo()
     create_cfg()
 
+def install_kext_menu():
+    clr_print_logo()
+    logging.info("Install kext (Beta):")
+    logging.info("1. Auto (Using default path)")
+    logging.info("")
+    logging.info("B. Back")
+
+    choice = input("Option: ")
+
+    if choice == "1":
+        install_kext_auto()
+    elif choice == "2":
+        install_kext_manual()
+    elif choice.lower() == "b":
+        return
+    else:
+        logging.info("Invalid choice. Please enter a valid option.")
+
+
+def install_kext_auto():
+    clr_print_logo()
+    logging.info("Installing kext (Auto)...")
+
+    script_directory = os.path.dirname(os.path.realpath(__file__))
+    
+    # Define the 'password' variable here
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    password = cfg.get('User', 'Password', fallback='')
+
+    # Mount EFI with sudo
+    try:
+        subprocess.run(["sudo", "-S", "diskutil", "mount", "EFI"], input=password.encode(), check=True)
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Failed to mount EFI partition: {e}")
+        return
+
+    
+    # Move DirectHW.kext to EFI/OC/Kexts with sudo
+    try:
+
+        kext_source_path = os.path.join(script_directory, "Assets/Kexts/DirectHW.kext")
+        kext_destination_path = "/Volumes/EFI/EFI/OC/Kexts"
+
+        subprocess.run(["sudo", "-S", "cp", "-r", kext_source_path, kext_destination_path], input=password.encode(), check=True)
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Failed to move DirectHW.kext: {e}")
+        return
+
+    # Check if OC folder exists
+    oc_path = os.path.join("/Volumes/EFI/EFI/OC")
+    if not os.path.exists(oc_path):
+        logging.error("OC folder does not exist!")
+        subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
+        return
+
+    # Run OCSnapshot with default paths
+    config_path = os.path.join("/Volumes/EFI/EFI/OC/config.plist")
+    ocsnapshot_script_path = os.path.join(script_directory, "Assets/OCSnapshot/OCSnapshot.py")
+
+    subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
+
+    # Unmount EFI with force
+    subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
+
+    logging.info("Kext installation completed.")
+    logging.info("Please add `debug=0x144` to `boot-args` and set csr-config-active to `7F080000` in config.plist before using UXTU4Mac")
+    input("Press Enter to go back main menu")
+
     
 def read_cfg() -> str:
     cfg = ConfigParser()
@@ -284,12 +358,28 @@ def check_updates():
         if result != "y":
             sys.exit()
 
+
+
 def run_cmd(args, user_mode):
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     password = cfg.get('User', 'Password', fallback='')
     command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
-    while True:
+    stop = False
+
+    def check_input():
+        nonlocal stop
+        while True:
+            i = input().lower()
+            if i == 'b':
+                stop = True
+                break
+
+    thread = threading.Thread(target=check_input)
+    thread.start()
+
+    while not stop:
+        
         result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logging.info(result.stdout.decode())
         if result.stderr:
@@ -298,7 +388,10 @@ def run_cmd(args, user_mode):
         clr_print_logo()
         logging.info(f"Using mode: {user_mode}")
         logging.info("Script will be reapplied every 3 seconds just like UXTU")
+        logging.info("Press B then Enter to go back the main menu")
         logging.info("------ RyzenAdj Log ------")
+  #  logging.info("Press B then Enter to go back the main menu")
+    thread.join()
 
 def info():
     while True:
@@ -368,6 +461,8 @@ def main():
             elif choice == "2":
                 clr_print_logo()
                 create_cfg()
+            elif choice.lower() == "i":
+               install_kext_menu()
             elif choice.lower() == "h":
                 print_system_info()
             elif choice.lower() == "a":
