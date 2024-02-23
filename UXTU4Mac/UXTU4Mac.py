@@ -402,7 +402,7 @@ def info():
             open_github()
         elif choice == "2":
             open_releases()
-        elif choice.lower() == "F":
+        elif choice.lower() == "f":
             run_updater()
         elif choice.lower() == "b":
             break
