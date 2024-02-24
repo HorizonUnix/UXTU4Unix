@@ -259,21 +259,16 @@ def install_kext_menu():
     logging.info("Install kext and dependencies (Beta):")
     logging.info("")
     logging.info("1. Auto (Using default path, e.g., /Volumes/EFI/EFI/OC)")
+    logging.info("2. Manual (Specify your config.plist path)")
     logging.info("")
     logging.info("B. Back")
     logging.info("")
-    logging.info("If you are failed to install kexts and dependencies automatically than you can do it manually")
-    logging.info("1. Add `DirectHW.kext` from `Assets/Kexts` to `EFI/OC/Kexts` and do a snapshot \nto config.plist")
-    logging.info("2. Disable SIP (<`7F080000`>) at `csr-active-config`")
-    logging.info("3. Add `debug=0x44` or `debug=0x144` to `boot-args`")
-    logging.info("")
-
     choice = input("Option (default is 1): ")
 
     if choice == "1":
         install_kext_auto()
-   # elif choice == "2":
-     #   install_kext_manual()
+    elif choice == "2":
+        install_kext_manual()
     elif choice.lower() == "b":
         return
     else:
@@ -313,7 +308,34 @@ def install_kext_auto():
     logging.info("EFI partition unmounted successfully.")
     logging.info("Kext and dependencies installation completed.")
     input("Press Enter to continue...")
-    
+
+def install_kext_manual():
+    clr_print_logo()
+    logging.info("Installing kext and dependencies (Manual)...")
+    script_directory = os.path.dirname(os.path.realpath(__file__))
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    password = cfg.get('User', 'Password', fallback='')
+
+    config_path = input("Please drag and drop the target plist:  ")
+    config_path = config_path.strip()
+    print(config_path)
+    if not os.path.exists(config_path):
+        print(f"Error: The specified path '{config_path}' does not exist.")
+        return
+
+    oc_path = os.path.dirname(config_path)
+    kext_source_path = os.path.join(script_directory, "Assets/Kexts/DirectHW.kext")
+    kext_destination_path = os.path.join(oc_path, "Kexts")
+
+    subprocess.run(["sudo", "-S", "cp", "-r", kext_source_path, kext_destination_path], input=password.encode(), check=True)
+    ocsnapshot_script_path = os.path.join(script_directory, "Assets/OCSnapshot/OCSnapshot.py")
+    subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
+    edit_config(config_path)
+    logging.info("Successfully updated boot-args and SIP settings.")
+    print("Kext and dependencies installation completed.")
+    input("Press Enter to continue...")
+
 def read_cfg() -> str:
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
