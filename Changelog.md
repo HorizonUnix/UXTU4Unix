@@ -1,3 +1,11 @@
+## [0.1.1]
+
+- Support backup `Logs` folder and `config.ini` when update UXTU4Mac
+- Support show changelog on updater
+- Fix a bug with CFU
+- Now users have another option to specify config.plist path for install kext and dependencies
+- Add a note after install kext and dependencies
+
 ## [0.1.0]
 
 ### Welcome to version series `0.1.x` with a better experience of using UXTU4Mac
