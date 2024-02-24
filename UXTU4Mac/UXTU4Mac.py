@@ -15,7 +15,7 @@ from configparser import ConfigParser
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.0"
+LOCAL_VERSION = "0.1.1"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -235,7 +235,7 @@ def welcome_tutorial():
     input("Press Enter to continue...")
     clr_print_logo()
     create_cfg()
-    logging.info("Configuration created successfully!")
+    logging.info("Configuration file created successfully!")
     input("Press Enter to proceed to the next step...")
     clr_print_logo()
     install_kext_menu()
@@ -307,6 +307,7 @@ def install_kext_auto():
     subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
     logging.info("EFI partition unmounted successfully.")
     logging.info("Kext and dependencies installation completed.")
+    logging.info("Please restart your computer to take effect!")
     input("Press Enter to continue...")
 
 def install_kext_manual():
@@ -334,6 +335,7 @@ def install_kext_manual():
     edit_config(config_path)
     logging.info("Successfully updated boot-args and SIP settings.")
     print("Kext and dependencies installation completed.")
+    logging.info("Please restart your computer to take effect!")
     input("Press Enter to continue...")
 
 def read_cfg() -> str:
