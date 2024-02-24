@@ -167,8 +167,6 @@ def main_menu():
 def about_menu():
     clr_print_logo()
     logging.info("About UXTU4Mac")
-    logging.info("")
-    logging.info(f"Latest version on GitHub: {get_latest_ver()}")
     logging.info("----------------------------")
     logging.info("Maintainer: GorouFlex")
     logging.info("CLI: GorouFlex")
@@ -177,8 +175,8 @@ def about_menu():
     logging.info("----------------------------")
     logging.info("")
     logging.info("1. Open GitHub repo")
-    logging.info("2. Change log")
-    logging.info("F. Force update to the latest version")
+    logging.info("2. Show changelog")
+    logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
     logging.info("")
     logging.info("B. Back")
 
@@ -356,6 +354,7 @@ def run_updater():
         raise SystemExit
     elif choice == "n":
         logging.info("Skipping update...")
+        sys.exit(-1)
     else:
         logging.info("Invalid choice.")
         
@@ -365,7 +364,6 @@ def check_updates():
     except:
         clr_print_logo()
         logging.info("No Internet connection, try again")
-        
     if LOCAL_VERSION < latest_version:
         run_updater()
     elif LOCAL_VERSION > latest_version:
@@ -412,7 +410,9 @@ def info():
         if choice == "1":
             open_github()
         elif choice == "2":
-            open_releases()
+            changelog = get_changelog()
+            logging.info("Changelog for the latest version:\n" + changelog)
+            input("Press Enter to go back to the main menu...")
         elif choice.lower() == "f":
             run_updater()
         elif choice.lower() == "b":
