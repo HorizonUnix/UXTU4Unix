@@ -9,10 +9,12 @@ import urllib.request
 import plistlib
 import threading
 import base64
+import json
 from configparser import ConfigParser
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
+GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
 LOCAL_VERSION = "0.1.0"
 
 PRESETS = {
@@ -334,12 +336,21 @@ def get_latest_ver():
     latest_version = urllib.request.urlopen(LATEST_VERSION_URL).geturl()
     return latest_version.split("/")[-1]
 
+def get_changelog():
+    request = urllib.request.Request(GITHUB_API_URL)
+    response = urllib.request.urlopen(request)
+    data = json.loads(response.read())
+    return data['body']
+
 def run_updater():
     clr_print_logo()
-    logging.info("A new update is available! Do you want to update? (y/n): ")
+    changelog = get_changelog()
+    logging.info("A new update is available!")
+    logging.info("Changelog for the latest version:\n" + changelog)
+    logging.info("Do you want to update? (y/n): ")
     choice = input("Option: ").lower()
     
-    if choice == "y":
+    if choice == "y":        
         subprocess.run(["python3", "Assets/Updater.py"])
         logging.info("Update complete. Please restart the application.")
         raise SystemExit
@@ -347,7 +358,7 @@ def run_updater():
         logging.info("Skipping update...")
     else:
         logging.info("Invalid choice.")
-
+        
 def check_updates():
     try:
         latest_version = get_latest_ver()
