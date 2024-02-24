@@ -10,6 +10,16 @@ def update():
     current_dir = os.path.dirname(os.path.dirname(script_dir))
     current_folder = os.path.join(current_dir, "UXTU4Mac")
     new_folder = os.path.join(current_dir, "UXTU4Mac_new")
+    config_file = os.path.join(current_folder, "config.ini")
+    backup_config = os.path.join(current_dir, "config.ini.bak")
+    logs_folder = os.path.join(current_folder, "Logs")
+    backup_logs = os.path.join(current_dir, "Logs.bak")
+
+    if os.path.exists(config_file):
+        shutil.copy2(config_file, backup_config)
+    if os.path.exists(logs_folder):
+        shutil.copytree(logs_folder, backup_logs)
+
     urllib.request.urlretrieve(url, os.path.join(current_dir, "UXTU4Mac.zip"))
     with zipfile.ZipFile(os.path.join(current_dir, "UXTU4Mac.zip"), 'r') as zip_ref:
         zip_ref.extractall(new_folder)
@@ -21,6 +31,11 @@ def update():
 
     subprocess.call(['chmod', '+x', os.path.join(current_dir, "UXTU4Mac", "UXTU4Mac.command")])
     subprocess.call(['chmod', '+x', os.path.join(current_dir, "UXTU4Mac", "Assets", "ryzenadj")])
+
+    if os.path.exists(backup_config):
+        shutil.move(backup_config, config_file)
+    if os.path.exists(backup_logs):
+        shutil.move(backup_logs, logs_folder)
 
 if __name__ == "__main__":
     update()
