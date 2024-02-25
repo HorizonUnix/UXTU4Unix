@@ -498,10 +498,6 @@ def main():
         choice = input("Option: ")
         if choice == "1":
             clr_print_logo()
-            if not check_kext():
-              print("Cannot run RyzenAdj because your computer is missing DirectHW.kext or debug=0x144")
-              input("Press Enter to continue...")
-              return
             logging.info("Apply Preset:")
             logging.info("1. Load saved preset from config file")
             logging.info("2. Load from available premade preset")
