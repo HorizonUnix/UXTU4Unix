@@ -1,3 +1,10 @@
+[0.1.11]
+
+- Add a tester list
+- Make CLI look better with a little rework
+- Fix a bug with Install kext and dependencies
+- Fix a bug with About UXTU4Mac
+
 ## [0.1.1]
 
 - Support backup `Logs` folder and `config.ini` when update UXTU4Mac
