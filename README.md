@@ -7,6 +7,8 @@
 
 ---
 
+> [!NOTE]
+If you run this tool successfully, please check our tester list under ‘About UXTU4Mac’ to see if your CPU is listed. If it isn’t, then create an issue for us to complete the support board, and you will be listed at our testers list!
 ## Supported APU/CPU
 > [!NOTE]
 > - If your AMD Zen-based processor is supported by [NootedRed](https://github.com/ChefKissInc/NootedRed) **or** [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) **Premade Preset** section, you can also use this tool.
