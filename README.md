@@ -9,18 +9,7 @@
 
 ## Supported APU/CPU
 > [!NOTE]
-> - If your AMD Ryzen APU/CPU is supported by [NootedRed](https://github.com/ChefKissInc/NootedRed) **or** [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) premade preset section, you can also use this tool.
-> - Some `Athlon` APU/CPUs are also supported by `UXTU4Mac` if the CPU codenames match with the list below:
-
-| Codename | Product Name |
-| :---: | :---: |
-| Raven (Ridge) | 2xxxU/H/G/GE |
-| Picasso | 3xxxU/H/G/GE |
-| Dali | 3xxxU/G |
-| Renoir | 4xxxU/H/HS/G/GE |
-| Lucienne | 5xxxU |
-| Cezanne | 5xxxU/H/HS/HX/G/GE |
-| Rembrandt | 6xxx (N/A) |
+> - If your AMD Zen-based processor is supported by [NootedRed](https://github.com/ChefKissInc/NootedRed) **or** [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) **Premade Preset** section, you can also use this tool.
 
 ## Usage
 
