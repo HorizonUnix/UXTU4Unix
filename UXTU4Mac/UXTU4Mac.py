@@ -370,14 +370,19 @@ def run_updater():
     
     if choice == "y":        
         subprocess.run(["python3", "Assets/Updater.py"])
-        logging.info("Update complete. Please restart the application.")
-        raise SystemExit
+        logging.info("Update complete. Restarting the application, please close this window...")
+        restart_application()
     elif choice == "n":
         logging.info("Skipping update...")
         sys.exit(-1)
     else:
         logging.info("Invalid choice.")
-        
+
+def restart_application():
+    command_file_path = os.path.join(os.path.dirname(__file__), 'UXTU4Mac.command')
+    subprocess.Popen(['open', command_file_path])
+    sys.exit()
+
 def check_updates():
     try:
         latest_version = get_latest_ver()
