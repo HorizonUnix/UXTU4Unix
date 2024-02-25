@@ -1,15 +1,5 @@
-import os
-import sys
-import time
-import subprocess
-import getpass
-import webbrowser
-import logging
-import urllib.request
-import plistlib
-import threading
-import base64
-import json
+import os, sys, time, subprocess, getpass, webbrowser, logging
+import urllib.request, plistlib, threading, base64, json
 from configparser import ConfigParser
 
 CONFIG_PATH = 'config.ini'
@@ -63,8 +53,10 @@ def print_system_info():
     )
     cpu_family = get_system_info("Assets/ryzenadj -i | grep 'CPU Family'", use_sudo=True).strip()
     smu_version = get_system_info("Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
-    logging.info(f' - {cpu_family}')
-    logging.info(f' - {smu_version}')
+    if cpu_family:
+        logging.info(f' - {cpu_family}')
+    if smu_version:
+        logging.info(f' - {smu_version}')
     logging.info(f' - Cores: {get_system_info("sysctl -n hw.physicalcpu")}')
     logging.info(f' - Threads: {get_system_info("sysctl -n hw.logicalcpu")}')
     logging.info(
@@ -100,22 +92,22 @@ def print_system_info():
              slot_info.append((slot_name, size, type, speed, manufacturer, part_number, serial_number))
         for i in range(0, len(slot_info), 2):
             logging.info(
-                f" - Size: {slot_info[i][1]}/{slot_info[i + 1][1] if i + 1 < len(slot_info) else 'N/A'}"
+                f" - Size: {slot_info[i][1]} / {slot_info[i + 1][1] if i + 1 < len(slot_info) else 'N/A'}"
             )
             logging.info(
-                f" - Type: {slot_info[i][2]}/{slot_info[i + 1][2] if i + 1 < len(slot_info) else 'N/A'}"
+                f" - Type: {slot_info[i][2]} / {slot_info[i + 1][2] if i + 1 < len(slot_info) else 'N/A'}"
             )
             logging.info(
-                f" - Speed: {slot_info[i][3]}/{slot_info[i + 1][3] if i + 1 < len(slot_info) else 'N/A'}"
+                f" - Speed: {slot_info[i][3]} / {slot_info[i + 1][3] if i + 1 < len(slot_info) else 'N/A'}"
             )
             logging.info(
-                f" - Manufacturer: {slot_info[i][5]}/{slot_info[i + 1][5] if i + 1 < len(slot_info) else 'N/A'}"
+                f" - Manufacturer: {slot_info[i][5]} / {slot_info[i + 1][5] if i + 1 < len(slot_info) else 'N/A'}"
             )
             logging.info(
-                f" - Status: {slot_info[i][4]}/{slot_info[i + 1][4] if i + 1 < len(slot_info) else 'N/A'}"
+                f" - Status: {slot_info[i][4]} / {slot_info[i + 1][4] if i + 1 < len(slot_info) else 'N/A'}"
             )
             logging.info(
-                f" - Part Number: {slot_info[i][6]}/{slot_info[i + 1][6] if i + 1 < len(slot_info) else 'N/A'}"
+                f" - Part Number: {slot_info[i][6]} / {slot_info[i + 1][6] if i + 1 < len(slot_info) else 'N/A'}"
             )
     except:
         logging.info("Pardon me for my horrible search for displaying RAM information")
@@ -139,8 +131,9 @@ def print_system_info():
         logging.info(
             f""" - {get_system_info("system_profiler SPPowerDataType | grep 'Condition'")}"""
         )
+    logging.info("")
     logging.info("If you fail to retrieve your hardware information, run `sudo purge` \nor remove RestrictEvent.kext")
-    input("Press Enter to go back to the main menu...")
+    input("Press Enter to continue...")
 
 def clr_print_logo():
     os.system('clear')
@@ -159,8 +152,8 @@ def main_menu():
     logging.info("1. Apply preset")
     logging.info("2. Settings")
     logging.info("")
-    logging.info("I. Install kexts and dependencies (Beta)")
     logging.info("H. Hardware Information")
+    logging.info("I. Install kexts and dependencies")
     logging.info("A. About")
     logging.info("Q. Quit")
 
@@ -176,6 +169,7 @@ def about_menu():
     logging.info("")
     logging.info("1. Open GitHub repo")
     logging.info("2. Show changelog")
+    logging.info("T. Tester list")
     logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
     logging.info("")
     logging.info("B. Back")
@@ -195,7 +189,7 @@ def create_cfg() -> None:
     choice = input("Choose your preset by pressing a number followed by the preset (1, 2, 3, 4): ")
     while True:
         subprocess.run("sudo -k", shell=True)
-        password = getpass.getpass("Enter your sudo password: ")
+        password = getpass.getpass("Enter your sudo (login) password: ")
         sudo_check_command = f"echo '{password}' | sudo -S ls /"
         sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
@@ -229,7 +223,7 @@ def create_cfg() -> None:
 def welcome_tutorial():
     clr_print_logo()
     logging.info("Welcome to UXTU4Mac!")
-    logging.info("This tool, created by GorouFlex, is designed for AMD APU Ryzen on macOS.")
+    logging.info("This tool, created by GorouFlex, is designed for AMD Zen-based processors on macOS.")
     logging.info("It's based on RyzenAdj and inspired by UXTU, tailored specifically for macOS!")
     logging.info("Let's get started with some initial setup.")
     input("Press Enter to continue...")
@@ -256,15 +250,14 @@ def edit_config(config_path):
 
 def install_kext_menu():
     clr_print_logo()
-    logging.info("Install kext and dependencies (Beta):")
+    logging.info("Install kext and dependencies")
     logging.info("")
-    logging.info("1. Auto (Using default path, e.g., /Volumes/EFI/EFI/OC)")
+    logging.info("1. Auto (Using default path: /Volumes/EFI/EFI/OC)")
     logging.info("2. Manual (Specify your config.plist path)")
     logging.info("")
     logging.info("B. Back")
     logging.info("")
     choice = input("Option (default is 1): ")
-
     if choice == "1":
         install_kext_auto()
     elif choice == "2":
@@ -273,7 +266,6 @@ def install_kext_menu():
         return
     else:
         logging.info("Invalid choice. Please enter a valid option.")
-
 
 def install_kext_auto():
     clr_print_logo()
@@ -286,6 +278,9 @@ def install_kext_auto():
         subprocess.run(["sudo", "-S", "diskutil", "mount", "EFI"], input=password.encode(), check=True)
     except subprocess.CalledProcessError as e:
         logging.error(f"Failed to mount EFI partition: {e}")
+        logging.info("")
+        logging.error("Please run in Manual mode.")
+        input("Press Enter to continue...")
         return
     try:
         kext_source_path = os.path.join(script_directory, "Assets/Kexts/DirectHW.kext")
@@ -293,6 +288,9 @@ def install_kext_auto():
         subprocess.run(["sudo", "-S", "cp", "-r", kext_source_path, kext_destination_path], input=password.encode(), check=True)
     except subprocess.CalledProcessError as e:
         logging.error(f"Failed to move DirectHW.kext: {e}")
+        logging.info("")
+        logging.error("Please run in Manual mode.")
+        input("Press Enter to continue...")
         return
     oc_path = os.path.join("/Volumes/EFI/EFI/OC")
     if not os.path.exists(oc_path):
@@ -347,10 +345,8 @@ def check_cfg_integrity() -> None:
     if not os.path.isfile(CONFIG_PATH) or os.stat(CONFIG_PATH).st_size == 0:
         welcome_tutorial()
         return
-
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
-    
     if not cfg.has_section('User'):
         welcome_tutorial()
 
@@ -423,7 +419,7 @@ def run_cmd(args, user_mode):
         clr_print_logo()
         logging.info(f"Using mode: {user_mode}")
         logging.info("Script will be reapplied every 3 seconds")
-        logging.info("Press B then Enter to go back the main menu")
+        logging.info("Press B then Enter to go back to the main menu")
         logging.info("------ RyzenAdj Log ------")
     thread.join()
 
@@ -432,26 +428,30 @@ def info():
         about_menu()
         choice = input("Option: ")
         if choice == "1":
-            open_github()
+            webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac")
         elif choice == "2":
+            clr_print_logo()
             changelog = get_changelog()
             logging.info("Changelog for the latest version:\n" + changelog)
-            input("Press Enter to go back to the main menu...")
+            input("Press Enter to continue...")
         elif choice.lower() == "f":
             run_updater()
+        elif choice.lower() == "t":
+            tester_list()
         elif choice.lower() == "b":
             break
         else:
             logging.info("Invalid choice. Please enter a valid option.")
 
-def open_github():
-    webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac")
-
-def open_releases():
-    webbrowser.open(
-        f"https://github.com/AppleOSX/UXTU4Mac/releases/tag/{get_latest_ver()}"
-    )
-
+def tester_list():
+    clr_print_logo()
+    logging.info("Tester list:")
+    logging.info("")
+    logging.info(" - GorouFlex for Ryzen 5 4500U (Renoir)")
+    logging.info(" - nlqanh524 for Ryzen 5 5500U (Lucienne)")
+    logging.info("")
+    input("Press Enter to continue...")
+    
 def main():
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
@@ -460,6 +460,7 @@ def main():
     check_cfg_integrity()
     if user_mode := read_cfg():
         clr_print_logo()
+        logging.info("Press B then Enter to go back to the main menu")
         logging.info(f"Using mode: {user_mode}")
         run_cmd(PRESETS[user_mode], user_mode)
     while True:                
@@ -477,6 +478,7 @@ def main():
             if preset_choice == "1":
                 if user_mode := read_cfg():
                     clr_print_logo()
+                    logging.info("Press B then Enter to go back to the main menu")
                     logging.info(f"Using mode: {user_mode}")
                     run_cmd(PRESETS[user_mode], user_mode)
                 else:
@@ -493,6 +495,7 @@ def main():
                      selected_preset = list(PRESETS.keys())[preset_number - 1]
                      clr_print_logo()
                      user_mode = selected_preset
+                     logging.info("Press B then Enter to go back to the main menu")
                      logging.info(f"Using mode: {user_mode}")
                      run_cmd(PRESETS[user_mode], user_mode)
                   else:
@@ -503,6 +506,7 @@ def main():
               custom_args = input("Custom arguments (preset): ")
               clr_print_logo()
               user_mode = "Custom"
+              logging.info("Press B then Enter to go back to the main menu")
               logging.info(f"Using mode: {user_mode}")
               run_cmd(custom_args, user_mode)
             elif preset_choice.lower() == "b":
@@ -519,6 +523,8 @@ def main():
         elif choice.lower() == "a":
             info()
         elif choice.lower() == "q":
+            clr_print_logo()
+            logging.info("Quitting...")
             sys.exit()
         else:
             logging.info("Invalid choice. Please enter a valid option.")
