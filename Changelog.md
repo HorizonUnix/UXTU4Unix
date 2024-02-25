@@ -1,3 +1,10 @@
+## [0.1.2]
+
+- Fix a bug when Updater doesn't delete zip file after update
+- Now script will restart itself after update
+- Now script will check DirectHW.kext and debug=0x144 before running ryzenAdj
+- New section name `UXTU4Mac dependencies` under About UXTU4Mac to check DirectHW.kext and debug=0x144
+
 ## [0.1.11]
 
 - Add a tester list
