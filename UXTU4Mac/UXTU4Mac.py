@@ -132,6 +132,18 @@ def print_system_info():
             f""" - {get_system_info("system_profiler SPPowerDataType | grep 'Condition'")}"""
         )
     logging.info("")
+    logging.info("UXTU4Mac dependencies:")
+    result = subprocess.run(['kextstat'], capture_output=True, text=True)
+    if 'DirectHW' not in result.stdout:
+        print(" - DirectHW.kext: Missing")
+    else:
+        print(" - DirectHW.kext: Yes")
+    result = subprocess.run(['nvram', 'boot-args'], capture_output=True, text=True)
+    if 'debug=0x144' not in result.stdout:
+        print(" - debug=0x144: Missing")
+    else:
+        print(" - debug=0x144: Yes")
+    logging.info("")
     logging.info("If you fail to retrieve your hardware information, run `sudo purge` \nor remove RestrictEvent.kext")
     input("Press Enter to continue...")
 
@@ -400,7 +412,20 @@ def check_updates():
             logging.info("Quitting...")
             raise SystemExit
 
+def check_kext():
+    result = subprocess.run(['kextstat'], capture_output=True, text=True)
+    if 'DirectHW' not in result.stdout:
+        return False
+    result = subprocess.run(['nvram', 'boot-args'], capture_output=True, text=True)
+    if 'debug=0x144' not in result.stdout:
+        return False
+    return True
+
 def run_cmd(args, user_mode):
+    if not check_kext():
+        print("Cannot run RyzenAdj because your computer is missing DirectHW.kext or debug=0x144")
+        input("Press Enter to continue...")
+        return
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     password = cfg.get('User', 'Password', fallback='')
@@ -473,6 +498,10 @@ def main():
         choice = input("Option: ")
         if choice == "1":
             clr_print_logo()
+            if not check_kext():
+              print("Cannot run RyzenAdj because your computer is missing DirectHW.kext or debug=0x144")
+              input("Press Enter to continue...")
+              return
             logging.info("Apply Preset:")
             logging.info("1. Load saved preset from config file")
             logging.info("2. Load from available premade preset")
