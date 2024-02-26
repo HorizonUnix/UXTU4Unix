@@ -1,11 +1,11 @@
 import os, sys, time, subprocess, getpass, webbrowser, logging
-import urllib.request, plistlib, threading, base64, json
+import urllib.request, plistlib, threading, base64, json, hashlib
 from configparser import ConfigParser
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.2"
+LOCAL_VERSION = "0.1.3"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -137,12 +137,17 @@ def print_system_info():
     if 'DirectHW' not in result.stdout:
         print(" - DirectHW.kext: Missing")
     else:
-        print(" - DirectHW.kext: Yes")
+        print(" - DirectHW.kext: OK")
     result = subprocess.run(['nvram', 'boot-args'], capture_output=True, text=True)
     if 'debug=0x144' not in result.stdout:
         print(" - debug=0x144: Missing")
     else:
-        print(" - debug=0x144: Yes")
+        print(" - debug=0x144: OK")
+    result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
+    if '%7f%08%00%00' not in result.stdout:
+        print(" - 7F080000 SIP: Not set")
+    else:
+        print(" - 7F080000 SIP: OK")    
     logging.info("")
     logging.info("If you fail to retrieve your hardware information, run `sudo purge` \nor remove RestrictEvent.kext")
     input("Press Enter to continue...")
@@ -172,6 +177,7 @@ def main_menu():
 def about_menu():
     clr_print_logo()
     logging.info("About UXTU4Mac")
+    logging.info("Codename: AATUOSX")
     logging.info("----------------------------")
     logging.info("Maintainer: GorouFlex")
     logging.info("CLI: GorouFlex")
@@ -190,15 +196,29 @@ def create_cfg() -> None:
     cfg = ConfigParser()
     cfg.add_section('User')
     cfg.read(CONFIG_PATH)
+    cfg.set('User', 'FIP', '0')
     clr_print_logo()
-    logging.info("--------- Settings ---------")
+    logging.info("------------ Settings ------------")
     logging.info("Premade preset:")
     for i, mode in enumerate(PRESETS, start=1):
         logging.info(f"{i}. {mode}")
+    logging.info("C. Custom (Beta)")
     logging.info("")
     logging.info("We recommend using the Auto preset for normal tasks and better power management based on your CPU usage, and the Extreme preset for unlocking full")
     logging.info("potential performance.")
-    choice = input("Choose your preset by pressing a number followed by the preset (1, 2, 3, 4): ")
+    choice = input("Choose your preset: ")
+    if choice.lower() == 'c':
+        custom_args = input("Enter your custom arguments: ")
+        cfg.set('User', 'Mode', 'Custom')
+        cfg.set('User', 'CustomArgs', custom_args)
+    else:
+        try:
+            preset_number = int(choice)
+            preset_name = list(PRESETS.keys())[preset_number - 1]
+            cfg.set('User', 'Mode', preset_name)
+        except ValueError:
+            logging.info("Invalid input. Please enter a number.")
+            sys.exit(-1)
     while True:
         subprocess.run("sudo -k", shell=True)
         password = getpass.getpass("Enter your sudo (login) password: ")
@@ -221,9 +241,6 @@ def create_cfg() -> None:
         else:
             cfg.set('User', 'LoginItems', '0')
     try:
-        preset_number = int(choice)
-        preset_name = list(PRESETS.keys())[preset_number - 1]
-        cfg.set('User', 'Mode', preset_name)
         cfg.set('User', 'Password', password)
         cfg.set('User', 'SkipCFU', '0')
         with open(CONFIG_PATH, 'w') as config_file:
@@ -419,17 +436,24 @@ def check_kext():
     result = subprocess.run(['nvram', 'boot-args'], capture_output=True, text=True)
     if 'debug=0x144' not in result.stdout:
         return False
+    result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
+    if '%7f%08%00%00' not in result.stdout:
+        return False 
     return True
 
 def run_cmd(args, user_mode):
     if not check_kext():
-        print("Cannot run RyzenAdj because your computer is missing DirectHW.kext or debug=0x144")
+        print("Cannot run RyzenAdj because your computer is missing DirectHW.kext or debug=0x144 or SIP is not SET yet")
         input("Press Enter to continue...")
         return
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     password = cfg.get('User', 'Password', fallback='')
-    command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
+    if args == 'Custom':
+        custom_args = cfg.get('User', 'CustomArgs', fallback='')
+        command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
+    else:
+        command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
     stop = False
     def check_input():
         nonlocal stop
@@ -481,10 +505,32 @@ def tester_list():
     logging.info(" - nlqanh524 for Ryzen 5 5500U (Lucienne)")
     logging.info("")
     input("Press Enter to continue...")
-    
+
+def check_fip_integrity():
+    hash_file_path = os.path.join(os.path.dirname(__file__), 'Assets/hash.ini')
+    try:
+        with open(hash_file_path, 'r') as hash_file:
+            expected_hash = hash_file.read().strip()
+    except FileNotFoundError:
+        logging.error(f"File Integrity Protection: {hash_file_path} not found. Exiting...")
+        sys.exit()
+    with open(__file__, 'rb') as file:
+        file_content = file.read()
+    current_hash = hashlib.sha256(file_content).hexdigest()
+    if current_hash != expected_hash:
+        logging.error("File Integrity Protection: File has been modified! Exiting...")
+        sys.exit()
+    else:
+        logging.info("File Integrity Protection: File integrity verified.")
+        
 def main():
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
+    fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
+    if not fip_enabled:
+        pass
+    else:
+      check_fip_integrity()
     if cfg.get('User', 'skipcfu', fallback = '0') == '0':
          check_updates()
     check_cfg_integrity()
@@ -492,14 +538,18 @@ def main():
         clr_print_logo()
         logging.info("Press B then Enter to go back to the main menu")
         logging.info(f"Using mode: {user_mode}")
-        run_cmd(PRESETS[user_mode], user_mode)
+        if user_mode in PRESETS:
+          run_cmd(PRESETS[user_mode], user_mode)
+        else:
+          run_cmd(user_mode, user_mode)
+
     while True:                
         main_menu()
         choice = input("Option: ")
         if choice == "1":
             clr_print_logo()
             logging.info("Apply Preset:")
-            logging.info("1. Load saved preset from config file")
+            logging.info("1. Load saved settings from config file")
             logging.info("2. Load from available premade preset")
             logging.info("3. Custom preset (Beta)")
             logging.info("")
@@ -510,7 +560,10 @@ def main():
                     clr_print_logo()
                     logging.info("Press B then Enter to go back to the main menu")
                     logging.info(f"Using mode: {user_mode}")
-                    run_cmd(PRESETS[user_mode], user_mode)
+                    if user_mode in PRESETS:
+                      run_cmd(PRESETS[user_mode], user_mode)
+                    else:
+                     run_cmd(user_mode, user_mode)
                 else:
                     logging.info("Config file is missing or invalid. Please run the script again.")
             elif preset_choice == "2":

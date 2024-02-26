@@ -1,3 +1,9 @@
+## [0.1.3]
+
+- Support for Custom preset for config file
+- Introduce FIP ( File Integrity Protection ) which protect main script file ( Beta ), disabled by default
+- Now check SIP flags before running ryzenAdj
+
 ## [0.1.2]
 
 - Fix a bug when Updater doesn't delete zip file after update
