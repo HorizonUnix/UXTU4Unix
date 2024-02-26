@@ -437,9 +437,7 @@ def check_kext():
     if 'debug=0x144' not in result.stdout:
         return False
     result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
-    if '%7f%08%00%00' not in result.stdout:
-        return False 
-    return True
+    return '%7f%08%00%00' in result.stdout
 
 def run_cmd(args, user_mode):
     if not check_kext():
@@ -527,10 +525,8 @@ def main():
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
-    if not fip_enabled:
-        pass
-    else:
-      check_fip_integrity()
+    if fip_enabled:
+        check_fip_integrity()
     if cfg.get('User', 'skipcfu', fallback = '0') == '0':
          check_updates()
     check_cfg_integrity()
