@@ -1,3 +1,18 @@
+## [0.1.4]
+
+- Enhance FIP, more secure and safe
+- Rework `Settings` and `Welcome` section
+- Add a build number
+- Add a new update name
+- Now `Settings` have these section:
+```
+P. Preset setting
+F. FIP setting
+C. CFU setting
+L. Login Items setting
+S. Sudo Password setting
+```
+
 ## [0.1.3]
 
 - Support for Custom preset for config file
