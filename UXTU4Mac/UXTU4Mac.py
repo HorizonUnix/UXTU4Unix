@@ -195,6 +195,7 @@ def about_menu():
 def setting_menu():
     clr_print_logo()
     logging.info("------------ Settings ----------")
+    logging.info("")
     logging.info("P. Preset setting")
     logging.info("F. FIP setting")
     logging.info("C. CFU setting")
@@ -209,6 +210,7 @@ def pass_cfg() -> None:
     clr_print_logo()
     logging.info("------------ Sudo Password Setting ---------")
     pswd = cfg.get('User', 'Password', fallback='')
+    logging.info("")
     logging.info(f"Current sudo (login) password: {pswd}")
     logging.info("C. Change password")
     logging.info("")
@@ -239,6 +241,7 @@ def login_cfg() -> None:
     clr_print_logo()
     logging.info("------------ Login Items Setting ---------")
     logging.info("(Run script with macOS every startup)")
+    logging.info("")
     login_enabled = cfg.get('User', 'LoginItems', fallback='1') == '1'
     if login_enabled:
         logging.info("Login Items status: OK")
@@ -283,6 +286,7 @@ def cfu_cfg() -> None:
     cfg.read(CONFIG_PATH)
     clr_print_logo()
     logging.info("------------ Check For Updates Setting ---------")
+    logging.info("")
     cfu_enabled = cfg.get('User', 'CFU', fallback='1') == '1'
     if cfu_enabled:
         logging.info("CFU status: Enabled")
@@ -311,7 +315,8 @@ def fip_cfg() -> None:
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     clr_print_logo()
-    logging.info("------------ File Inte Protection Setting ------------")
+    logging.info("------------ File Integrity Protectio Setting ------------")
+    logging.info("")
     fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
     if fip_enabled:
         logging.info("FIP status: Enabled")
