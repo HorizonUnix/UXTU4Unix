@@ -5,7 +5,7 @@ from configparser import ConfigParser
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.3"
+LOCAL_VERSION = "0.1.4"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -171,20 +171,20 @@ def main_menu():
     logging.info("")
     logging.info("H. Hardware Information")
     logging.info("I. Install kexts and dependencies")
-    logging.info("A. About")
+    logging.info("A. About UXTU4Mac")
     logging.info("Q. Quit")
 
 def about_menu():
     clr_print_logo()
     logging.info("About UXTU4Mac")
     logging.info("Codename: AATUOSX")
+    logging.info("The Loop Update (1C8BB)")
     logging.info("----------------------------")
     logging.info("Maintainer: GorouFlex")
     logging.info("CLI: GorouFlex")
     logging.info("GUI: NotchApple1703")
     logging.info("OCSnapshot: CorpNewt")
     logging.info("----------------------------")
-    logging.info("")
     logging.info("1. Open GitHub repo")
     logging.info("2. Show changelog")
     logging.info("T. Tester list")
@@ -192,25 +192,172 @@ def about_menu():
     logging.info("")
     logging.info("B. Back")
 
-def create_cfg() -> None:
-    cfg = ConfigParser()
-    cfg.add_section('User')
-    cfg.read(CONFIG_PATH)
-    cfg.set('User', 'FIP', '0')
+def setting_menu():
     clr_print_logo()
-    logging.info("------------ Settings ------------")
+    logging.info("------------ Settings ----------")
+    logging.info("P. Preset setting")
+    logging.info("F. FIP setting")
+    logging.info("C. CFU setting")
+    logging.info("L. Login Items setting")
+    logging.info("S. Sudo Password setting")
+    logging.info("")
+    logging.info("B. Back")
+
+def pass_cfg() -> None:
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    clr_print_logo()
+    logging.info("------------ Sudo Password Setting ---------")
+    pswd = cfg.get('User', 'Password', fallback='')
+    logging.info(f"Current sudo (login) password: {pswd}")
+    logging.info("C. Change password")
+    logging.info("")
+    logging.info("B. Back")
+    choice = input("Option: ")
+    if choice.lower() == "c":
+       while True:
+         subprocess.run("sudo -k", shell=True)
+         password = getpass.getpass("Enter your sudo (login) password: ")
+         sudo_check_command = f"echo '{password}' | sudo -S ls /"
+         sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)   
+         if sudo_check_process.returncode == 0:
+            break
+         else:
+           logging.info("Incorrect sudo password. Please try again.")
+    elif choice.lower() == "b":
+        return
+    else:
+        logging.info("Invalid Option.")
+    cfg.set('User', 'Password', password)
+    with open(CONFIG_PATH, 'w') as config_file:
+        cfg.write(config_file)
+    pass_cfg()
+    
+def login_cfg() -> None:
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    clr_print_logo()
+    logging.info("------------ Login Items Setting ---------")
+    logging.info("(Run script with macOS every startup)")
+    login_enabled = cfg.get('User', 'LoginItems', fallback='1') == '1'
+    if login_enabled:
+        logging.info("Login Items status: OK")
+    else:
+        logging.info("Login Items status: Not set")
+    logging.info("")
+    logging.info("E. Enable Login Items")
+    logging.info("D. Disable Login Items")
+    logging.info("")
+    logging.info("B. Back")
+    choice = input("Option: ")
+    if choice.lower() == "e":
+        login = "1"
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        command_file = os.path.join(current_dir, 'UXTU4Mac.command')
+        command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+        subprocess.call(command, shell=True)
+    elif choice.lower() == "d":
+        login = "0"
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        command_file = os.path.join(current_dir, 'UXTU4Mac.command')
+        command = f'''
+         osascript -e 'tell application "System Events"
+         set login_items to the name of every login item
+         if "{command_file}" is in login_items then
+            delete login item "{command_file}"
+         end if
+        end tell'
+        '''
+        subprocess.call(command, shell=True)
+    elif choice.lower() == "b":
+        return
+    else:
+        logging.info("Invalid Option.")
+    cfg.set('User', 'LoginItems', login)
+    with open(CONFIG_PATH, 'w') as config_file:
+        cfg.write(config_file)
+    login_cfg()
+    
+def cfu_cfg() -> None:
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    clr_print_logo()
+    logging.info("------------ Check For Updates Setting ---------")
+    cfu_enabled = cfg.get('User', 'CFU', fallback='1') == '1'
+    if cfu_enabled:
+        logging.info("CFU status: Enabled")
+    else:
+        logging.info("CFU status: Disabled")
+    logging.info("")
+    logging.info("E. Enable CFU")
+    logging.info("D. Disable CFU")
+    logging.info("")
+    logging.info("B. Back")
+    choice = input("Option: ")
+    if choice.lower() == "e":
+       cfu = "1"
+    elif choice.lower() == "d":
+       cfu = "0"
+    elif choice.lower() == "b":
+        return
+    else:
+        logging.info("Invalid Option.")
+    cfg.set('User', 'CFU', cfu)   
+    with open(CONFIG_PATH, 'w') as config_file:
+        cfg.write(config_file)
+    cfu_cfg()
+
+def fip_cfg() -> None:
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    clr_print_logo()
+    logging.info("------------ File Inte Protection Setting ------------")
+    fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
+    if fip_enabled:
+        logging.info("FIP status: Enabled")
+    else:
+        logging.info("FIP status: Disabled")
+    logging.info("")
+    logging.info("E. Enable FIP")
+    logging.info("D. Disable FIP")
+    logging.info("")
+    logging.info("B. Back")
+    choice = input("Option: ")
+    if choice.lower() == "e":
+       fip = "1"
+    elif choice.lower() == "d":
+       fip = "0"
+    elif choice.lower() == "b":
+        return
+    else:
+        logging.info("Invalid Option.")
+    cfg.set('User', 'FIP', fip)
+    with open(CONFIG_PATH, 'w') as config_file:
+        cfg.write(config_file)
+    fip_cfg()
+    
+def preset_cfg() -> None:
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    clr_print_logo()
+    logging.info("------------ Preset Setting ------------")
     logging.info("Premade preset:")
     for i, mode in enumerate(PRESETS, start=1):
         logging.info(f"{i}. {mode}")
     logging.info("C. Custom (Beta)")
     logging.info("")
+    logging.info("B. Back")
     logging.info("We recommend using the Auto preset for normal tasks and better power management based on your CPU usage, and the Extreme preset for unlocking full")
     logging.info("potential performance.")
-    choice = input("Choose your preset: ")
+    choice = input("Option: ")
     if choice.lower() == 'c':
         custom_args = input("Enter your custom arguments: ")
         cfg.set('User', 'Mode', 'Custom')
         cfg.set('User', 'CustomArgs', custom_args)
+        with open(CONFIG_PATH, 'w') as config_file:
+            cfg.write(config_file)
+    elif choice.lower() == 'b':
+        return
     else:
         try:
             preset_number = int(choice)
@@ -219,37 +366,15 @@ def create_cfg() -> None:
         except ValueError:
             logging.info("Invalid input. Please enter a number.")
             sys.exit(-1)
-    while True:
-        subprocess.run("sudo -k", shell=True)
-        password = getpass.getpass("Enter your sudo (login) password: ")
-        sudo_check_command = f"echo '{password}' | sudo -S ls /"
-        sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
-        if sudo_check_process.returncode == 0:
-            break
-        else:
-            logging.info("Incorrect sudo password. Please try again.")
-    login_items_setting = cfg.get('User', 'LoginItems', fallback='0')
-    if login_items_setting == '0':
-        start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
-        if start_with_macos == 'y':
-            cfg.set('User', 'LoginItems', '1')
-            current_dir = os.path.dirname(os.path.realpath(__file__))
-            command_file = os.path.join(current_dir, 'UXTU4Mac.command')
-            command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
-            subprocess.call(command, shell=True)
-        else:
-            cfg.set('User', 'LoginItems', '0')
-    try:
-        cfg.set('User', 'Password', password)
-        cfg.set('User', 'SkipCFU', '0')
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
-    except ValueError:
-        logging.info("Invalid input. Please enter a number.")
-        sys.exit(-1)
-
+    logging.info("Set preset sucessfully!")
+    input("Press Enter to continue...")
+    
 def welcome_tutorial():
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    cfg.add_section('User')
     clr_print_logo()
     logging.info("Welcome to UXTU4Mac!")
     logging.info("This tool, created by GorouFlex, is designed for AMD Zen-based processors on macOS.")
@@ -257,7 +382,37 @@ def welcome_tutorial():
     logging.info("Let's get started with some initial setup.")
     input("Press Enter to continue...")
     clr_print_logo()
-    create_cfg()
+    while True:
+      subprocess.run("sudo -k", shell=True)
+      password = getpass.getpass("Enter your sudo (login) password: ")
+      sudo_check_command = f"echo '{password}' | sudo -S ls /"
+      sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)   
+      if sudo_check_process.returncode == 0:
+         break
+      else:
+         logging.info("Incorrect sudo password. Please try again.")
+    login_items_setting = cfg.get('User', 'LoginItems', fallback='0')
+    if login_items_setting == '0':
+        start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
+        if start_with_macos == 'y':
+            login = "1"
+            current_dir = os.path.dirname(os.path.realpath(__file__))
+            command_file = os.path.join(current_dir, 'UXTU4Mac.command')
+            command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+            subprocess.call(command, shell=True)
+        else:
+           login = "0"
+    try:
+       cfg.set('User', 'Password', password)
+       cfg.set('User', 'LoginItems', login)
+       cfg.set('User', 'CFU', '1')
+       cfg.set('User', 'FIP', '0')
+    except ValueError:
+        logging.info("Invalid Option.")
+        sys.exit(-1)
+    with open(CONFIG_PATH, 'w') as config_file:
+      cfg.write(config_file)
+    preset_cfg()
     logging.info("Configuration file created successfully!")
     input("Press Enter to proceed to the next step...")
     clr_print_logo()
@@ -294,7 +449,7 @@ def install_kext_menu():
     elif choice.lower() == "b":
         return
     else:
-        logging.info("Invalid choice. Please enter a valid option.")
+        logging.info("Invalid Option.")
 
 def install_kext_auto():
     clr_print_logo()
@@ -392,6 +547,7 @@ def get_changelog():
 def run_updater():
     clr_print_logo()
     changelog = get_changelog()
+    logging.info("--------- UXTU4Mac Software Update ---------")
     logging.info("A new update is available!")
     logging.info("Changelog for the latest version:\n" + changelog)
     logging.info("Do you want to update? (y/n): ")
@@ -405,7 +561,7 @@ def run_updater():
         logging.info("Skipping update...")
         sys.exit(-1)
     else:
-        logging.info("Invalid choice.")
+        logging.info("Invalid Option.")
 
 def restart_application():
     command_file_path = os.path.join(os.path.dirname(__file__), 'UXTU4Mac.command')
@@ -493,7 +649,7 @@ def info():
         elif choice.lower() == "b":
             break
         else:
-            logging.info("Invalid choice. Please enter a valid option.")
+            logging.info("Invalid Option.")
 
 def tester_list():
     clr_print_logo()
@@ -505,12 +661,12 @@ def tester_list():
     input("Press Enter to continue...")
 
 def check_fip_integrity():
-    hash_file_path = os.path.join(os.path.dirname(__file__), 'Assets/hash.ini')
+    hash_file_url = 'https://raw.githubusercontent.com/AppleOSX/UXTU4Mac/master/Hash.txt'
     try:
-        with open(hash_file_path, 'r') as hash_file:
-            expected_hash = hash_file.read().strip()
-    except FileNotFoundError:
-        logging.error(f"File Integrity Protection: {hash_file_path} not found. Exiting...")
+        with urllib.request.urlopen(hash_file_url) as response:
+            expected_hash = response.read().decode().strip()
+    except urllib.error.URLError:
+        logging.error(f"File Integrity Protection: {hash_file_url} not found. Exiting...")
         sys.exit()
     with open(__file__, 'rb') as file:
         file_content = file.read()
@@ -527,7 +683,7 @@ def main():
     fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
     if fip_enabled:
         check_fip_integrity()
-    if cfg.get('User', 'skipcfu', fallback = '0') == '0':
+    if cfg.get('User', 'cfu', fallback = '1') == '1':
          check_updates()
     check_cfg_integrity()
     if user_mode := read_cfg():
@@ -578,7 +734,7 @@ def main():
                      logging.info(f"Using mode: {user_mode}")
                      run_cmd(PRESETS[user_mode], user_mode)
                   else:
-                    logging.info("Invalid number. Please enter a valid option.")
+                    logging.info("Invalid Option.")
                 except ValueError:
                  logging.info("Invalid input. Please enter a number.")
             elif preset_choice == "3":
@@ -591,10 +747,24 @@ def main():
             elif preset_choice.lower() == "b":
                   continue
             else:
-                logging.info("Invalid choice. Please enter a valid option.")
+                logging.info("Invalid Option.")
         elif choice == "2":
-            clr_print_logo()
-            create_cfg()
+            setting_menu()
+            settings_choice = input("Option: ")
+            if settings_choice.lower() == "p":
+               preset_cfg()
+            elif settings_choice.lower() == "f":
+                fip_cfg()
+            elif settings_choice.lower() == "c":
+                cfu_cfg()
+            elif settings_choice.lower() == "l":
+               login_cfg()
+            elif settings_choice.lower() == "s":
+               pass_cfg()
+            elif settings_choice.lower() == "b":
+                continue
+            else:
+                logging.info("Invalid Option.")
         elif choice.lower() == "i":
            install_kext_menu()
         elif choice.lower() == "h":
@@ -606,7 +776,7 @@ def main():
             logging.info("Quitting...")
             sys.exit()
         else:
-            logging.info("Invalid choice. Please enter a valid option.")
+            logging.info("Invalid Option.")
                 
 if __name__ == "__main__":
     main()
