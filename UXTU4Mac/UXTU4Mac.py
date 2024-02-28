@@ -5,7 +5,7 @@ from configparser import ConfigParser
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.51"
+LOCAL_VERSION = "0.1.52"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -170,7 +170,7 @@ def main_menu():
     logging.info("2. Settings")
     logging.info("")
     logging.info("H. Hardware Information")
-    logging.info("I. Install kexts and dependencies")
+    logging.info("I. Install UXTU4Mac kexts and dependencies")
     logging.info("A. About UXTU4Mac")
     logging.info("Q. Quit")
 
@@ -414,7 +414,8 @@ def preset_cfg() -> None:
 def welcome_tutorial():
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
-    cfg.add_section('User')
+    if not cfg.has_section('User'):
+        cfg.add_section('User')
     clr_print_logo()
     logging.info("Welcome to UXTU4Mac!")
     logging.info("Created by GorouFlex, designed for AMD Zen-based processors on macOS.")
@@ -423,31 +424,34 @@ def welcome_tutorial():
     input("Press Enter to continue...")
     clr_print_logo()
     while True:
-      subprocess.run("sudo -k", shell=True)
-      password = getpass.getpass("Enter your sudo (login) password: ")
-      sudo_check_command = f"echo '{password}' | sudo -S ls /"
-      sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)   
-      if sudo_check_process.returncode == 0:
-         break
-      else:
-         logging.info("Incorrect sudo password. Please try again.")
+        subprocess.run("sudo -k", shell=True)
+        password = getpass.getpass("Enter your sudo (login) password: ")
+        sudo_check_command = f"echo '{password}' | sudo -S ls /"
+        sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if sudo_check_process.returncode == 0:
+            break
+        else:
+            logging.info("Incorrect sudo password. Please try again.")
     login_items_setting = cfg.get('User', 'LoginItems', fallback='0')
     if login_items_setting == '0':
         start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
         if start_with_macos == 'y':
-            login = "1"
+            cfg.set('User', 'LoginItems', '1')
+            with open(CONFIG_PATH, 'w') as config_file:
+               cfg.write(config_file)
             current_dir = os.path.dirname(os.path.realpath(__file__))
             command_file = os.path.join(current_dir, 'UXTU4Mac.command')
             command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
             subprocess.call(command, shell=True)
         else:
-           login = "0"
+            cfg.set('User', 'LoginItems', '1')
+            with open(CONFIG_PATH, 'w') as config_file:
+               cfg.write(config_file)
     try:
-       cfg.set('User', 'Password', password)
-       cfg.set('User', 'LoginItems', login)
-       cfg.set('User', 'CFU', '1')
-       cfg.set('User', 'FIP', '0')
-       cfg.set('User', 'Time', '10')
+        cfg.set('User', 'Password', password)
+        cfg.set('User', 'CFU', '1')
+        cfg.set('User', 'FIP', '0')
+        cfg.set('User', 'Time', '10')
     except ValueError:
         logging.info("Invalid Option.")
         sys.exit(-1)
@@ -473,10 +477,10 @@ def edit_config(config_path):
 
 def install_kext_menu():
     clr_print_logo()
-    logging.info("Install kext and dependencies")
+    logging.info("Install UXTU4Mac kext and dependencies")
     logging.info("")
-    logging.info("1. Auto (Using default path: /Volumes/EFI/EFI/OC)")
-    logging.info("2. Manual (Specify your config.plist path)")
+    logging.info("1. Auto install (Using default path: /Volumes/EFI/EFI/OC)")
+    logging.info("2. Manual install (Specify your config.plist path)")
     logging.info("")
     logging.info("B. Back")
     logging.info("")
@@ -493,7 +497,7 @@ def install_kext_menu():
 
 def install_kext_auto():
     clr_print_logo()
-    logging.info("Installling kext and dependencies (Auto)...")
+    logging.info("Installling UXTU4Mac kext and dependencies (Auto)...")
     script_directory = os.path.dirname(os.path.realpath(__file__))
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
@@ -534,7 +538,7 @@ def install_kext_auto():
 
 def install_kext_manual():
     clr_print_logo()
-    logging.info("Installing kext and dependencies (Manual)...")
+    logging.info("Installing UXTU4Mac kext and dependencies (Manual)...")
     script_directory = os.path.dirname(os.path.realpath(__file__))
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
@@ -571,7 +575,8 @@ def check_cfg_integrity() -> None:
         return
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
-    if not cfg.has_section('User'):
+    required_keys = ['password', 'loginitems', 'cfu', 'fip', 'time', 'mode']
+    if not cfg.has_section('User') or any(key not in cfg['User'] for key in required_keys):
         welcome_tutorial()
 
 def get_latest_ver():
@@ -598,18 +603,15 @@ def run_updater():
     if choice == "y":        
         subprocess.run(["python3", "Assets/Updater.py"])
         logging.info("Update complete. Restarting the application, please close this window...")
-        restart_application()
+        command_file_path = os.path.join(os.path.dirname(__file__), 'UXTU4Mac.command')
+        subprocess.Popen(['open', command_file_path])
+        sys.exit()
     elif choice == "n":
         logging.info("Skipping update...")
         sys.exit(-1)
     else:
         logging.info("Invalid Option.")
         input("Press Enter to continue...")
-
-def restart_application():
-    command_file_path = os.path.join(os.path.dirname(__file__), 'UXTU4Mac.command')
-    subprocess.Popen(['open', command_file_path])
-    sys.exit()
 
 def check_updates():
     try:
@@ -726,7 +728,7 @@ def check_fip_integrity():
     current_hash = hashlib.sha256(file_content).hexdigest()
     if current_hash != expected_hash:
         clr_print_logo()
-        logging.error("File Integrity Protection: File has been modified! Exiting...")
+        logging.error("File Integrity Protection: File has been modified!\n Or FIP is outdated \nExiting...")
         sys.exit()
     else:
         logging.info("File Integrity Protection: File integrity verified.")
@@ -756,6 +758,7 @@ def settings():
 def main():
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
+    check_cfg_integrity()
     if cfg.get('User', 'cfu', fallback = '1') == '1':
          check_updates()
     else:
@@ -764,7 +767,6 @@ def main():
     fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
     if fip_enabled:
         check_fip_integrity()
-    check_cfg_integrity()
     time = cfg.get('User', 'Time', fallback='10')
     if user_mode := read_cfg():
         if user_mode in PRESETS:
