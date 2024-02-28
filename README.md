@@ -34,10 +34,6 @@
 | Auto mode | ✅ | ✅ |
 | Support for many hardware | ✅ | ❌ Only for some AMD Ryzen APU/CPU models, [see here](#supported-cpuapu) |
 
-## Check if `DirectHW.kext` is being loaded or not?
-
-<p><img align="center" src="/Img/ck_kext1.png"/><img align="center" src="/Img/ck_kext2.png"/></p>
-
 # Preview
 > [!NOTE]
 > - Auto preset results in better power management (2:30 hours of my battery usage).
