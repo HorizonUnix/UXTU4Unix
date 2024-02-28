@@ -27,6 +27,18 @@ jobs:
         env:
           TAG: ${{ env.TAG }}
 
+      - name: Calculate SHA256 hash
+        run: |
+          echo "$(shasum -a 256 UXTU4Mac/UXTU4Mac.py | awk '{print $1}')" > Hash.txt
+
+      - name: Push changes
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git add Hash.txt
+          git commit -m "Update Hash.txt"
+          git push
+          
       - id: generate-notes
         name: Generate Release Notes
         shell: bash
