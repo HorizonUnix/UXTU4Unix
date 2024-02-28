@@ -1,3 +1,7 @@
+## [0.1.52]
+
+- Fix a bug with `Welcome` section
+- Proper config file check before start script
 ## [0.1.51]
 
 - Fix a bug when disable login items does not actually delete it
