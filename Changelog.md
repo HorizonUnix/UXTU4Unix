@@ -1,3 +1,10 @@
+## [0.1.51]
+
+- Fix a bug when disable login items does not actually delete it
+- Fix a bug with `run_cmd` and related
+- Fix a bug with `Welcome` section
+- Fix a bug with `About UXTU4Mac` section
+- Now will check both FIP and CFU status before disable one of them due to some issues
 ## [0.1.5]
 
 - Fix a lot of bug related to `Settings` and other sections
