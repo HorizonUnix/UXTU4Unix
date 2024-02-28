@@ -200,7 +200,7 @@ def setting_menu():
     logging.info("3. CFU setting")
     logging.info("4. Login Items setting")
     logging.info("5. Sudo Password setting")
-    logging.info("6. Time Sleep setting")
+    logging.info("6. Sleep Time setting")
     logging.info("")
     logging.info("B. Back")
 
@@ -208,8 +208,8 @@ def sleep_cfg() -> None:
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     clr_print_logo()
-    logging.info("------------ Time Sleep Setting ---------")
-    logging.info("(Time sleep between next apply to SMU using ryzenAdj)")
+    logging.info("------------ Sleep Time Setting ---------")
+    logging.info("(Sleep time between next apply to SMU using ryzenAdj)")
     time = cfg.get('User', 'Time', fallback='10')
     logging.info(f"Time sleep: {time}")
     logging.info("")
@@ -643,7 +643,7 @@ def run_cmd(args, user_mode):
         input("Press Enter to continue...")
         return
     cfg = ConfigParser()
-    time = cfg.get('User', 'Time', fallback='10')
+    sleep_time = cfg.get('User', 'Time', fallback='10')
     cfg.read(CONFIG_PATH)
     password = cfg.get('User', 'Password', fallback='')
     if args == 'Custom':
@@ -651,26 +651,31 @@ def run_cmd(args, user_mode):
         command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
     else:
         command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
-    stop = False
+    stop = threading.Event()
     def check_input():
-        nonlocal stop
         while True:
             i = input().lower()
             if i == 'b':
-                stop = True
+                stop.set()
                 break
     thread = threading.Thread(target=check_input)
     thread.start()
-    while not stop:
+    while not stop.is_set():
         result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logging.info(result.stdout.decode())
         if result.stderr:
             logging.info(f"Error: {result.stderr.decode()}")
-        time.sleep(time)
+        if stop.is_set():
+            break
+        for _ in range(int(float(sleep_time))):
+            if stop.is_set():
+                break
+            time.sleep(1)
         clr_print_logo()
         logging.info(f"Using mode: {user_mode}")
-        logging.info(f"Script will be reapplied every {time} seconds")
+        logging.info(f"Script will be reapplied every {sleep_time} seconds")
         logging.info("Press B then Enter to go back to the main menu")
+        logging.info("(Please ignore the Password error)")
         logging.info("------ RyzenAdj Log ------")
     thread.join()
 
@@ -765,6 +770,7 @@ def main():
         logging.info(f"Using mode: {user_mode}")
         logging.info(f"Script will be reapplied every {time} seconds")
         logging.info("Press B then Enter to go back to the main menu")
+        logging.info("(Please ignore the Password error)")
         logging.info("------ RyzenAdj Log ------")
         if user_mode in PRESETS:
           run_cmd(PRESETS[user_mode], user_mode)
@@ -788,6 +794,7 @@ def main():
                     logging.info(f"Using mode: {user_mode}")
                     logging.info(f"Script will be reapplied every {time} seconds")
                     logging.info("Press B then Enter to go back to the main menu")
+                    logging.info("(Please ignore the Password error)")
                     logging.info("------ RyzenAdj Log ------")
                     if user_mode in PRESETS:
                       run_cmd(PRESETS[user_mode], user_mode)
@@ -811,6 +818,7 @@ def main():
                      logging.info(f"Using mode: {user_mode}")
                      logging.info(f"Script will be reapplied every {time} seconds")
                      logging.info("Press B then Enter to go back to the main menu")
+                     logging.info("(Please ignore the Password error)")
                      logging.info("------ RyzenAdj Log ------")
                      run_cmd(PRESETS[user_mode], user_mode)
                   else:
