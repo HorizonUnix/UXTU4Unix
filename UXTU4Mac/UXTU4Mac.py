@@ -750,14 +750,14 @@ def settings():
 def main():
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
-    fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
-    if fip_enabled:
-        check_fip_integrity()
     if cfg.get('User', 'cfu', fallback = '1') == '1':
          check_updates()
     else:
         clr_print_logo()
         logging.info("Skipping CFU...")
+    fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
+    if fip_enabled:
+        check_fip_integrity()
     check_cfg_integrity()
     time = cfg.get('User', 'Time', fallback='10')
     if user_mode := read_cfg():
