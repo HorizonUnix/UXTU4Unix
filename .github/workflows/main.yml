@@ -36,7 +36,7 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
           git add Hash.txt
-          git commit -m "Update Hash.txt"
+          git commit -m "Hash update"
           git push
           
       - id: generate-notes
