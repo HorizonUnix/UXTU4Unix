@@ -588,10 +588,12 @@ def run_updater():
     changelog = get_changelog()
     logging.info("--------- UXTU4Mac Software Update ---------")
     logging.info("A new update is available!")
-    logging.info(f"Changelog for the latest version ({get_latest_ver}):\n" + changelog)
+    logging.info(
+        f"Changelog for the latest version ({get_latest_ver}):\n{changelog}"
+    )
     logging.info("Do you want to update? (y/n): ")
     choice = input("Option: ").lower()
-    
+
     if choice == "y":        
         subprocess.run(["python3", "Assets/Updater.py"])
         logging.info("Update complete. Restarting the application, please close this window...")
@@ -681,7 +683,9 @@ def info():
         elif choice == "2":
             clr_print_logo()
             changelog = get_changelog()
-            logging.info(f"Changelog for the latest version ({get_latest_ver}):\n" + changelog)
+            logging.info(
+                f"Changelog for the latest version ({get_latest_ver}):\n{changelog}"
+            )
             input("Press Enter to continue...")
         elif choice.lower() == "f":
             run_updater()
