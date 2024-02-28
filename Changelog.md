@@ -1,3 +1,10 @@
+## [0.1.5]
+
+- Fix a lot of bug related to `Settings` and other sections
+- Default sleep time now `10`s instead of `3`s
+- New Time Sleep settings under `Settings` to set sleep time
+- Improve handling about user option
+  
 ## [0.1.4]
 
 - Enhance FIP, more secure and safe
