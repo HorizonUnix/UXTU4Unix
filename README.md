@@ -38,9 +38,17 @@
 > [!NOTE]
 > - Auto preset results in better power management (2:30 hours of my battery usage).
 > - The Extreme preset yields the full potential performance that my Ryzen 5 4500U (Renoir) can handle but only lasts for 1:30 hours of my battery usage. To achieve maximum performance, please plug in with AC.
+
+<p align="left">
+  <img src="/Img/main_menu.png">
+  <img src="/Img/preset.png">
+  <img src="/Img/preset_setting.png">
+  <img src="/Img/hi1.png">
+  <img src="/Img/hi2.png">
+</p>
+
 ### Extreme Preset
 ![Screenshot 2024-02-12 at 15 52 16](https://github.com/AppleOSX/UXTU4Mac/assets/98001973/19e1481a-07ae-4efb-9b50-fac0cf137e0a)
-
 ### Special thanks to
 - [corpnewt](https://github.com/corpnewt) for OCSnapShot
 - [NotchApple1703](https://github.com/NotchApple1703) for the GUI (after ver 0.1.x)
