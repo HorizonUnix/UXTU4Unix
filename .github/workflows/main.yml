@@ -21,12 +21,6 @@ jobs:
             chmod +x UXTU4Mac/Assets/ryzenadj
             chmod +x UXTU4Mac/UXTU4Mac.command
 
-      - name: Zip folder
-        run: |
-          zip -r UXTU4Mac.zip UXTU4Mac
-        env:
-          TAG: ${{ env.TAG }}
-
       - name: Calculate SHA256 hash
         run: |
           echo "$(shasum -a 256 UXTU4Mac/UXTU4Mac.py | awk '{print $1}')" > Hash.txt
@@ -38,6 +32,12 @@ jobs:
           git add Hash.txt
           git commit -m "Hash update"
           git push
+          
+      - name: Zip folder
+        run: |
+          zip -r UXTU4Mac.zip UXTU4Mac
+        env:
+          TAG: ${{ env.TAG }}
           
       - id: generate-notes
         name: Generate Release Notes
