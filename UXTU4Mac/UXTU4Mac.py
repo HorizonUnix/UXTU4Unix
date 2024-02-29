@@ -23,12 +23,23 @@ console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
 logging.getLogger().addHandler(console_handler)
 
-def get_system_info(command, use_sudo=False):
+def clr_print_logo():
+    os.system('clear')
+    logging.info("""
+    ██╗   ██╗██╗  ██╗████████╗██╗   ██╗██╗  ██╗███╗   ███╗ █████╗  ██████╗
+    ██║   ██║╚██╗██╔╝╚══██╔══╝██║   ██║██║  ██║████╗ ████║██╔══██╗██╔════╝
+    ██║   ██║ ╚███╔╝    ██║   ██║   ██║███████║██╔████╔██║███████║██║
+    ██║   ██║ ██╔██╗    ██║   ██║   ██║╚════██║██║╚██╔╝██║██╔══██║██║
+    ╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝     ██║██║ ╚═╝ ██║██║  ██║╚██████╗
+     ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝      ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝
+    Version: {}
+    """.format(LOCAL_VERSION))
+    
+def get_hardware_info(command, use_sudo=False):
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    password = cfg.get('User', 'Password', fallback='')
     if use_sudo:
-        cfg = ConfigParser()
-        cfg.read(CONFIG_PATH)
-        password = cfg.get('User', 'Password', fallback='')
-
         command = f"sudo -S {command}"
         process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         output, error = process.communicate(input=password.encode())
@@ -37,45 +48,45 @@ def get_system_info(command, use_sudo=False):
         output, error = process.communicate()
     return output.decode('utf-8').strip()
 
-def print_system_info():
+def hardware_info():
     clr_print_logo()
     logging.info("Device information:")
-    logging.info(f' - Name: {get_system_info("scutil --get ComputerName")}')
-    logging.info(f' - Model (SMBios): {get_system_info("sysctl -n hw.model")}')
+    logging.info(f' - Name: {get_hardware_info("scutil --get ComputerName")}')
+    logging.info(f' - Model (SMBios): {get_hardware_info("sysctl -n hw.model")}')
     logging.info(
-        f""" - {get_system_info("system_profiler SPHardwareDataType | grep 'Serial Number'")}"""
+        f""" - {get_hardware_info("system_profiler SPHardwareDataType | grep 'Serial Number'")}"""
     )
-    logging.info(f' - macOS: {get_system_info("sysctl -n kern.osproductversion")} ({get_system_info("sysctl -n kern.osversion")})')
+    logging.info(f' - macOS: {get_hardware_info("sysctl -n kern.osproductversion")} ({get_hardware_info("sysctl -n kern.osversion")})')
 
     logging.info("\nProcessor Information:")
     logging.info(
-        f' - Processor: {get_system_info("sysctl -n machdep.cpu.brand_string")}'
+        f' - Processor: {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
     )
-    cpu_family = get_system_info("Assets/ryzenadj -i | grep 'CPU Family'", use_sudo=True).strip()
-    smu_version = get_system_info("Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
+    cpu_family = get_hardware_info("Assets/ryzenadj -i | grep 'CPU Family'", use_sudo=True).strip()
+    smu_version = get_hardware_info("Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
     if cpu_family:
         logging.info(f' - {cpu_family}')
     if smu_version:
         logging.info(f' - {smu_version}')
-    logging.info(f' - Cores: {get_system_info("sysctl -n hw.physicalcpu")}')
-    logging.info(f' - Threads: {get_system_info("sysctl -n hw.logicalcpu")}')
+    logging.info(f' - Cores: {get_hardware_info("sysctl -n hw.physicalcpu")}')
+    logging.info(f' - Threads: {get_hardware_info("sysctl -n hw.logicalcpu")}')
     logging.info(
-        f""" - {get_system_info("system_profiler SPHardwareDataType | grep 'L2'")}"""
+        f""" - {get_hardware_info("system_profiler SPHardwareDataType | grep 'L2'")}"""
     )
     logging.info(
-        f""" - {get_system_info("system_profiler SPHardwareDataType | grep 'L3'")}"""
+        f""" - {get_hardware_info("system_profiler SPHardwareDataType | grep 'L3'")}"""
     )
-    base_clock = float(get_system_info("sysctl -n hw.cpufrequency_max")) / (10**9)
+    base_clock = float(get_hardware_info("sysctl -n hw.cpufrequency_max")) / (10**9)
     logging.info(" - Base clock: {:.2f} GHz".format(base_clock))
-    logging.info(f' - CPU Vendor: {get_system_info("sysctl -n machdep.cpu.vendor")}')
-    logging.info(f' - Family model: {get_system_info("sysctl -n machdep.cpu.family")}')
+    logging.info(f' - CPU Vendor: {get_hardware_info("sysctl -n machdep.cpu.vendor")}')
+    logging.info(f' - Family model: {get_hardware_info("sysctl -n machdep.cpu.family")}')
     logging.info(
-        f' - CPU instruction: {get_system_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]}'
+        f' - CPU instruction: {get_hardware_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]}'
     )
     logging.info("\nMemory information:")
-    memory = float(get_system_info("sysctl -n hw.memsize")) / (1024**3)
+    memory = float(get_hardware_info("sysctl -n hw.memsize")) / (1024**3)
     logging.info(" - Total of Ram: {:.2f} GB".format(memory))
-    ram_info = get_system_info("system_profiler SPMemoryDataType")
+    ram_info = get_hardware_info("system_profiler SPMemoryDataType")
     ram_info_lines = ram_info.split('\n')
     ram_slot_names = ["BANK","SODIMM","DIMM"]
     slot_info = []
@@ -111,25 +122,25 @@ def print_system_info():
             )
     except:
         logging.info("Pardon me for my horrible search for displaying RAM information")
-    if has_battery := get_system_info(
+    if has_battery := get_hardware_info(
         "system_profiler SPPowerDataType | grep 'Battery Information'"
     ):
         logging.info("\nBattery Information:")
         logging.info(
-            f""" - {get_system_info("system_profiler SPPowerDataType | grep 'Manufacturer'")}"""
+            f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Manufacturer'")}"""
         )
         logging.info(
-            f""" - {get_system_info("system_profiler SPPowerDataType | grep 'Device'")}"""
+            f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Device'")}"""
         )
-        logging.info(" - State of Charge (%): {}".format(get_system_info("pmset -g batt | egrep '([0-9]+\\%).*' -o --colour=auto | cut -f1 -d';'")))
+        logging.info(" - State of Charge (%): {}".format(get_hardware_info("pmset -g batt | egrep '([0-9]+\\%).*' -o --colour=auto | cut -f1 -d';'")))
         logging.info(
-            f""" - {get_system_info("system_profiler SPPowerDataType | grep 'Cycle Count'")}"""
-        )
-        logging.info(
-            f""" - {get_system_info("system_profiler SPPowerDataType | grep 'Full Charge Capacity'")}"""
+            f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Cycle Count'")}"""
         )
         logging.info(
-            f""" - {get_system_info("system_profiler SPPowerDataType | grep 'Condition'")}"""
+            f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Full Charge Capacity'")}"""
+        )
+        logging.info(
+            f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Condition'")}"""
         )
     logging.info("")
     logging.info("UXTU4Mac dependencies:")
@@ -152,25 +163,13 @@ def print_system_info():
     logging.info("If you fail to retrieve your hardware information, run `sudo purge` \nor remove RestrictEvent.kext")
     input("Press Enter to continue...")
 
-def clr_print_logo():
-    os.system('clear')
-    logging.info("""
-    ██╗   ██╗██╗  ██╗████████╗██╗   ██╗██╗  ██╗███╗   ███╗ █████╗  ██████╗
-    ██║   ██║╚██╗██╔╝╚══██╔══╝██║   ██║██║  ██║████╗ ████║██╔══██╗██╔════╝
-    ██║   ██║ ╚███╔╝    ██║   ██║   ██║███████║██╔████╔██║███████║██║
-    ██║   ██║ ██╔██╗    ██║   ██║   ██║╚════██║██║╚██╔╝██║██╔══██║██║
-    ╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝     ██║██║ ╚═╝ ██║██║  ██║╚██████╗
-     ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝      ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝
-    Version: {}
-    """.format(LOCAL_VERSION))
-
 def main_menu():
     clr_print_logo()
-    logging.info("1. Apply preset")
+    logging.info("1. Apply Preset")
     logging.info("2. Settings")
     logging.info("")
     logging.info("H. Hardware Information")
-    logging.info("I. Install UXTU4Mac kexts and dependencies")
+    logging.info("I. Install UXTU4Mac Kexts and Dependencies")
     logging.info("A. About UXTU4Mac")
     logging.info("Q. Quit")
 
@@ -184,196 +183,271 @@ def about_menu():
     logging.info("GUI: NotchApple1703")
     logging.info("OCSnapshot: CorpNewt")
     logging.info("----------------------------")
-    logging.info("1. Open GitHub repo")
-    logging.info("2. Show changelog")
-    logging.info("T. Tester list")
-    logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
+    logging.info("1. Open GitHub Repository")
+    logging.info("2. Show Changelog")
+    logging.info("T. Tester List")
+    logging.info(f"F. Force Update to the Latest Version ({get_latest_ver()})")
     logging.info("")
     logging.info("B. Back")
+
+def install_menu():
+    clr_print_logo()
+    logging.info("Installing UXTU4Mac kext and dependencies\n")
+    logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)")
+    logging.info("2. Manual install (Specify your config.plist path)\n")
+    logging.info("B. Back\n")
+    choice = input("Option (default is 1): ")
+    if choice == "1":
+        install_auto()
+    elif choice == "2":
+        install_manual()
+    elif choice.lower() == "b":
+        return
+    else:
+        logging.info("Invalid option. Please try again.")
+        input("Press Enter to continue...")
 
 def setting_menu():
     clr_print_logo()
     logging.info("------------ Settings ----------")
-    logging.info("1. Preset setting")
-    logging.info("2. FIP setting")
-    logging.info("3. CFU setting")
-    logging.info("4. Login Items setting")
-    logging.info("5. Sudo Password setting")
-    logging.info("6. Sleep Time setting")
+    logging.info("1. Preset Setting")
+    logging.info("2. FIP Setting")
+    logging.info("3. CFU Setting")
+    logging.info("4. Login Items Setting")
+    logging.info("5. Sudo Password Setting")
+    logging.info("6. Sleep Time Setting")
     logging.info("")
     logging.info("B. Back")
 
-def sleep_cfg() -> None:
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
-    clr_print_logo()
-    logging.info("------------ Sleep Time Setting ---------")
-    logging.info("(Sleep time between next apply to SMU using ryzenAdj)")
-    time = cfg.get('User', 'Time', fallback='10')
-    logging.info(f"Sleep time: {time}")
-    logging.info("")
-    logging.info("1. Change time sleep")
-    logging.info("")
-    logging.info("B. Back")
-    choice = input("Option: ")
-    if choice == "1":
-       set_time = input("Enter your sleep time (Default is 10s): ")
-       cfg.set('User', 'Time', set_time)   
-       with open(CONFIG_PATH, 'w') as config_file:
-         cfg.write(config_file)
+def settings():
+    while True:
+      setting_menu()
+      settings_choice = input("Option: ")
+      if settings_choice == "1":
+         preset_cfg()
+      elif settings_choice == "2":
+         fip_cfg()
+      elif settings_choice == "3":
+         cfu_cfg()
+      elif settings_choice == "4":
+         login_cfg()
+      elif settings_choice == "5":
+         pass_cfg()
+      elif settings_choice == "6":
+         sleep_cfg() 
+      elif settings_choice.lower() == "b":
+         break
+      else:
+       logging.info("Invalid option.")
        input("Press Enter to continue...")
-    elif choice.lower() == "b":
-        return
-    else:
-        logging.info("Invalid Option.")
-        input("Press Enter to continue...")
-    sleep_cfg()
-    
-def pass_cfg() -> None:
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
-    clr_print_logo()
-    logging.info("------------ Sudo Password Setting ---------")
-    pswd = cfg.get('User', 'Password', fallback='')
-    logging.info(f"Current sudo (login) password: {pswd}")
-    logging.info("1. Change password")
-    logging.info("")
-    logging.info("B. Back")
-    choice = input("Option: ")
-    if choice == "1":
-       while True:
-         subprocess.run("sudo -k", shell=True)
-         password = getpass.getpass("Enter your sudo (login) password: ")
-         sudo_check_command = f"echo '{password}' | sudo -S ls /"
-         sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)   
-         if sudo_check_process.returncode == 0:
-            break
-         else:
-           logging.info("Incorrect sudo password. Please try again.")
-         cfg.set('User', 'Password', password)
-         with open(CONFIG_PATH, 'w') as config_file:
-           cfg.write(config_file)
-    elif choice.lower() == "b":
-        return
-    else:
-        logging.info("Invalid Option.")
-        input("Press Enter to continue...")
-    pass_cfg()
-    
-def login_cfg() -> None:
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
-    clr_print_logo()
-    logging.info("------------ Login Items Setting ---------")
-    logging.info("(Run script with macOS every startup)")
-    login_enabled = cfg.get('User', 'LoginItems', fallback='1') == '1'
-    if login_enabled:
-        logging.info("Login Items status: OK")
-    else:
-        logging.info("Login Items status: Not set")
-    logging.info("")
-    logging.info("1. Enable Login Items")
-    logging.info("2. Disable Login Items")
-    logging.info("")
-    logging.info("B. Back")
-    choice = input("Option: ")
-    if choice == "1":
-        cfg.set('User', 'LoginItems', '1')
-        with open(CONFIG_PATH, 'w') as config_file:
-          cfg.write(config_file)
-        current_dir = os.path.dirname(os.path.realpath(__file__))
-        command_file = os.path.join(current_dir, 'UXTU4Mac.command')
-        command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
-        subprocess.call(command, shell=True)
-    elif choice == "2":
-        cfg.set('User', 'LoginItems', '0')
-        with open(CONFIG_PATH, 'w') as config_file:
-          cfg.write(config_file)
-        current_dir = os.path.dirname(os.path.realpath(__file__))
-        command_file = os.path.join(current_dir, 'UXTU4Mac.command')
-        command_file_name = os.path.basename(command_file)
-        command = f"osascript -e 'tell application \"System Events\" to delete login item \"{command_file_name}\"'"
-        subprocess.call(command, shell=True)
-    elif choice.lower() == "b":
-        return
-    else:
-        logging.info("Invalid Option.")
-        input("Press Enter to continue...")
-    login_cfg()
 
-def cfu_cfg() -> None:
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
+def preset_menu():
     clr_print_logo()
-    logging.info("------------ Check For Updates Setting ---------")
-    cfu_enabled = cfg.get('User', 'CFU', fallback='1') == '1'
-    if cfu_enabled:
-        logging.info("CFU status: Enabled")
-    else:
-        logging.info("CFU status: Disabled")
-    logging.info("")
-    logging.info("1. Enable CFU")
-    logging.info("2. Disable CFU")
+    logging.info("Apply Preset:")
+    logging.info("1. Load saved settings from config file")
+    logging.info("2. Load from available premade preset")
+    logging.info("3. Custom preset (Beta)")
     logging.info("")
     logging.info("B. Back")
-    choice = input("Option: ")
-    if choice == "1":
-       cfg.set('User', 'CFU', '1')   
-       with open(CONFIG_PATH, 'w') as config_file:
-         cfg.write(config_file)
-    elif choice == "2":
-        fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
-        if fip_enabled:
-            logging.info("Cannot disable CFU because FIP is currently on")
-            input("Press Enter to continue...")
+    preset_choice = input("Option: ")
+    if preset_choice == "1":
+        if user_mode := read_cfg():
+            if user_mode in PRESETS:
+                apply_smu(PRESETS[user_mode], user_mode)
+            else:
+                apply_smu(user_mode, user_mode)
         else:
-          cfg.set('User', 'CFU', '0')   
-          with open(CONFIG_PATH, 'w') as config_file:
-           cfg.write(config_file)
-    elif choice.lower() == "b":
+            logging.info("Config file is missing or invalid. Please run the script again.")
+            input("Press Enter to continue...")
+    elif preset_choice == "2":
+        clr_print_logo()
+        logging.info("Select a premade preset:")
+        for i, mode in enumerate(PRESETS, start=1):
+            logging.info(f"{i}. {mode}")
+        preset_number = input("Choose a preset by entering the number: ")
+        try:
+            preset_number = int(preset_number)
+            if 1 <= preset_number <= len(PRESETS):
+                selected_preset = list(PRESETS.keys())[preset_number - 1]
+                clr_print_logo()
+                user_mode = selected_preset
+                apply_smu(PRESETS[user_mode], user_mode)
+            else:
+                logging.info("Invalid Option.")
+                input("Press Enter to continue...")
+        except ValueError:
+            logging.info("Invalid input. Please enter a number.")
+    elif preset_choice == "3":
+        custom_args = input("Custom arguments (preset): ")
+        clr_print_logo()
+        user_mode = "Custom"
+        apply_smu(custom_args, user_mode)
+    elif preset_choice.lower() == "b":
         return
     else:
         logging.info("Invalid Option.")
-        input("Press Enter to continue...")
-    cfu_cfg()
-    
-def fip_cfg() -> None:
+        
+def sleep_cfg():
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
-    clr_print_logo()
-    logging.info("------------ File Integrity Protection Setting ------------")
-    fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
-    if fip_enabled:
-        logging.info("FIP status: Enabled")
-    else:
-        logging.info("FIP status: Disabled")
-    logging.info("")
-    logging.info("1. Enable FIP")
-    logging.info("2. Disable FIP")
-    logging.info("")
-    logging.info("B. Back")
-    choice = input("Option: ")
-    if choice == "1":
+    while True:
+        clr_print_logo()
+        logging.info("------------ Sleep Time Setting ---------")
+        logging.info("(Sleep time between the next application to SMU using ryzenAdj)")
+        time = cfg.get('User', 'Time', fallback='10')
+        logging.info(f"Sleep Time: {time}")
+        logging.info("\n1. Change Sleep Time\n\nB. Back")
+        choice = input("Option: ")
+        if choice == "1":
+            set_time = input("Enter Your Sleep Time (Default is 10s): ")
+            cfg.set('User', 'Time', set_time)   
+            with open(CONFIG_PATH, 'w') as config_file:
+                cfg.write(config_file)
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid Option.")
+            input("Press Enter to Continue...")
+    
+def pass_cfg():
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    while True:
+        clr_print_logo()
+        logging.info("------------ Sudo Password Setting ---------")
+        pswd = cfg.get('User', 'Password', fallback='')
+        logging.info(f"Current Sudo (Login) Password: {pswd}")
+        logging.info("\n1. Change Password\n\nB. Back")
+        choice = input("Option: ")
+        if choice == "1":
+            while True:
+                subprocess.run("sudo -k", shell=True)
+                password = getpass.getpass("Enter Your Sudo (Login) Password: ")
+                sudo_check_command = f"echo '{password}' | sudo -S ls /"
+                sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)   
+                if sudo_check_process.returncode == 0:
+                    cfg.set('User', 'Password', password)
+                    with open(CONFIG_PATH, 'w') as config_file:
+                        cfg.write(config_file)
+                    break
+                else:
+                    logging.info("Incorrect Sudo Password. Please Try Again.")
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid Option.")
+            input("Press Enter to Continue...")
+
+def login_cfg():
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    while True:
+        clr_print_logo()
+        logging.info("------------ Login Items Setting ---------")
+        logging.info("(Run Script with macOS Every Startup)")
+        login_enabled = cfg.get('User', 'LoginItems', fallback='1') == '1'
+        if login_enabled:
+            logging.info("Login Items Status: OK")
+        else:
+            logging.info("Login Items Status: Not Set")
+        logging.info("")
+        logging.info("1. Enable Login Items")
+        logging.info("2. Disable Login Items")
+        logging.info("")
+        logging.info("B. Back")
+        choice = input("Option: ")
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        command_file = os.path.join(current_dir, 'UXTU4Mac.command')
+        if choice == "1":
+            cfg.set('User', 'LoginItems', '1')
+            command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+        elif choice == "2":
+            cfg.set('User', 'LoginItems', '0')
+            command_file_name = os.path.basename(command_file)
+            command = f"osascript -e 'tell application \"System Events\" to delete login item \"{command_file_name}\"'"
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid Option.")
+            input("Press Enter to Continue...")
+            continue
+        with open(CONFIG_PATH, 'w') as config_file:
+            cfg.write(config_file)
+        subprocess.call(command, shell=True)
+
+def cfu_cfg():
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    while True:
+        clr_print_logo()
+        logging.info("------------ Check for Updates Setting ---------")
         cfu_enabled = cfg.get('User', 'CFU', fallback='1') == '1'
         if cfu_enabled:
-            cfg.set('User', 'FIP', '1')
+            logging.info("CFU Status: Enabled")
         else:
-            logging.info("Cannot enable FIP because CFU is currently off")
-            input("Press Enter to continue...")
+            logging.info("CFU Status: Disabled")
+        logging.info("")
+        logging.info("1. Enable CFU")
+        logging.info("2. Disable CFU")
+        logging.info("")
+        logging.info("B. Back")
+        choice = input("Option: ")
+        if choice == "1":
+            cfg.set('User', 'CFU', '1')
+        elif choice == "2":
+            fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
+            if fip_enabled:
+                logging.info("Cannot Disable CFU Because FIP is Currently On")
+                input("Press Enter to Continue...")
+                continue
+            else:
+                cfg.set('User', 'CFU', '0')
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid Option.")
+            input("Press Enter to Continue...")
+            continue
         with open(CONFIG_PATH, 'w') as config_file:
-          cfg.write(config_file)
-    elif choice == "2":
-       cfg.set('User', 'FIP', '0')
-       with open(CONFIG_PATH, 'w') as config_file:
-         cfg.write(config_file)
-    elif choice.lower() == "b":
-        return
-    else:
-        logging.info("Invalid Option.")
-        input("Press Enter to continue...")
-    fip_cfg()
-    
-def preset_cfg() -> None:
+            cfg.write(config_file)
+
+def fip_cfg():
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    while True:
+        clr_print_logo()
+        logging.info("------------ File Integrity Protection Setting ------------")
+        fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
+        if fip_enabled:
+            logging.info("FIP Status: Enabled")
+        else:
+            logging.info("FIP Status: Disabled")
+        logging.info("")
+        logging.info("1. Enable FIP")
+        logging.info("2. Disable FIP")
+        logging.info("")
+        logging.info("B. Back")
+        choice = input("Option: ")
+        cfu_enabled = cfg.get('User', 'CFU', fallback='1') == '1'
+        if choice == "1":
+            if cfu_enabled:
+                cfg.set('User', 'FIP', '1')
+            else:
+                logging.info("Cannot Enable FIP Because CFU is Currently Off")
+                input("Press Enter to Continue...")
+                continue
+        elif choice == "2":
+            cfg.set('User', 'FIP', '0')
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid Option.")
+            input("Press Enter to Continue...")
+            continue
+        with open(CONFIG_PATH, 'w') as config_file:
+            cfg.write(config_file)
+
+def preset_cfg():
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     clr_print_logo()
@@ -392,8 +466,6 @@ def preset_cfg() -> None:
         cfg.set('User', 'Mode', 'Custom')
         cfg.set('User', 'CustomArgs', custom_args)
         logging.info("Set preset sucessfully!")
-        with open(CONFIG_PATH, 'w') as config_file:
-            cfg.write(config_file)
         input("Press Enter to continue...")
     elif choice.lower() == 'b':
         return
@@ -408,8 +480,8 @@ def preset_cfg() -> None:
             logging.info("Invalid Option.")
             input("Press Enter to continue...")
             preset_cfg()
-        with open(CONFIG_PATH, 'w') as config_file:
-            cfg.write(config_file)
+    with open(CONFIG_PATH, 'w') as config_file:
+        cfg.write(config_file)
     
 def welcome_tutorial():
     cfg = ConfigParser()
@@ -437,16 +509,15 @@ def welcome_tutorial():
         start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
         if start_with_macos == 'y':
             cfg.set('User', 'LoginItems', '1')
-            with open(CONFIG_PATH, 'w') as config_file:
-               cfg.write(config_file)
             current_dir = os.path.dirname(os.path.realpath(__file__))
             command_file = os.path.join(current_dir, 'UXTU4Mac.command')
             command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
             subprocess.call(command, shell=True)
         else:
-            cfg.set('User', 'LoginItems', '1')
-            with open(CONFIG_PATH, 'w') as config_file:
-               cfg.write(config_file)
+            cfg.set('User', 'LoginItems', '0')
+        
+        with open(CONFIG_PATH, 'w') as config_file:
+            cfg.write(config_file)
     try:
         cfg.set('User', 'Password', password)
         cfg.set('User', 'CFU', '1')
@@ -456,10 +527,10 @@ def welcome_tutorial():
         logging.info("Invalid Option.")
         sys.exit(-1)
     with open(CONFIG_PATH, 'w') as config_file:
-      cfg.write(config_file)
+        cfg.write(config_file)
     preset_cfg()
     clr_print_logo()
-    install_kext_menu()
+    install_menu()
 
 def edit_config(config_path):
     with open(config_path, 'rb') as f:
@@ -474,95 +545,6 @@ def edit_config(config_path):
         config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['csr-active-config'] = base64.b64decode('fwgAAA==')
     with open(config_path, 'wb') as f:
         plistlib.dump(config, f)
-
-def install_kext_menu():
-    clr_print_logo()
-    logging.info("Install UXTU4Mac kext and dependencies")
-    logging.info("")
-    logging.info("1. Auto install (Using default path: /Volumes/EFI/EFI/OC)")
-    logging.info("2. Manual install (Specify your config.plist path)")
-    logging.info("")
-    logging.info("B. Back")
-    logging.info("")
-    choice = input("Option (default is 1): ")
-    if choice == "1":
-        install_kext_auto()
-    elif choice == "2":
-        install_kext_manual()
-    elif choice.lower() == "b":
-        return
-    else:
-        logging.info("Invalid Option.")
-        input("Press Enter to continue...")
-
-def install_kext_auto():
-    clr_print_logo()
-    logging.info("Installling UXTU4Mac kext and dependencies (Auto)...")
-    script_directory = os.path.dirname(os.path.realpath(__file__))
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
-    password = cfg.get('User', 'Password', fallback='')
-    try:
-        subprocess.run(["sudo", "-S", "diskutil", "mount", "EFI"], input=password.encode(), check=True)
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to mount EFI partition: {e}")
-        logging.info("")
-        logging.error("Please run in Manual mode.")
-        input("Press Enter to continue...")
-        return
-    try:
-        kext_source_path = os.path.join(script_directory, "Assets/Kexts/DirectHW.kext")
-        kext_destination_path = "/Volumes/EFI/EFI/OC/Kexts"
-        subprocess.run(["sudo", "-S", "cp", "-r", kext_source_path, kext_destination_path], input=password.encode(), check=True)
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to move DirectHW.kext: {e}")
-        logging.info("")
-        logging.error("Please run in Manual mode.")
-        input("Press Enter to continue...")
-        return
-    oc_path = os.path.join("/Volumes/EFI/EFI/OC")
-    if not os.path.exists(oc_path):
-        logging.error("OC folder does not exist!")
-        subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
-        return
-    config_path = os.path.join("/Volumes/EFI/EFI/OC/config.plist")
-    ocsnapshot_script_path = os.path.join(script_directory, "Assets/OCSnapshot/OCSnapshot.py")
-    subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
-    edit_config(config_path)
-    logging.info("Successfully updated boot-args and SIP settings.")
-    subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
-    logging.info("EFI partition unmounted successfully.")
-    logging.info("Kext and dependencies installation completed.")
-    logging.info("Please restart your computer to take effect!")
-    input("Press Enter to continue...")
-
-def install_kext_manual():
-    clr_print_logo()
-    logging.info("Installing UXTU4Mac kext and dependencies (Manual)...")
-    script_directory = os.path.dirname(os.path.realpath(__file__))
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
-    password = cfg.get('User', 'Password', fallback='')
-
-    config_path = input("Please drag and drop the target plist:  ")
-    config_path = config_path.strip()
-    print(config_path)
-    if not os.path.exists(config_path):
-        print(f"Error: The specified path '{config_path}' does not exist.")
-        return
-
-    oc_path = os.path.dirname(config_path)
-    kext_source_path = os.path.join(script_directory, "Assets/Kexts/DirectHW.kext")
-    kext_destination_path = os.path.join(oc_path, "Kexts")
-
-    subprocess.run(["sudo", "-S", "cp", "-r", kext_source_path, kext_destination_path], input=password.encode(), check=True)
-    ocsnapshot_script_path = os.path.join(script_directory, "Assets/OCSnapshot/OCSnapshot.py")
-    subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
-    edit_config(config_path)
-    logging.info("Successfully updated boot-args and SIP settings.")
-    print("Kext and dependencies installation completed.")
-    logging.info("Please restart your computer to take effect!")
-    input("Press Enter to continue...")
 
 def read_cfg() -> str:
     cfg = ConfigParser()
@@ -589,47 +571,6 @@ def get_changelog():
     data = json.loads(response.read())
     return data['body']
 
-def run_updater():
-    clr_print_logo()
-    changelog = get_changelog()
-    logging.info("--------- UXTU4Mac Software Update ---------")
-    logging.info("A new update is available!")
-    logging.info(
-        f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}"
-    )
-    logging.info("Do you want to update? (y/n): ")
-    choice = input("Option: ").lower()
-
-    if choice == "y":        
-        subprocess.run(["python3", "Assets/Updater.py"])
-        logging.info("Update complete. Restarting the application, please close this window...")
-        command_file_path = os.path.join(os.path.dirname(__file__), 'UXTU4Mac.command')
-        subprocess.Popen(['open', command_file_path])
-        sys.exit()
-    elif choice == "n":
-        logging.info("Skipping update...")
-        sys.exit(-1)
-    else:
-        logging.info("Invalid Option.")
-        input("Press Enter to continue...")
-
-def check_updates():
-    try:
-        latest_version = get_latest_ver()
-    except:
-        clr_print_logo()
-        logging.info("No Internet connection, try again")
-    if LOCAL_VERSION < latest_version:
-        run_updater()
-    elif LOCAL_VERSION > latest_version:
-        clr_print_logo()
-        logging.info("Welcome to UXTU4Mac Beta Program.")
-        logging.info("This build may not be as stable as expected. Only for testing purposes!")
-        result = input("Do you want to continue? (y/n): ").lower()
-        if result != "y":
-            logging.info("Quitting...")
-            raise SystemExit
-
 def check_kext():
     result = subprocess.run(['kextstat'], capture_output=True, text=True)
     if 'DirectHW' not in result.stdout:
@@ -640,7 +581,111 @@ def check_kext():
     result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
     return '%7f%08%00%00' in result.stdout
 
-def run_cmd(args, user_mode):
+def install_auto():
+    clr_print_logo()
+    logging.info("Installing UXTU4Mac kext and dependencies (Auto)...")
+    script_directory = os.path.dirname(os.path.realpath(__file__))
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    password = cfg.get('User', 'Password', fallback='')
+    try:
+        subprocess.run(["sudo", "-S", "diskutil", "mount", "EFI"], input=password.encode(), check=True)
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Failed to mount EFI partition: {e}")
+        logging.error("Please run in Manual mode.")
+        input("Press Enter to continue...")
+        return
+    try:
+        kext_source_path = os.path.join(script_directory, "Assets/Kexts/DirectHW.kext")
+        kext_destination_path = "/Volumes/EFI/EFI/OC/Kexts"
+        subprocess.run(["sudo", "-S", "cp", "-r", kext_source_path, kext_destination_path], input=password.encode(), check=True)
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Failed to move DirectHW.kext: {e}")
+        logging.error("Please run in Manual mode.")
+        input("Press Enter to continue...")
+        return
+    oc_path = os.path.join("/Volumes/EFI/EFI/OC")
+    if not os.path.exists(oc_path):
+        logging.error("OC folder does not exist!")
+        input("Press Enter to continue...")
+        subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
+        return
+    config_path = os.path.join("/Volumes/EFI/EFI/OC/config.plist")
+    ocsnapshot_script_path = os.path.join(script_directory, "Assets/OCSnapshot/OCSnapshot.py")
+    subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
+    edit_config(config_path)
+    logging.info("Successfully updated boot-args and SIP settings.")
+    subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
+    logging.info("EFI partition unmounted successfully.")
+    logging.info("Kext and dependencies installation completed.")
+    logging.info("Please restart your computer for the changes to take effect.")
+    input("Press Enter to continue...")
+
+def install_manual():
+    clr_print_logo()
+    logging.info("Installing UXTU4Mac kext and dependencies (Manual)...")
+    script_directory = os.path.dirname(os.path.realpath(__file__))
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    password = cfg.get('User', 'Password', fallback='')
+    config_path = input("Please drag and drop the target plist: ").strip()
+    if not os.path.exists(config_path):
+        logging.error(f"The specified path '{config_path}' does not exist.")
+        input("Press Enter to continue...")
+        return
+    oc_path = os.path.dirname(config_path)
+    kext_source_path = os.path.join(script_directory, "Assets/Kexts/DirectHW.kext")
+    kext_destination_path = os.path.join(oc_path, "Kexts")
+    subprocess.run(["sudo", "-S", "cp", "-r", kext_source_path, kext_destination_path], input=password.encode(), check=True)
+    ocsnapshot_script_path = os.path.join(script_directory, "Assets/OCSnapshot/OCSnapshot.py")
+    subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
+    edit_config(config_path)
+    logging.info("Successfully updated boot-args and SIP settings.")
+    logging.info("Kext and dependencies installation completed.")
+    logging.info("Please restart your computer for the changes to take effect.")
+    input("Press Enter to continue...")
+
+def run_updater():
+    clr_print_logo()
+    changelog = get_changelog()
+    logging.info("--------- UXTU4Mac Software Update ---------")
+    logging.info("A new update is available!")
+    logging.info(
+        f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}"
+    )
+    logging.info("Do you want to update? (y/n): ")
+    choice = input("Option: ").lower()
+    if choice == "y":        
+        subprocess.run(["python3", "Assets/Updater.py"])
+        logging.info("Update complete. Restarting the application, please close this window...")
+        command_file_path = os.path.join(os.path.dirname(__file__), 'UXTU4Mac.command')
+        subprocess.Popen(['open', command_file_path])
+        sys.exit()
+    elif choice == "n":
+        logging.info("Skipping update...")
+        sys.exit(-1)
+    else:
+        logging.info("Invalid option. Please try again.")
+        input("Press Enter to continue...")
+
+def check_updates():
+    try:
+        latest_version = get_latest_ver()
+    except:
+        clr_print_logo()
+        logging.info("No Internet connection. Please try again.")
+    if LOCAL_VERSION < latest_version:
+        run_updater()
+    elif LOCAL_VERSION > latest_version:
+        clr_print_logo()
+        logging.info("Welcome to the UXTU4Mac Beta Program.")
+        logging.info("This build may not be as stable as expected. It's intended only for testing purposes!")
+        result = input("Do you want to continue? (y/n): ").lower()
+        if result != "y":
+            logging.info("Quitting...")
+            raise SystemExit
+
+def apply_smu(args, user_mode):
     if not check_kext():
         print("Cannot run RyzenAdj because your computer is missing DirectHW.kext or \ndebug=0x144 or SIP is not SET yet")
         input("Press Enter to continue...")
@@ -682,7 +727,7 @@ def run_cmd(args, user_mode):
             time.sleep(1)
     thread.join()
 
-def info():
+def about():
     while True:
         about_menu()
         choice = input("Option: ")
@@ -702,19 +747,19 @@ def info():
         elif choice.lower() == "b":
             break
         else:
-            logging.info("Invalid Option.")
+            logging.info("Invalid option.")
             input("Press Enter to continue...")
 
 def tester_list():
     clr_print_logo()
-    logging.info("Special thanks to our tester:")
+    logging.info("Special thanks to our testers:")
     logging.info("")
-    logging.info(" - GorouFlex for AMD Ryzen 5 4500U (Renoir)")
-    logging.info(" - nlqanh524 for AMD Ryzen 5 5500U (Lucienne)")
+    logging.info(" - GorouFlex for testing on AMD Ryzen 5 4500U (Renoir)")
+    logging.info(" - nlqanh524 for testing on AMD Ryzen 5 5500U (Lucienne)")
     logging.info("")
     input("Press Enter to continue...")
 
-def check_fip_integrity():
+def check_file_integrity():
     hash_file_url = 'https://raw.githubusercontent.com/AppleOSX/UXTU4Mac/master/Hash.txt'
     try:
         with urllib.request.urlopen(hash_file_url) as response:
@@ -728,107 +773,41 @@ def check_fip_integrity():
     current_hash = hashlib.sha256(file_content).hexdigest()
     if current_hash != expected_hash:
         clr_print_logo()
-        logging.error("File Integrity Protection: File has been modified!\n Or FIP is outdated \nExiting...")
+        logging.error("File Integrity Protection: File has been modified!\n Or FIP is outdated. \nExiting...")
         sys.exit()
     else:
         logging.info("File Integrity Protection: File integrity verified.")
 
-def settings():
-    while True:
-      setting_menu()
-      settings_choice = input("Option: ")
-      if settings_choice == "1":
-         preset_cfg()
-      elif settings_choice == "2":
-         fip_cfg()
-      elif settings_choice == "3":
-         cfu_cfg()
-      elif settings_choice == "4":
-         login_cfg()
-      elif settings_choice == "5":
-         pass_cfg()
-      elif settings_choice == "6":
-         sleep_cfg() 
-      elif settings_choice == "b":
-         break
-      else:
-       logging.info("Invalid Option.")
-       input("Press Enter to continue...")
-       
 def main():
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
     check_cfg_integrity()
-    if cfg.get('User', 'cfu', fallback = '1') == '1':
-         check_updates()
+    if cfg.get('User', 'cfu', fallback='1') == '1':
+        check_updates()
     else:
         clr_print_logo()
         logging.info("Skipping CFU...")
-    fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
-    if fip_enabled:
-        check_fip_integrity()
+    if cfg.get('User', 'FIP', fallback='0') == '1':
+        check_file_integrity()
     time = cfg.get('User', 'Time', fallback='10')
     if user_mode := read_cfg():
         if user_mode in PRESETS:
-          run_cmd(PRESETS[user_mode], user_mode)
+            apply_smu(PRESETS[user_mode], user_mode)
         else:
-          run_cmd(user_mode, user_mode)
+            apply_smu(user_mode, user_mode)
     while True:                
         main_menu()
         choice = input("Option: ")
         if choice == "1":
-            clr_print_logo()
-            logging.info("Apply Preset:")
-            logging.info("1. Load saved settings from config file")
-            logging.info("2. Load from available premade preset")
-            logging.info("3. Custom preset (Beta)")
-            logging.info("")
-            logging.info("B. Back")
-            preset_choice = input("Option: ")
-            if preset_choice == "1":
-                if user_mode := read_cfg():
-                    if user_mode in PRESETS:
-                      run_cmd(PRESETS[user_mode], user_mode)
-                    else:
-                     run_cmd(user_mode, user_mode)
-                else:
-                    logging.info("Config file is missing or invalid. Please run the script again.")
-                    input("Press Enter to continue...")
-            elif preset_choice == "2":
-                clr_print_logo()
-                logging.info("Select a premade preset:")
-                for i, mode in enumerate(PRESETS, start=1):
-                  logging.info(f"{i}. {mode}")
-                preset_number = input("Choose a preset by entering the number: ")
-                try:
-                  preset_number = int(preset_number)
-                  if 1 <= preset_number <= len(PRESETS):
-                     selected_preset = list(PRESETS.keys())[preset_number - 1]
-                     clr_print_logo()
-                     user_mode = selected_preset
-                     run_cmd(PRESETS[user_mode], user_mode)
-                  else:
-                    logging.info("Invalid Option.")
-                    input("Press Enter to continue...")
-                except ValueError:
-                 logging.info("Invalid input. Please enter a number.")
-            elif preset_choice == "3":
-              custom_args = input("Custom arguments (preset): ")
-              clr_print_logo()
-              user_mode = "Custom"
-              run_cmd(custom_args, user_mode)
-            elif preset_choice.lower() == "b":
-                  continue
-            else:
-                logging.info("Invalid Option.")
+            preset_menu()
         elif choice == "2":
-             settings()
+            settings()
         elif choice.lower() == "i":
-           install_kext_menu()
+            install_menu()
         elif choice.lower() == "h":
-            print_system_info()
+            hardware_info()
         elif choice.lower() == "a":
-            info()
+            about()
         elif choice.lower() == "q":
             clr_print_logo()
             logging.info("Quitting...")
