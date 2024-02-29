@@ -1,3 +1,9 @@
+## [0.1.6]
+
+- Reworked the entire code structure
+- Script now runs faster with better optimization
+- Fix various bugs related to loops and other function
+- Use While loop instead `threading` for `apply_smu` a.k.a `run_cmd`
 ## [0.1.52]
 
 - Fix a bug with `Welcome` section
