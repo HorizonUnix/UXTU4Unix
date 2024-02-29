@@ -1,11 +1,11 @@
 import os, sys, time, subprocess, getpass, webbrowser, logging
-import urllib.request, plistlib, threading, base64, json, hashlib
+import urllib.request, plistlib, base64, json, hashlib, select
 from configparser import ConfigParser
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.52"
+LOCAL_VERSION = "0.1.6"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -656,7 +656,7 @@ def run_updater():
     logging.info("Do you want to update? (y/n): ")
     choice = input("Option: ").lower()
     if choice == "y":        
-        subprocess.run(["python3", "Assets/Updater.py"])
+        subprocess.run(["python3", "Assets/SU.py"])
         logging.info("Update complete. Restarting the application, please close this window...")
         command_file_path = os.path.join(os.path.dirname(__file__), 'UXTU4Mac.command')
         subprocess.Popen(['open', command_file_path])
@@ -691,42 +691,32 @@ def apply_smu(args, user_mode):
         input("Press Enter to continue...")
         return
     cfg = ConfigParser()
-    sleep_time = cfg.get('User', 'Time', fallback='10')
     cfg.read(CONFIG_PATH)
+    sleep_time = cfg.get('User', 'Time', fallback='10')
     password = cfg.get('User', 'Password', fallback='')
     if args == 'Custom':
         custom_args = cfg.get('User', 'CustomArgs', fallback='')
         command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
     else:
         command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
-    stop = threading.Event()
-    def check_input():
-        while True:
-            i = input().lower()
-            if i == 'b':
-                stop.set()
-                break
-    thread = threading.Thread(target=check_input)
-    thread.start()
-    while not stop.is_set():
+    while True:
         clr_print_logo()
         logging.info(f"Using mode: {user_mode}")
         logging.info(f"Script will be reapplied every {sleep_time} seconds")
         logging.info("Press B then Enter to go back to the main menu")
-        logging.info("(Please ignore the Password error)")
+        logging.info("(Please ignore the 'Password:')")
         logging.info("------ RyzenAdj Log ------")
         result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logging.info(result.stdout.decode())
         if result.stderr:
-            logging.info(f"Error: {result.stderr.decode()}")
-        if stop.is_set():
-            break
+            logging.info(f"{result.stderr.decode()}")
         for _ in range(int(float(sleep_time))):
-            if stop.is_set():
-                break
+            if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                line = sys.stdin.readline()
+                if line.strip() == 'b':
+                    return
             time.sleep(1)
-    thread.join()
-
+            
 def about():
     while True:
         about_menu()
