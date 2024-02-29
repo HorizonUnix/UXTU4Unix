@@ -176,7 +176,7 @@ def main_menu():
 def about_menu():
     clr_print_logo()
     logging.info("About UXTU4Mac")
-    logging.info("The Loop Update (1A9F2)")
+    logging.info("The Loop Update (1B3D5)")
     logging.info("----------------------------")
     logging.info("Maintainer: GorouFlex")
     logging.info("CLI: GorouFlex")
