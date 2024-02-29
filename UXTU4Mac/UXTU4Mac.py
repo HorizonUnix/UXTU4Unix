@@ -5,7 +5,7 @@ from configparser import ConfigParser
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.6"
+LOCAL_VERSION = "0.1.61"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -155,10 +155,10 @@ def hardware_info():
     else:
         print(" - debug=0x144: OK")
     result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
-    if '%7f%08%00%00' not in result.stdout:
-        print(" - 7F080000 SIP: Not set")
+    if '%03%08%00%00' not in result.stdout:
+        print(" - 03080000 SIP: Not set")
     else:
-        print(" - 7F080000 SIP: OK")    
+        print(" - 03080000 SIP: OK")    
     logging.info("")
     logging.info("If you fail to retrieve your hardware information, run `sudo purge` \nor remove RestrictEvent.kext")
     input("Press Enter to continue...")
@@ -169,7 +169,6 @@ def main_menu():
     logging.info("2. Settings")
     logging.info("")
     logging.info("H. Hardware Information")
-    logging.info("I. Install UXTU4Mac Kexts and Dependencies")
     logging.info("A. About UXTU4Mac")
     logging.info("Q. Quit")
 
@@ -211,12 +210,13 @@ def setting_menu():
     clr_print_logo()
     logging.info("------------ Settings ----------")
     logging.info("1. Preset Setting")
-    logging.info("2. FIP Setting")
-    logging.info("3. CFU Setting")
-    logging.info("4. Login Items Setting")
-    logging.info("5. Sudo Password Setting")
-    logging.info("6. Sleep Time Setting")
+    logging.info("2. Sleep Time Setting")
+    logging.info("3. Login Items Setting")
+    logging.info("4. CFU Setting")
+    logging.info("5. FIP Setting")
+    logging.info("6. Sudo Password Setting")
     logging.info("")
+    logging.info("I. Install UXTU4Mac Kexts and Dependencies")
     logging.info("B. Back")
 
 def settings():
@@ -226,15 +226,17 @@ def settings():
       if settings_choice == "1":
          preset_cfg()
       elif settings_choice == "2":
-         fip_cfg()
+         sleep_cfg()
       elif settings_choice == "3":
-         cfu_cfg()
-      elif settings_choice == "4":
          login_cfg()
+      elif settings_choice == "4":
+         cfu_cfg()
       elif settings_choice == "5":
-         pass_cfg()
+         fip_cfg()
       elif settings_choice == "6":
-         sleep_cfg() 
+         pass_cfg()
+      elif settings_choice.lower() == "i":
+         install_menu()
       elif settings_choice.lower() == "b":
          break
       else:
@@ -339,13 +341,15 @@ def pass_cfg():
             input("Press Enter to Continue...")
 
 def login_cfg():
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
     while True:
         clr_print_logo()
         logging.info("------------ Login Items Setting ---------")
         logging.info("(Run Script with macOS Every Startup)")
-        login_enabled = cfg.get('User', 'LoginItems', fallback='1') == '1'
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        command_file = os.path.join(current_dir, 'UXTU4Mac.command')
+        command_file_name = os.path.basename(command_file)
+        check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
+        login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
         if login_enabled:
             logging.info("Login Items Status: OK")
         else:
@@ -356,24 +360,26 @@ def login_cfg():
         logging.info("")
         logging.info("B. Back")
         choice = input("Option: ")
-        current_dir = os.path.dirname(os.path.realpath(__file__))
-        command_file = os.path.join(current_dir, 'UXTU4Mac.command')
         if choice == "1":
-            cfg.set('User', 'LoginItems', '1')
-            command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+            if not login_enabled:
+               command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+               subprocess.call(command, shell=True)
+            else:
+                logging.info("You already add this script to Login Items")
+                input("Press Enter to Continue")
         elif choice == "2":
-            cfg.set('User', 'LoginItems', '0')
-            command_file_name = os.path.basename(command_file)
-            command = f"osascript -e 'tell application \"System Events\" to delete login item \"{command_file_name}\"'"
+            if login_enabled:
+              command = f"osascript -e 'tell application \"System Events\" to delete login item \"{command_file_name}\"'"
+              subprocess.call(command, shell=True)
+            else:
+              logging.info("Cannot remove this script because it's does not exist on Login Items")
+              input("Press Enter to Continue")
         elif choice.lower() == "b":
             break
         else:
             logging.info("Invalid Option.")
             input("Press Enter to Continue...")
             continue
-        with open(CONFIG_PATH, 'w') as config_file:
-            cfg.write(config_file)
-        subprocess.call(command, shell=True)
 
 def cfu_cfg():
     cfg = ConfigParser()
@@ -504,25 +510,22 @@ def welcome_tutorial():
             break
         else:
             logging.info("Incorrect sudo password. Please try again.")
-    login_items_setting = cfg.get('User', 'LoginItems', fallback='0')
-    if login_items_setting == '0':
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    command_file = os.path.join(current_dir, 'UXTU4Mac.command')
+    check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file}"
+    login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
+    if not login_enabled:
         start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
         if start_with_macos == 'y':
-            cfg.set('User', 'LoginItems', '1')
-            current_dir = os.path.dirname(os.path.realpath(__file__))
-            command_file = os.path.join(current_dir, 'UXTU4Mac.command')
             command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
             subprocess.call(command, shell=True)
-        else:
-            cfg.set('User', 'LoginItems', '0')
-        
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
     try:
         cfg.set('User', 'Password', password)
         cfg.set('User', 'CFU', '1')
         cfg.set('User', 'FIP', '0')
-        cfg.set('User', 'Time', '10')
+        cfg.set('User', 'Time', '30')
     except ValueError:
         logging.info("Invalid Option.")
         sys.exit(-1)
@@ -542,7 +545,7 @@ def edit_config(config_path):
                 config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82'][
                     'boot-args'
                 ] = f'{boot_args} debug=0x144'
-        config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['csr-active-config'] = base64.b64decode('fwgAAA==')
+        config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['csr-active-config'] = base64.b64decode('AwgAAA==')
     with open(config_path, 'wb') as f:
         plistlib.dump(config, f)
 
@@ -557,7 +560,7 @@ def check_cfg_integrity() -> None:
         return
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
-    required_keys = ['password', 'loginitems', 'cfu', 'fip', 'time', 'mode']
+    required_keys = ['password', 'cfu', 'fip', 'time', 'mode']
     if not cfg.has_section('User') or any(key not in cfg['User'] for key in required_keys):
         welcome_tutorial()
 
@@ -579,7 +582,7 @@ def check_kext():
     if 'debug=0x144' not in result.stdout:
         return False
     result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
-    return '%7f%08%00%00' in result.stdout
+    return '%03%08%00%00' in result.stdout
 
 def install_auto():
     clr_print_logo()
@@ -687,7 +690,7 @@ def check_updates():
 
 def apply_smu(args, user_mode):
     if not check_kext():
-        print("Cannot run RyzenAdj because your computer is missing DirectHW.kext or \ndebug=0x144 or SIP is not SET yet")
+        print("Cannot run RyzenAdj because your computer is missing DirectHW.kext or \ndebug=0x144 or 03080000 SIP is not SET yet\nPlease run Install UXTU4Mac Kexts and Dependencies under Setting \nand restart after install.")
         input("Press Enter to continue...")
         return
     cfg = ConfigParser()
@@ -792,8 +795,6 @@ def main():
             preset_menu()
         elif choice == "2":
             settings()
-        elif choice.lower() == "i":
-            install_menu()
         elif choice.lower() == "h":
             hardware_info()
         elif choice.lower() == "a":
