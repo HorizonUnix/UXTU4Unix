@@ -1,3 +1,9 @@
+## [0.1.61]
+
+- Rework `Settings` menu
+- Proper support for Login Items
+- Change SIP flags from `7F080000` to `03080000`
+### Please reinstall your kext and SIP through Settings -> Install UXTU4Mac Kexts
 ## [0.1.6]
 
 - Reworked the entire code structure
