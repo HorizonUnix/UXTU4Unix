@@ -512,7 +512,8 @@ def welcome_tutorial():
             logging.info("Incorrect sudo password. Please try again.")
     current_dir = os.path.dirname(os.path.realpath(__file__))
     command_file = os.path.join(current_dir, 'UXTU4Mac.command')
-    check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file}"
+    command_file_name = os.path.basename(command_file)
+    check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
     login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
     if not login_enabled:
         start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
