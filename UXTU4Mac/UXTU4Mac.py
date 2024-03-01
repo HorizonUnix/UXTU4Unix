@@ -5,7 +5,7 @@ from configparser import ConfigParser
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.61"
+LOCAL_VERSION = "0.1.62"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -155,10 +155,10 @@ def hardware_info():
     else:
         print(" - debug=0x144: OK")
     result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
-    if '%03%08%00%00' not in result.stdout:
-        print(" - 03080000 SIP: Not set")
+    if '%0b%08%00%00' not in result.stdout:
+        print(" - 0B080000 SIP: Not set")
     else:
-        print(" - 03080000 SIP: OK")    
+        print(" - 0B080000 SIP: OK")    
     logging.info("")
     logging.info("If you fail to retrieve your hardware information, run `sudo purge` \nor remove RestrictEvent.kext")
     input("Press Enter to continue...")
@@ -175,7 +175,7 @@ def main_menu():
 def about_menu():
     clr_print_logo()
     logging.info("About UXTU4Mac")
-    logging.info("The Loop Update (1B3D5)")
+    logging.info("The Loop Update (1CADE5)")
     logging.info("----------------------------")
     logging.info("Maintainer: GorouFlex")
     logging.info("CLI: GorouFlex")
@@ -546,7 +546,7 @@ def edit_config(config_path):
                 config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82'][
                     'boot-args'
                 ] = f'{boot_args} debug=0x144'
-        config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['csr-active-config'] = base64.b64decode('AwgAAA==')
+        config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['csr-active-config'] = base64.b64decode('CwgAAA==')
     with open(config_path, 'wb') as f:
         plistlib.dump(config, f)
 
@@ -583,7 +583,7 @@ def check_kext():
     if 'debug=0x144' not in result.stdout:
         return False
     result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
-    return '%03%08%00%00' in result.stdout
+    return '%0b%08%00%00' in result.stdout
 
 def install_auto():
     clr_print_logo()
@@ -678,6 +678,7 @@ def check_updates():
     except:
         clr_print_logo()
         logging.info("No Internet connection. Please try again.")
+        raise SystemExit
     if LOCAL_VERSION < latest_version:
         run_updater()
     elif LOCAL_VERSION > latest_version:
@@ -691,7 +692,7 @@ def check_updates():
 
 def apply_smu(args, user_mode):
     if not check_kext():
-        print("Cannot run RyzenAdj because your computer is missing DirectHW.kext or \ndebug=0x144 or 03080000 SIP is not SET yet\nPlease run Install UXTU4Mac Kexts and Dependencies under Setting \nand restart after install.")
+        print("Cannot run RyzenAdj because your computer is missing DirectHW.kext or \ndebug=0x144 or 0B080000 SIP is not SET yet\nPlease run Install UXTU4Mac Kexts and Dependencies under Setting \nand restart after install.")
         input("Press Enter to continue...")
         return
     cfg = ConfigParser()
@@ -717,7 +718,7 @@ def apply_smu(args, user_mode):
         for _ in range(int(float(sleep_time))):
             if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                 line = sys.stdin.readline()
-                if line.strip() == 'b':
+                if line.lower().strip() == 'b':
                     return
             time.sleep(1)
             
