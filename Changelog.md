@@ -1,3 +1,9 @@
+## [0.1.62]
+
+- Fix a bug with CFU
+- Fix a bug with `apply_smu`
+- Change default SIP flags from `03080000` to `0B080000` which higher than `03080000`
+### Please reinstall your kext and SIP through Settings -> Install UXTU4Mac Kexts
 ## [0.1.61]
 
 - Rework `Settings` menu
