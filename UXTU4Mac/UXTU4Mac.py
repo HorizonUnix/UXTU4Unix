@@ -1,4 +1,4 @@
-import os, time, subprocess, getpass, webbrowser, logging
+import os, time, subprocess, getpass, webbrowser, logging, sys
 import urllib.request, plistlib, base64, json, hashlib, select
 from configparser import ConfigParser
 
@@ -25,7 +25,7 @@ cfg.read(CONFIG_PATH)
 
 def clear():
     os.system('clear')
-    logging.info("""
+    logging.info(r"""
      _   ___  _______ _   _ _ _  __  __         
     | | | \ \/ /_   _| | | | | ||  \/  |__ _ __ 
     | |_| |>  <  | | | |_| |_  _| |\/| / _` / _|
@@ -153,7 +153,7 @@ def hardware_info():
     if '%0b%08%00%00' not in result.stdout:
         logging.info(" - 0B080000 SIP: Not set")
     else:
-        logging.infoß(" - 0B080000 SIP: OK")    
+        logging.info(" - 0B080000 SIP: OK")    
     logging.info("")
     logging.info("If you fail to retrieve your hardware information, run `sudo purge` \nor remove RestrictEvent.kext")
     input("Press Enter to continue...")
@@ -747,27 +747,28 @@ def main():
             apply_smu(PRESETS[user_mode], user_mode)
         else:
             apply_smu(user_mode, user_mode)
-    while True:                
+
+    while True:
         clear()
+        options = {
+            "1": preset_menu,
+            "2": settings,
+            "h": hardware_info,
+            "a": about,
+            "q": lambda: sys.exit("Quitting..."),
+        }
+
         logging.info("1. Apply Preset")
         logging.info("2. Settings")
         logging.info("")
         logging.info("H. Hardware Information")
         logging.info("A. About UXTU4Mac")
         logging.info("Q. Quit")
-        choice = input("Option: ")
-        if choice == "1":
-            preset_menu()
-        elif choice == "2":
-            settings()
-        elif choice.lower() == "h":
-            hardware_info()
-        elif choice.lower() == "a":
-            about()
-        elif choice.lower() == "q":
-            clear()
-            logging.info("Quitting...")
-            raise SystemExit
+
+        choice = input("Option: ").lower()
+        action = options.get(choice)
+        if action:
+            action()
         else:
             logging.info("Invalid Option.")
             input("Press Enter to continue...")
