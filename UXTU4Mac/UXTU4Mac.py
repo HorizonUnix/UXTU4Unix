@@ -14,30 +14,26 @@ PRESETS = {
     "Auto": "--power-saving"
 }
 
-if not os.path.exists('Logs'):
-    os.mkdir('Logs')
+os.makedirs('Logs', exist_ok=True)
 logging.basicConfig(filename='Logs/UXTU4Mac.log', filemode='w', encoding='utf-8',
                     level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S')
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-logging.getLogger().addHandler(console_handler)
+logging.getLogger().addHandler(logging.StreamHandler())
 
-def clr_print_logo():
+cfg = ConfigParser()
+cfg.read(CONFIG_PATH)
+
+def clear():
     os.system('clear')
     logging.info("""
-    ██╗   ██╗██╗  ██╗████████╗██╗   ██╗██╗  ██╗███╗   ███╗ █████╗  ██████╗
-    ██║   ██║╚██╗██╔╝╚══██╔══╝██║   ██║██║  ██║████╗ ████║██╔══██╗██╔════╝
-    ██║   ██║ ╚███╔╝    ██║   ██║   ██║███████║██╔████╔██║███████║██║
-    ██║   ██║ ██╔██╗    ██║   ██║   ██║╚════██║██║╚██╔╝██║██╔══██║██║
-    ╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝     ██║██║ ╚═╝ ██║██║  ██║╚██████╗
-     ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝      ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝
+     _   ___  _______ _   _ _ _  __  __         
+    | | | \ \/ /_   _| | | | | ||  \/  |__ _ __ 
+    | |_| |>  <  | | | |_| |_  _| |\/| / _` / _|
+     \___//_/\_\ |_|  \___/  |_||_|  |_\__,_\__|                                         
     Version: {}
     """.format(LOCAL_VERSION))
     
 def get_hardware_info(command, use_sudo=False):
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
     password = cfg.get('User', 'Password', fallback='')
     if use_sudo:
         command = f"sudo -S {command}"
@@ -49,14 +45,14 @@ def get_hardware_info(command, use_sudo=False):
     return output.decode('utf-8').strip()
 
 def hardware_info():
-    clr_print_logo()
-    logging.info("Device information:")
+    clear()
+    logging.info("Device Information:")
     logging.info(f' - Name: {get_hardware_info("scutil --get ComputerName")}')
     logging.info(f' - Model (SMBios): {get_hardware_info("sysctl -n hw.model")}')
     logging.info(
         f""" - {get_hardware_info("system_profiler SPHardwareDataType | grep 'Serial Number'")}"""
     )
-    logging.info(f' - macOS: {get_hardware_info("sysctl -n kern.osproductversion")} ({get_hardware_info("sysctl -n kern.osversion")})')
+    logging.info(f' - macOS version: {get_hardware_info("sysctl -n kern.osproductversion")} ({get_hardware_info("sysctl -n kern.osversion")})')
 
     logging.info("\nProcessor Information:")
     logging.info(
@@ -78,14 +74,13 @@ def hardware_info():
     )
     base_clock = float(get_hardware_info("sysctl -n hw.cpufrequency_max")) / (10**9)
     logging.info(" - Base clock: {:.2f} GHz".format(base_clock))
-    logging.info(f' - CPU Vendor: {get_hardware_info("sysctl -n machdep.cpu.vendor")}')
-    logging.info(f' - Family model: {get_hardware_info("sysctl -n machdep.cpu.family")}')
+    logging.info(f' - Vendor: {get_hardware_info("sysctl -n machdep.cpu.vendor")}')
     logging.info(
-        f' - CPU instruction: {get_hardware_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]}'
+        f' - Instruction: {get_hardware_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]}'
     )
-    logging.info("\nMemory information:")
+    logging.info("\nMemory Information:")
     memory = float(get_hardware_info("sysctl -n hw.memsize")) / (1024**3)
-    logging.info(" - Total of Ram: {:.2f} GB".format(memory))
+    logging.info(" - Total of RAM: {:.2f} GB".format(memory))
     ram_info = get_hardware_info("system_profiler SPMemoryDataType")
     ram_info_lines = ram_info.split('\n')
     ram_slot_names = ["BANK","SODIMM","DIMM"]
@@ -146,82 +141,84 @@ def hardware_info():
     logging.info("UXTU4Mac dependencies:")
     result = subprocess.run(['kextstat'], capture_output=True, text=True)
     if 'DirectHW' not in result.stdout:
-        print(" - DirectHW.kext: Missing")
+        logging.info(" - DirectHW.kext: Missing")
     else:
-        print(" - DirectHW.kext: OK")
+        logging.info(" - DirectHW.kext: OK")
     result = subprocess.run(['nvram', 'boot-args'], capture_output=True, text=True)
     if 'debug=0x144' not in result.stdout:
-        print(" - debug=0x144: Missing")
+        logging.info(" - debug=0x144: Missing")
     else:
-        print(" - debug=0x144: OK")
+        logging.info(" - debug=0x144: OK")
     result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
     if '%0b%08%00%00' not in result.stdout:
-        print(" - 0B080000 SIP: Not set")
+        logging.info(" - 0B080000 SIP: Not set")
     else:
-        print(" - 0B080000 SIP: OK")    
+        logging.infoß(" - 0B080000 SIP: OK")    
     logging.info("")
     logging.info("If you fail to retrieve your hardware information, run `sudo purge` \nor remove RestrictEvent.kext")
     input("Press Enter to continue...")
 
-def main_menu():
-    clr_print_logo()
-    logging.info("1. Apply Preset")
-    logging.info("2. Settings")
+def about():
+    while True:
+        clear()
+        logging.info("About UXTU4Mac")
+        logging.info("The Loop Update (1GC921P)")
+        logging.info("----------------------------")
+        logging.info("Maintainer: GorouFlex")
+        logging.info("CLI: GorouFlex")
+        logging.info("GUI: NotchApple1703")
+        logging.info("Advisor: NotchApple1703")
+        logging.info("OCSnapshot: CorpNewt")
+        logging.info("Command file: CorpNewt")
+        logging.info("----------------------------")
+        logging.info("1. Open GitHub Repository")
+        logging.info("2. Show Changelog")
+        logging.info("T. Tester List")
+        logging.info(f"F. Force Update to the Latest Version ({get_latest_ver()})")
+        logging.info("")
+        logging.info("B. Back")
+        choice = input("Option: ")
+        if choice == "1":
+            webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac")
+        elif choice == "2":
+            clear()
+            changelog = get_changelog()
+            logging.info(
+                f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}"
+            )
+            input("Press Enter to continue...")
+        elif choice.lower() == "f":
+            updater()
+        elif choice.lower() == "t":
+            tester_list()
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
+
+def tester_list():
+    clear()
+    logging.info("Special thanks to our testers:")
     logging.info("")
-    logging.info("H. Hardware Information")
-    logging.info("A. About UXTU4Mac")
-    logging.info("Q. Quit")
-
-def about_menu():
-    clr_print_logo()
-    logging.info("About UXTU4Mac")
-    logging.info("The Loop Update (1CADE5)")
-    logging.info("----------------------------")
-    logging.info("Maintainer: GorouFlex")
-    logging.info("CLI: GorouFlex")
-    logging.info("GUI: NotchApple1703")
-    logging.info("OCSnapshot: CorpNewt")
-    logging.info("----------------------------")
-    logging.info("1. Open GitHub Repository")
-    logging.info("2. Show Changelog")
-    logging.info("T. Tester List")
-    logging.info(f"F. Force Update to the Latest Version ({get_latest_ver()})")
+    logging.info(" - GorouFlex for testing on AMD Ryzen 5 4500U (Renoir)")
+    logging.info(" - nlqanh524 for testing on AMD Ryzen 5 5500U (Lucienne)")
     logging.info("")
-    logging.info("B. Back")
-
-def install_menu():
-    clr_print_logo()
-    logging.info("Installing UXTU4Mac kext and dependencies\n")
-    logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)")
-    logging.info("2. Manual install (Specify your config.plist path)\n")
-    logging.info("B. Back\n")
-    choice = input("Option (default is 1): ")
-    if choice == "1":
-        install_auto()
-    elif choice == "2":
-        install_manual()
-    elif choice.lower() == "b":
-        return
-    else:
-        logging.info("Invalid option. Please try again.")
-        input("Press Enter to continue...")
-
-def setting_menu():
-    clr_print_logo()
-    logging.info("------------ Settings ----------")
-    logging.info("1. Preset Setting")
-    logging.info("2. Sleep Time Setting")
-    logging.info("3. Login Items Setting")
-    logging.info("4. CFU Setting")
-    logging.info("5. FIP Setting")
-    logging.info("6. Sudo Password Setting")
-    logging.info("")
-    logging.info("I. Install UXTU4Mac Kexts and Dependencies")
-    logging.info("B. Back")
-
+    input("Press Enter to continue...")
+    
 def settings():
     while True:
-      setting_menu()
+      clear()
+      logging.info("------------ Settings ----------")
+      logging.info("1. Preset Setting")
+      logging.info("2. Sleep Time Setting")
+      logging.info("3. Login Items Setting")
+      logging.info("4. CFU Setting")
+      logging.info("5. FIP Setting")
+      logging.info("6. Sudo Password Setting")
+      logging.info("")
+      logging.info("I. Install UXTU4Mac Kexts and Dependencies")
+      logging.info("B. Back")
       settings_choice = input("Option: ")
       if settings_choice == "1":
          preset_cfg()
@@ -244,7 +241,7 @@ def settings():
        input("Press Enter to continue...")
 
 def preset_menu():
-    clr_print_logo()
+    clear()
     logging.info("Apply Preset:")
     logging.info("1. Load saved settings from config file")
     logging.info("2. Load from available premade preset")
@@ -262,7 +259,7 @@ def preset_menu():
             logging.info("Config file is missing or invalid. Please run the script again.")
             input("Press Enter to continue...")
     elif preset_choice == "2":
-        clr_print_logo()
+        clear()
         logging.info("Select a premade preset:")
         for i, mode in enumerate(PRESETS, start=1):
             logging.info(f"{i}. {mode}")
@@ -271,7 +268,7 @@ def preset_menu():
             preset_number = int(preset_number)
             if 1 <= preset_number <= len(PRESETS):
                 selected_preset = list(PRESETS.keys())[preset_number - 1]
-                clr_print_logo()
+                clear()
                 user_mode = selected_preset
                 apply_smu(PRESETS[user_mode], user_mode)
             else:
@@ -281,7 +278,7 @@ def preset_menu():
             logging.info("Invalid input. Please enter a number.")
     elif preset_choice == "3":
         custom_args = input("Custom arguments (preset): ")
-        clr_print_logo()
+        clear()
         user_mode = "Custom"
         apply_smu(custom_args, user_mode)
     elif preset_choice.lower() == "b":
@@ -290,13 +287,11 @@ def preset_menu():
         logging.info("Invalid Option.")
         
 def sleep_cfg():
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
     while True:
-        clr_print_logo()
+        clear()
         logging.info("------------ Sleep Time Setting ---------")
         logging.info("(Sleep time between the next application to SMU using ryzenAdj)")
-        time = cfg.get('User', 'Time', fallback='10')
+        time = cfg.get('User', 'Time', fallback='30')
         logging.info(f"Sleep Time: {time}")
         logging.info("\n1. Change Sleep Time\n\nB. Back")
         choice = input("Option: ")
@@ -312,10 +307,8 @@ def sleep_cfg():
             input("Press Enter to Continue...")
     
 def pass_cfg():
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
     while True:
-        clr_print_logo()
+        clear()
         logging.info("------------ Sudo Password Setting ---------")
         pswd = cfg.get('User', 'Password', fallback='')
         logging.info(f"Current Sudo (Login) Password: {pswd}")
@@ -342,7 +335,7 @@ def pass_cfg():
 
 def login_cfg():
     while True:
-        clr_print_logo()
+        clear()
         logging.info("------------ Login Items Setting ---------")
         logging.info("(Run Script with macOS Every Startup)")
         current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -382,10 +375,8 @@ def login_cfg():
             continue
 
 def cfu_cfg():
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
     while True:
-        clr_print_logo()
+        clear()
         logging.info("------------ Check for Updates Setting ---------")
         cfu_enabled = cfg.get('User', 'CFU', fallback='1') == '1'
         if cfu_enabled:
@@ -418,10 +409,8 @@ def cfu_cfg():
             cfg.write(config_file)
 
 def fip_cfg():
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
     while True:
-        clr_print_logo()
+        clear()
         logging.info("------------ File Integrity Protection Setting ------------")
         fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
         if fip_enabled:
@@ -454,9 +443,7 @@ def fip_cfg():
             cfg.write(config_file)
 
 def preset_cfg():
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
-    clr_print_logo()
+    clear()
     logging.info("------------ Preset Setting ------------")
     logging.info("Premade preset:")
     for i, mode in enumerate(PRESETS, start=1):
@@ -490,17 +477,15 @@ def preset_cfg():
         cfg.write(config_file)
     
 def welcome_tutorial():
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
     if not cfg.has_section('User'):
         cfg.add_section('User')
-    clr_print_logo()
+    clear()
     logging.info("Welcome to UXTU4Mac!")
     logging.info("Created by GorouFlex, designed for AMD Zen-based processors on macOS.")
     logging.info("Based on RyzenAdj and inspired by UXTU.")
     logging.info("Let's get started with some initial setup.")
     input("Press Enter to continue...")
-    clr_print_logo()
+    clear()
     while True:
         subprocess.run("sudo -k", shell=True)
         password = getpass.getpass("Enter your sudo (login) password: ")
@@ -533,7 +518,7 @@ def welcome_tutorial():
     with open(CONFIG_PATH, 'w') as config_file:
         cfg.write(config_file)
     preset_cfg()
-    clr_print_logo()
+    clear()
     install_menu()
 
 def edit_config(config_path):
@@ -551,8 +536,6 @@ def edit_config(config_path):
         plistlib.dump(config, f)
 
 def read_cfg() -> str:
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
     return cfg.get('User', 'Mode', fallback='')
 
 def check_cfg_integrity() -> None:
@@ -575,7 +558,7 @@ def get_changelog():
     data = json.loads(response.read())
     return data['body']
 
-def check_kext():
+def check_run():
     result = subprocess.run(['kextstat'], capture_output=True, text=True)
     if 'DirectHW' not in result.stdout:
         return False
@@ -585,12 +568,27 @@ def check_kext():
     result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
     return '%0b%08%00%00' in result.stdout
 
+def install_menu():
+    clear()
+    logging.info("Installing UXTU4Mac kext and dependencies\n")
+    logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)")
+    logging.info("2. Manual install (Specify your config.plist path)\n")
+    logging.info("B. Back\n")
+    choice = input("Option (default is 1): ")
+    if choice == "1":
+        install_auto()
+    elif choice == "2":
+        install_manual()
+    elif choice.lower() == "b":
+        return
+    else:
+        logging.info("Invalid option. Please try again.")
+        input("Press Enter to continue...")
+        
 def install_auto():
-    clr_print_logo()
+    clear()
     logging.info("Installing UXTU4Mac kext and dependencies (Auto)...")
     script_directory = os.path.dirname(os.path.realpath(__file__))
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
     password = cfg.get('User', 'Password', fallback='')
     try:
         subprocess.run(["sudo", "-S", "diskutil", "mount", "EFI"], input=password.encode(), check=True)
@@ -626,11 +624,9 @@ def install_auto():
     input("Press Enter to continue...")
 
 def install_manual():
-    clr_print_logo()
+    clear()
     logging.info("Installing UXTU4Mac kext and dependencies (Manual)...")
     script_directory = os.path.dirname(os.path.realpath(__file__))
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
     password = cfg.get('User', 'Password', fallback='')
     config_path = input("Please drag and drop the target plist: ").strip()
     if not os.path.exists(config_path):
@@ -649,8 +645,8 @@ def install_manual():
     logging.info("Please restart your computer for the changes to take effect.")
     input("Press Enter to continue...")
 
-def run_updater():
-    clr_print_logo()
+def updater():
+    clear()
     changelog = get_changelog()
     logging.info("--------- UXTU4Mac Software Update ---------")
     logging.info("A new update is available!")
@@ -677,13 +673,13 @@ def check_updates():
     try:
         latest_version = get_latest_ver()
     except:
-        clr_print_logo()
+        clear()
         logging.info("No Internet connection. Please try again.")
         raise SystemExit
     if LOCAL_VERSION < latest_version:
-        run_updater()
+        updater()
     elif LOCAL_VERSION > latest_version:
-        clr_print_logo()
+        clear()
         logging.info("Welcome to the UXTU4Mac Beta Program.")
         logging.info("This build may not be as stable as expected. It's intended only for testing purposes!")
         result = input("Do you want to continue? (y/n): ").lower()
@@ -692,13 +688,12 @@ def check_updates():
             raise SystemExit
 
 def apply_smu(args, user_mode):
-    if not check_kext():
-        print("Cannot run RyzenAdj because your computer is missing DirectHW.kext or \ndebug=0x144 or 0B080000 SIP is not SET yet\nPlease run Install UXTU4Mac Kexts and Dependencies under Setting \nand restart after install.")
+    if not check_run():
+        clear()
+        logging.info("Cannot run RyzenAdj because your computer is missing DirectHW.kext or \ndebug=0x144 or 0B080000 SIP is not SET yet\nPlease run Install UXTU4Mac Kexts and Dependencies under Setting \nand restart after install.")
         input("Press Enter to continue...")
         return
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
-    sleep_time = cfg.get('User', 'Time', fallback='10')
+    sleep_time = cfg.get('User', 'Time', fallback='30')
     password = cfg.get('User', 'Password', fallback='')
     if args == 'Custom':
         custom_args = cfg.get('User', 'CustomArgs', fallback='')
@@ -706,7 +701,7 @@ def apply_smu(args, user_mode):
     else:
         command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
     while True:
-        clr_print_logo()
+        clear()
         logging.info(f"Using mode: {user_mode}")
         logging.info(f"Script will be reapplied every {sleep_time} seconds")
         logging.info("Press B then Enter to go back to the main menu")
@@ -723,76 +718,43 @@ def apply_smu(args, user_mode):
                     return
             time.sleep(1)
             
-def about():
-    while True:
-        about_menu()
-        choice = input("Option: ")
-        if choice == "1":
-            webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac")
-        elif choice == "2":
-            clr_print_logo()
-            changelog = get_changelog()
-            logging.info(
-                f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}"
-            )
-            input("Press Enter to continue...")
-        elif choice.lower() == "f":
-            run_updater()
-        elif choice.lower() == "t":
-            tester_list()
-        elif choice.lower() == "b":
-            break
-        else:
-            logging.info("Invalid option.")
-            input("Press Enter to continue...")
-
-def tester_list():
-    clr_print_logo()
-    logging.info("Special thanks to our testers:")
-    logging.info("")
-    logging.info(" - GorouFlex for testing on AMD Ryzen 5 4500U (Renoir)")
-    logging.info(" - nlqanh524 for testing on AMD Ryzen 5 5500U (Lucienne)")
-    logging.info("")
-    input("Press Enter to continue...")
-
 def check_file_integrity():
     hash_file_url = 'https://raw.githubusercontent.com/AppleOSX/UXTU4Mac/master/Hash.txt'
     try:
         with urllib.request.urlopen(hash_file_url) as response:
             expected_hash = response.read().decode().strip()
     except urllib.error.URLError:
-        clr_print_logo()
+        clear()
         logging.error(f"File Integrity Protection: {hash_file_url} not found. Exiting...")
         raise SystemExit
     with open(__file__, 'rb') as file:
         file_content = file.read()
     current_hash = hashlib.sha256(file_content).hexdigest()
     if current_hash != expected_hash:
-        clr_print_logo()
+        clear()
         logging.error("File Integrity Protection: File has been modified!\n Or FIP is outdated. \nExiting...")
         raise SystemExit
-    else:
-        logging.info("File Integrity Protection: File integrity verified.")
 
 def main():
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
     check_cfg_integrity()
     if cfg.get('User', 'cfu', fallback='1') == '1':
         check_updates()
-    else:
-        clr_print_logo()
-        logging.info("Skipping CFU...")
     if cfg.get('User', 'FIP', fallback='0') == '1':
         check_file_integrity()
-    time = cfg.get('User', 'Time', fallback='10')
+    time = cfg.get('User', 'Time', fallback='30')
     if user_mode := read_cfg():
         if user_mode in PRESETS:
             apply_smu(PRESETS[user_mode], user_mode)
         else:
             apply_smu(user_mode, user_mode)
     while True:                
-        main_menu()
+        clear()
+        logging.info("1. Apply Preset")
+        logging.info("2. Settings")
+        logging.info("")
+        logging.info("H. Hardware Information")
+        logging.info("A. About UXTU4Mac")
+        logging.info("Q. Quit")
         choice = input("Option: ")
         if choice == "1":
             preset_menu()
@@ -803,7 +765,7 @@ def main():
         elif choice.lower() == "a":
             about()
         elif choice.lower() == "q":
-            clr_print_logo()
+            clear()
             logging.info("Quitting...")
             raise SystemExit
         else:
