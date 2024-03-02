@@ -1,11 +1,11 @@
-import os, sys, time, subprocess, getpass, webbrowser, logging
+import os, time, subprocess, getpass, webbrowser, logging
 import urllib.request, plistlib, base64, json, hashlib, select
 from configparser import ConfigParser
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.62"
+LOCAL_VERSION = "0.1.63"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -529,7 +529,7 @@ def welcome_tutorial():
         cfg.set('User', 'Time', '30')
     except ValueError:
         logging.info("Invalid Option.")
-        sys.exit(-1)
+        raise SystemExit
     with open(CONFIG_PATH, 'w') as config_file:
         cfg.write(config_file)
     preset_cfg()
@@ -661,16 +661,17 @@ def run_updater():
     choice = input("Option: ").lower()
     if choice == "y":        
         subprocess.run(["python3", "Assets/SU.py"])
+        logging.info("Updating...")
         logging.info("Update complete. Restarting the application, please close this window...")
         command_file_path = os.path.join(os.path.dirname(__file__), 'UXTU4Mac.command')
         subprocess.Popen(['open', command_file_path])
-        sys.exit()
+        raise SystemExit
     elif choice == "n":
         logging.info("Skipping update...")
-        sys.exit(-1)
+        raise SystemExit
     else:
         logging.info("Invalid option. Please try again.")
-        input("Press Enter to continue...")
+        raise SystemExit
 
 def check_updates():
     try:
@@ -762,14 +763,14 @@ def check_file_integrity():
     except urllib.error.URLError:
         clr_print_logo()
         logging.error(f"File Integrity Protection: {hash_file_url} not found. Exiting...")
-        sys.exit()
+        raise SystemExit
     with open(__file__, 'rb') as file:
         file_content = file.read()
     current_hash = hashlib.sha256(file_content).hexdigest()
     if current_hash != expected_hash:
         clr_print_logo()
         logging.error("File Integrity Protection: File has been modified!\n Or FIP is outdated. \nExiting...")
-        sys.exit()
+        raise SystemExit
     else:
         logging.info("File Integrity Protection: File integrity verified.")
 
@@ -804,7 +805,7 @@ def main():
         elif choice.lower() == "q":
             clr_print_logo()
             logging.info("Quitting...")
-            sys.exit()
+            raise SystemExit
         else:
             logging.info("Invalid Option.")
             input("Press Enter to continue...")
