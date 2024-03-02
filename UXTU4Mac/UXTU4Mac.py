@@ -5,7 +5,7 @@ from configparser import ConfigParser
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.63"
+LOCAL_VERSION = "0.1.7"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -747,7 +747,6 @@ def main():
             apply_smu(PRESETS[user_mode], user_mode)
         else:
             apply_smu(user_mode, user_mode)
-
     while True:
         clear()
         options = {
@@ -757,14 +756,12 @@ def main():
             "a": about,
             "q": lambda: sys.exit("Quitting..."),
         }
-
         logging.info("1. Apply Preset")
         logging.info("2. Settings")
         logging.info("")
         logging.info("H. Hardware Information")
         logging.info("A. About UXTU4Mac")
         logging.info("Q. Quit")
-
         choice = input("Option: ").lower()
         action = options.get(choice)
         if action:
