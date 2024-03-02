@@ -1,3 +1,11 @@
+## [0.1.7]
+
+- Fix a serious bug about `apply_smu`
+- Rework some code structure
+- Rebrand with new logo for CLI
+- New command file thanks to @corpnewt source code
+- Better experience
+- Optimize code
 ## [0.1.63]
 
 - Fix a bug with built-in Updater
