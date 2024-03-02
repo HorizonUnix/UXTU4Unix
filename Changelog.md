@@ -1,3 +1,7 @@
+## [0.1.63]
+
+- Fix a bug with built-in Updater
+- Remove `sys` library
 ## [0.1.62]
 
 - Fix a bug with CFU
