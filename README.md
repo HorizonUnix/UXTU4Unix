@@ -1,6 +1,5 @@
 <picture><img align="left" src="/Img/Logo.png" width="20%"/></picture>
 <h1>UXTU4Mac (WIP)</h1>
-<h3>UXTU but for macOS (Riel 🐧)</h3>
 <h3>Based on RyzenAdj</h3>
 
 ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/AppleOSX/UXTU4Mac/total)
