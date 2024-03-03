@@ -19,19 +19,17 @@ logging.basicConfig(filename='Logs/UXTU4Mac.log', filemode='w', encoding='utf-8'
                     level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S')
 logging.getLogger().addHandler(logging.StreamHandler())
-
 cfg = ConfigParser()
 cfg.read(CONFIG_PATH)
 
 def clear():
     os.system('clear')
-    logging.info(r"""
-     _   ___  _______ _   _ _ _  __  __         
-    | | | \ \/ /_   _| | | | | ||  \/  |__ _ __ 
-    | |_| |>  <  | | | |_| |_  _| |\/| / _` / _|
-     \___//_/\_\ |_|  \___/  |_||_|  |_\__,_\__|                                         
-    Version: {}
-    """.format(LOCAL_VERSION))
+    logging.info(r"""   _   ___  _______ _   _ _ _  __  __
+  | | | \ \/ /_   _| | | | | ||  \/  |__ _ __
+  | |_| |>  <  | | | |_| |_  _| |\/| / _` / _|
+   \___//_/\_\ |_|  \___/  |_||_|  |_\__,_\__|
+  Version: {}
+""".format(LOCAL_VERSION))
     
 def get_hardware_info(command, use_sudo=False):
     password = cfg.get('User', 'Password', fallback='')
@@ -124,9 +122,6 @@ def hardware_info():
         logging.info(
             f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Manufacturer'")}"""
         )
-        logging.info(
-            f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Device'")}"""
-        )
         logging.info(" - State of Charge (%): {}".format(get_hardware_info("pmset -g batt | egrep '([0-9]+\\%).*' -o --colour=auto | cut -f1 -d';'")))
         logging.info(
             f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Cycle Count'")}"""
@@ -155,48 +150,44 @@ def hardware_info():
     else:
         logging.info(" - 0B080000 SIP: OK")    
     logging.info("")
-    logging.info("If you fail to retrieve your hardware information, run `sudo purge` \nor remove RestrictEvent.kext")
     input("Press Enter to continue...")
 
 def about():
+    options = {
+        "1": lambda: webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac"),
+        "2": show_changelog,
+        "t": tester_list,
+        "f": updater,
+        "b": "break"
+    }
     while True:
         clear()
         logging.info("About UXTU4Mac")
-        logging.info("The Loop Update (1GC921P)")
+        logging.info("The Loop Update (1GC0809NF)")
         logging.info("----------------------------")
-        logging.info("Maintainer: GorouFlex")
-        logging.info("CLI: GorouFlex")
-        logging.info("GUI: NotchApple1703")
-        logging.info("Advisor: NotchApple1703")
-        logging.info("OCSnapshot: CorpNewt")
-        logging.info("Command file: CorpNewt")
+        logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
+        logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
+        logging.info("OCSnapshot: CorpNewt\nCommand file: CorpNewt")
         logging.info("----------------------------")
-        logging.info("1. Open GitHub Repository")
-        logging.info("2. Show Changelog")
-        logging.info("T. Tester List")
+        logging.info("1. Open GitHub Repository\n2. Show Changelog\n\nT. Tester List")
         logging.info(f"F. Force Update to the Latest Version ({get_latest_ver()})")
-        logging.info("")
         logging.info("B. Back")
-        choice = input("Option: ")
-        if choice == "1":
-            webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac")
-        elif choice == "2":
-            clear()
-            changelog = get_changelog()
-            logging.info(
-                f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}"
-            )
-            input("Press Enter to continue...")
-        elif choice.lower() == "f":
-            updater()
-        elif choice.lower() == "t":
-            tester_list()
-        elif choice.lower() == "b":
-            break
-        else:
+        choice = input("Option: ").lower()
+        action = options.get(choice, None)
+        if action is None:
             logging.info("Invalid option.")
             input("Press Enter to continue...")
+        elif action == "break":
+            break
+        else:
+            action()
 
+def show_changelog():
+    clear()
+    changelog = get_changelog()
+    logging.info(f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}")
+    input("Press Enter to continue...")
+    
 def tester_list():
     clear()
     logging.info("Special thanks to our testers:")
@@ -207,46 +198,38 @@ def tester_list():
     input("Press Enter to continue...")
     
 def settings():
+    options = {
+        "1": preset_cfg,
+        "2": sleep_cfg,
+        "3": login_cfg,
+        "4": cfu_cfg,
+        "5": fip_cfg,
+        "6": pass_cfg,
+        "i": install_menu,
+        "b": "break"
+    }
     while True:
-      clear()
-      logging.info("------------ Settings ----------")
-      logging.info("1. Preset Setting")
-      logging.info("2. Sleep Time Setting")
-      logging.info("3. Login Items Setting")
-      logging.info("4. CFU Setting")
-      logging.info("5. FIP Setting")
-      logging.info("6. Sudo Password Setting")
-      logging.info("")
-      logging.info("I. Install UXTU4Mac Kexts and Dependencies")
-      logging.info("B. Back")
-      settings_choice = input("Option: ")
-      if settings_choice == "1":
-         preset_cfg()
-      elif settings_choice == "2":
-         sleep_cfg()
-      elif settings_choice == "3":
-         login_cfg()
-      elif settings_choice == "4":
-         cfu_cfg()
-      elif settings_choice == "5":
-         fip_cfg()
-      elif settings_choice == "6":
-         pass_cfg()
-      elif settings_choice.lower() == "i":
-         install_menu()
-      elif settings_choice.lower() == "b":
-         break
-      else:
-       logging.info("Invalid option.")
-       input("Press Enter to continue...")
+        clear()
+        logging.info("------------ Settings ----------")
+        logging.info("1. Preset Setting\n2. Sleep Time Setting")
+        logging.info("3. Login Items Setting\n4. CFU Setting")
+        logging.info("5. FIP Setting\n6. Sudo Password Setting\n")
+        logging.info("I. Install UXTU4Mac Kexts and Dependencies")
+        logging.info("B. Back")
+        settings_choice = input("Option: ").lower()
+        action = options.get(settings_choice, None)
+        if action is None:
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
+        elif action == "break":
+            break
+        else:
+            action()
 
 def preset_menu():
     clear()
     logging.info("Apply Preset:")
-    logging.info("1. Load saved settings from config file")
-    logging.info("2. Load from available premade preset")
-    logging.info("3. Custom preset (Beta)")
-    logging.info("")
+    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n3. Custom preset (Beta)\n")
     logging.info("B. Back")
     preset_choice = input("Option: ")
     if preset_choice == "1":
@@ -290,7 +273,7 @@ def sleep_cfg():
     while True:
         clear()
         logging.info("------------ Sleep Time Setting ---------")
-        logging.info("(Sleep time between the next application to SMU using ryzenAdj)")
+        logging.info("(Sleep time between the next apply to SMU using ryzenAdj)")
         time = cfg.get('User', 'Time', fallback='30')
         logging.info(f"Sleep Time: {time}")
         logging.info("\n1. Change Sleep Time\n\nB. Back")
@@ -348,9 +331,7 @@ def login_cfg():
         else:
             logging.info("Login Items Status: Not Set")
         logging.info("")
-        logging.info("1. Enable Login Items")
-        logging.info("2. Disable Login Items")
-        logging.info("")
+        logging.info("1. Enable Login Items\n2. Disable Login Items\n")
         logging.info("B. Back")
         choice = input("Option: ")
         if choice == "1":
@@ -384,9 +365,7 @@ def cfu_cfg():
         else:
             logging.info("CFU Status: Disabled")
         logging.info("")
-        logging.info("1. Enable CFU")
-        logging.info("2. Disable CFU")
-        logging.info("")
+        logging.info("1. Enable CFU\n2. Disable CFU\n")
         logging.info("B. Back")
         choice = input("Option: ")
         if choice == "1":
@@ -418,9 +397,7 @@ def fip_cfg():
         else:
             logging.info("FIP Status: Disabled")
         logging.info("")
-        logging.info("1. Enable FIP")
-        logging.info("2. Disable FIP")
-        logging.info("")
+        logging.info("1. Enable FIP\n2. Disable FIP\n")
         logging.info("B. Back")
         choice = input("Option: ")
         cfu_enabled = cfg.get('User', 'CFU', fallback='1') == '1'
@@ -449,8 +426,7 @@ def preset_cfg():
     for i, mode in enumerate(PRESETS, start=1):
         logging.info(f"{i}. {mode}")
     logging.info("C. Custom (Beta)")
-    logging.info("")
-    logging.info("B. Back")
+    logging.info("\nB. Back")
     logging.info("We recommend using the Auto preset for normal tasks and better power management based on your CPU usage, and the Extreme preset for unlocking full")
     logging.info("potential performance.")
     choice = input("Option: ")
@@ -571,9 +547,8 @@ def check_run():
 def install_menu():
     clear()
     logging.info("Installing UXTU4Mac kext and dependencies\n")
-    logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)")
-    logging.info("2. Manual install (Specify your config.plist path)\n")
-    logging.info("B. Back\n")
+    logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)\n2. Manual install (Specify your config.plist path)\n")
+    logging.info("B. Back")
     choice = input("Option (default is 1): ")
     if choice == "1":
         install_auto()
@@ -618,7 +593,6 @@ def install_auto():
     edit_config(config_path)
     logging.info("Successfully updated boot-args and SIP settings.")
     subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
-    logging.info("EFI partition unmounted successfully.")
     logging.info("Kext and dependencies installation completed.")
     logging.info("Please restart your computer for the changes to take effect.")
     input("Press Enter to continue...")
@@ -666,7 +640,7 @@ def updater():
         logging.info("Skipping update...")
         raise SystemExit
     else:
-        logging.info("Invalid option. Please try again.")
+        logging.info("Invalid option.")
         raise SystemExit
 
 def check_updates():
@@ -734,7 +708,7 @@ def check_file_integrity():
         clear()
         logging.error("File Integrity Protection: File has been modified!\n Or FIP is outdated. \nExiting...")
         raise SystemExit
-
+    
 def main():
     check_cfg_integrity()
     if cfg.get('User', 'cfu', fallback='1') == '1':
@@ -754,10 +728,9 @@ def main():
             "2": settings,
             "h": hardware_info,
             "a": about,
-            "q": lambda: sys.exit("Quitting..."),
+            "q": lambda: sys.exit("\nThanks for using UXTU4Mac\nHave a nice day!"),
         }
-        logging.info("1. Apply Preset")
-        logging.info("2. Settings")
+        logging.info("1. Apply Preset\n2. Settings")
         logging.info("")
         logging.info("H. Hardware Information")
         logging.info("A. About UXTU4Mac")
