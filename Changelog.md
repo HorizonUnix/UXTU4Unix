@@ -1,3 +1,6 @@
+## [0.1.71]
+
+- Small changes for code structure
 ## [0.1.7]
 
 - Fix a serious bug about `apply_smu`

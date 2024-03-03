@@ -629,19 +629,18 @@ def updater():
     )
     logging.info("Do you want to update? (y/n): ")
     choice = input("Option: ").lower()
-    if choice == "y":        
+    if choice == "y":    
         subprocess.run(["python3", "Assets/SU.py"])
         logging.info("Updating...")
         logging.info("Update complete. Restarting the application, please close this window...")
         command_file_path = os.path.join(os.path.dirname(__file__), 'UXTU4Mac.command')
         subprocess.Popen(['open', command_file_path])
-        raise SystemExit
     elif choice == "n":
         logging.info("Skipping update...")
-        raise SystemExit
     else:
         logging.info("Invalid option.")
-        raise SystemExit
+
+    raise SystemExit
 
 def check_updates():
     try:
@@ -736,8 +735,7 @@ def main():
         logging.info("A. About UXTU4Mac")
         logging.info("Q. Quit")
         choice = input("Option: ").lower()
-        action = options.get(choice)
-        if action:
+        if action := options.get(choice):
             action()
         else:
             logging.info("Invalid Option.")
