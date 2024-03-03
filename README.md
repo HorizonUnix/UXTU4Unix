@@ -12,15 +12,12 @@
 > - AMD Zen-based processor that supported [NootedRed](https://github.com/ChefKissInc/NootedRed) **or** [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) **Premade Preset** section (or just simply support RyzenAdj)
 
 ## Usage
-
-- Install Python from [here](https://www.python.org).
 - Download official build from [Releases](https://github.com/AppleOSX/UXTU4Mac/releases).
 - Run `UXTU4Mac.command`.
 - Follow the instructions.
 - [Optional] Disable `Core Performance Boost` in BIOS using [Smokeless_UMAF](https://github.com/DavidS95/Smokeless_UMAF) to get better temperature but sacrifice a lot of performance.
   
 ## For advanced users, please visit [Custom.md](Custom.md).
-
 ## Comparison 
 
 |  | UXTU | UXTU4Mac |  
