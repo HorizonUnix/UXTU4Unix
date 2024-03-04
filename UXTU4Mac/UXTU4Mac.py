@@ -5,7 +5,8 @@ from configparser import ConfigParser
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.71"
+LOCAL_VERSION = "0.1.72"
+SIP = '%0b%08%00%00'
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -145,17 +146,16 @@ def hardware_info():
     else:
         logging.info(" - debug=0x144: OK")
     result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
-    if '%0b%08%00%00' not in result.stdout:
-        logging.info(" - 0B080000 SIP: Not set")
+    if SIP not in result.stdout:
+        logging.info(" - SIP: Not set / Incorrect flags")
     else:
-        logging.info(" - 0B080000 SIP: OK")    
+        logging.info(" - SIP: OK")
     logging.info("")
     input("Press Enter to continue...")
 
 def about():
     options = {
         "1": lambda: webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac"),
-        "2": show_changelog,
         "t": tester_list,
         "f": updater,
         "b": "break"
@@ -163,15 +163,15 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Mac")
-        logging.info("The Loop Update (1GC0809NF)")
+        logging.info("The Loop Update (1S15A09D)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
         logging.info("OCSnapshot: CorpNewt\nCommand file: CorpNewt")
         logging.info("----------------------------")
-        logging.info("1. Open GitHub Repository\n2. Show Changelog\n\nT. Tester List")
-        logging.info(f"F. Force Update to the Latest Version ({get_latest_ver()})")
-        logging.info("B. Back")
+        logging.info("T. Tester list")
+        logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
+        logging.info("\nB. Back")
         choice = input("Option: ").lower()
         action = options.get(choice, None)
         if action is None:
@@ -182,18 +182,12 @@ def about():
         else:
             action()
 
-def show_changelog():
-    clear()
-    changelog = get_changelog()
-    logging.info(f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}")
-    input("Press Enter to continue...")
-    
 def tester_list():
     clear()
     logging.info("Special thanks to our testers:")
     logging.info("")
-    logging.info(" - GorouFlex for testing on AMD Ryzen 5 4500U (Renoir)")
-    logging.info(" - nlqanh524 for testing on AMD Ryzen 5 5500U (Lucienne)")
+    logging.info("- GorouFlex for AMD Ryzen 5 4500U (Renoir)")
+    logging.info("- nlqanh524 for AMD Ryzen 5 5500U (Lucienne)")
     logging.info("")
     input("Press Enter to continue...")
     
@@ -210,11 +204,11 @@ def settings():
     }
     while True:
         clear()
-        logging.info("------------ Settings ----------")
-        logging.info("1. Preset Setting\n2. Sleep Time Setting")
-        logging.info("3. Login Items Setting\n4. CFU Setting")
-        logging.info("5. FIP Setting\n6. Sudo Password Setting\n")
-        logging.info("I. Install UXTU4Mac Kexts and Dependencies")
+        logging.info("--------------- Settings ---------------")
+        logging.info("1. Preset\n2. Sleep time")
+        logging.info("3. Run on Startup\n4. Software Update")
+        logging.info("5. File Integrity Protection\n6. Sudo password\n")
+        logging.info("I. Install UXTU4Mac kexts and dependencies")
         logging.info("B. Back")
         settings_choice = input("Option: ").lower()
         action = options.get(settings_choice, None)
@@ -228,8 +222,8 @@ def settings():
 
 def preset_menu():
     clear()
-    logging.info("Apply Preset:")
-    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n3. Custom preset (Beta)\n")
+    logging.info("Apply SMU:")
+    logging.info("1. Load saved settings from config file\n2. Load from available preset\n3. Custom preset (Beta)\n")
     logging.info("B. Back")
     preset_choice = input("Option: ")
     if preset_choice == "1":
@@ -239,14 +233,16 @@ def preset_menu():
             else:
                 apply_smu(user_mode, user_mode)
         else:
-            logging.info("Config file is missing or invalid. Please run the script again.")
+            logging.info("Config file is missing or invalid")
+            logging.info("Reset config file..")
             input("Press Enter to continue...")
+            welcome_tutorial()
     elif preset_choice == "2":
         clear()
         logging.info("Select a premade preset:")
         for i, mode in enumerate(PRESETS, start=1):
             logging.info(f"{i}. {mode}")
-        preset_number = input("Choose a preset by entering the number: ")
+        preset_number = input("Option: ")
         try:
             preset_number = int(preset_number)
             if 1 <= preset_number <= len(PRESETS):
@@ -255,7 +251,7 @@ def preset_menu():
                 user_mode = selected_preset
                 apply_smu(PRESETS[user_mode], user_mode)
             else:
-                logging.info("Invalid Option.")
+                logging.info("Invalid option.")
                 input("Press Enter to continue...")
         except ValueError:
             logging.info("Invalid input. Please enter a number.")
@@ -267,40 +263,40 @@ def preset_menu():
     elif preset_choice.lower() == "b":
         return
     else:
-        logging.info("Invalid Option.")
+        logging.info("Invalid option.")
         
 def sleep_cfg():
     while True:
         clear()
-        logging.info("------------ Sleep Time Setting ---------")
-        logging.info("(Sleep time between the next apply to SMU using ryzenAdj)")
+        logging.info("--------------- Sleep time ---------------")
+        logging.info("(Sleep time between next apply to SMU using ryzenAdj)")
         time = cfg.get('User', 'Time', fallback='30')
-        logging.info(f"Sleep Time: {time}")
-        logging.info("\n1. Change Sleep Time\n\nB. Back")
+        logging.info(f"Current sleep time: {time}")
+        logging.info("\n1. Change sleep time\n\nB. Back")
         choice = input("Option: ")
         if choice == "1":
-            set_time = input("Enter Your Sleep Time (Default is 10s): ")
-            cfg.set('User', 'Time', set_time)   
+            set_time = input("Enter your sleep time (Default is 30s): ")
+            cfg.set('User', 'Time', set_time)
             with open(CONFIG_PATH, 'w') as config_file:
                 cfg.write(config_file)
         elif choice.lower() == "b":
             break
         else:
-            logging.info("Invalid Option.")
-            input("Press Enter to Continue...")
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
     
 def pass_cfg():
     while True:
         clear()
-        logging.info("------------ Sudo Password Setting ---------")
+        logging.info("--------------- Sudo password ---------------")
         pswd = cfg.get('User', 'Password', fallback='')
-        logging.info(f"Current Sudo (Login) Password: {pswd}")
-        logging.info("\n1. Change Password\n\nB. Back")
+        logging.info(f"Current sudo (login) password: {pswd}")
+        logging.info("\n1. Change password\n\nB. Back")
         choice = input("Option: ")
         if choice == "1":
             while True:
                 subprocess.run("sudo -k", shell=True)
-                password = getpass.getpass("Enter Your Sudo (Login) Password: ")
+                password = getpass.getpass("Enter your sudo (login) password: ")
                 sudo_check_command = f"echo '{password}' | sudo -S ls /"
                 sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)   
                 if sudo_check_process.returncode == 0:
@@ -309,29 +305,28 @@ def pass_cfg():
                         cfg.write(config_file)
                     break
                 else:
-                    logging.info("Incorrect Sudo Password. Please Try Again.")
+                    logging.info("Incorrect sudo password. Please try again.")
         elif choice.lower() == "b":
             break
         else:
-            logging.info("Invalid Option.")
-            input("Press Enter to Continue...")
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
 
 def login_cfg():
     while True:
         clear()
-        logging.info("------------ Login Items Setting ---------")
-        logging.info("(Run Script with macOS Every Startup)")
+        logging.info("--------------- Run on Startup ---------------")
         current_dir = os.path.dirname(os.path.realpath(__file__))
         command_file = os.path.join(current_dir, 'UXTU4Mac.command')
         command_file_name = os.path.basename(command_file)
         check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
         login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
         if login_enabled:
-            logging.info("Login Items Status: OK")
+            logging.info("Status: Enable")
         else:
-            logging.info("Login Items Status: Not Set")
+            logging.info("Status: Disable")
         logging.info("")
-        logging.info("1. Enable Login Items\n2. Disable Login Items\n")
+        logging.info("1. Enable Run on Startup\n2. Disable Run on Startup\n")
         logging.info("B. Back")
         choice = input("Option: ")
         if choice == "1":
@@ -340,32 +335,32 @@ def login_cfg():
                subprocess.call(command, shell=True)
             else:
                 logging.info("You already add this script to Login Items")
-                input("Press Enter to Continue")
+                input("Press Enter to continue")
         elif choice == "2":
             if login_enabled:
               command = f"osascript -e 'tell application \"System Events\" to delete login item \"{command_file_name}\"'"
               subprocess.call(command, shell=True)
             else:
               logging.info("Cannot remove this script because it's does not exist on Login Items")
-              input("Press Enter to Continue")
+              input("Press Enter to continue")
         elif choice.lower() == "b":
             break
         else:
-            logging.info("Invalid Option.")
-            input("Press Enter to Continue...")
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
             continue
 
 def cfu_cfg():
     while True:
         clear()
-        logging.info("------------ Check for Updates Setting ---------")
+        logging.info("--------------- Software Update ---------------")
         cfu_enabled = cfg.get('User', 'CFU', fallback='1') == '1'
         if cfu_enabled:
-            logging.info("CFU Status: Enabled")
+            logging.info("Status: Enabled")
         else:
-            logging.info("CFU Status: Disabled")
+            logging.info("Status: Disabled")
         logging.info("")
-        logging.info("1. Enable CFU\n2. Disable CFU\n")
+        logging.info("1. Enable Software Update\n2. Disable Software Update\n")
         logging.info("B. Back")
         choice = input("Option: ")
         if choice == "1":
@@ -373,16 +368,16 @@ def cfu_cfg():
         elif choice == "2":
             fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
             if fip_enabled:
-                logging.info("Cannot Disable CFU Because FIP is Currently On")
-                input("Press Enter to Continue...")
+                logging.info("Cannot disable Software Update because File Integrity Protection is currently on")
+                input("Press Enter to continue...")
                 continue
             else:
                 cfg.set('User', 'CFU', '0')
         elif choice.lower() == "b":
             break
         else:
-            logging.info("Invalid Option.")
-            input("Press Enter to Continue...")
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
             continue
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
@@ -390,14 +385,14 @@ def cfu_cfg():
 def fip_cfg():
     while True:
         clear()
-        logging.info("------------ File Integrity Protection Setting ------------")
+        logging.info("--------------- File Integrity Protection ---------------")
         fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
         if fip_enabled:
-            logging.info("FIP Status: Enabled")
+            logging.info("Status: Enabled")
         else:
-            logging.info("FIP Status: Disabled")
+            logging.info("Status: Disabled")
         logging.info("")
-        logging.info("1. Enable FIP\n2. Disable FIP\n")
+        logging.info("1. Enable File Integrity Protection\n2. Disable File Integrity Protection\n")
         logging.info("B. Back")
         choice = input("Option: ")
         cfu_enabled = cfg.get('User', 'CFU', fallback='1') == '1'
@@ -405,23 +400,23 @@ def fip_cfg():
             if cfu_enabled:
                 cfg.set('User', 'FIP', '1')
             else:
-                logging.info("Cannot Enable FIP Because CFU is Currently Off")
-                input("Press Enter to Continue...")
+                logging.info("Cannot enable File Integrity Protection because Software Update is currently Off")
+                input("Press Enter to continue...")
                 continue
         elif choice == "2":
             cfg.set('User', 'FIP', '0')
         elif choice.lower() == "b":
             break
         else:
-            logging.info("Invalid Option.")
-            input("Press Enter to Continue...")
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
             continue
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
 
 def preset_cfg():
     clear()
-    logging.info("------------ Preset Setting ------------")
+    logging.info("--------------- Preset ---------------")
     logging.info("Premade preset:")
     for i, mode in enumerate(PRESETS, start=1):
         logging.info(f"{i}. {mode}")
@@ -446,7 +441,7 @@ def preset_cfg():
             logging.info("Set preset sucessfully!")
             input("Press Enter to continue...")
         except ValueError:
-            logging.info("Invalid Option.")
+            logging.info("Invalid option.")
             input("Press Enter to continue...")
             preset_cfg()
     with open(CONFIG_PATH, 'w') as config_file:
@@ -489,7 +484,7 @@ def welcome_tutorial():
         cfg.set('User', 'FIP', '0')
         cfg.set('User', 'Time', '30')
     except ValueError:
-        logging.info("Invalid Option.")
+        logging.info("Invalid option.")
         raise SystemExit
     with open(CONFIG_PATH, 'w') as config_file:
         cfg.write(config_file)
@@ -596,6 +591,11 @@ def install_auto():
     logging.info("Kext and dependencies installation completed.")
     logging.info("Please restart your computer for the changes to take effect.")
     input("Press Enter to continue...")
+    restart_command = '''osascript -e 'tell app "System Events" to display dialog "Please restart your computer to take effects" buttons {"Yes", "No"} default button 2' '''
+    result = subprocess.check_output(restart_command, shell=True).decode("utf-8").strip()
+    if "Yes" in result:
+        restart_command = '''osascript -e 'tell app "System Events" to restart' '''
+        subprocess.call(restart_command, shell=True)
 
 def install_manual():
     clear()
@@ -618,7 +618,12 @@ def install_manual():
     logging.info("Kext and dependencies installation completed.")
     logging.info("Please restart your computer for the changes to take effect.")
     input("Press Enter to continue...")
-
+    restart_command = '''osascript -e 'tell app "System Events" to display dialog "Please restart your computer to take effects" buttons {"Yes", "No"} default button 2' '''
+    result = subprocess.check_output(restart_command, shell=True).decode("utf-8").strip()
+    if "Yes" in result:
+        restart_command = '''osascript -e 'tell app "System Events" to restart' '''
+        subprocess.call(restart_command, shell=True)
+        
 def updater():
     clear()
     changelog = get_changelog()
@@ -639,7 +644,6 @@ def updater():
         logging.info("Skipping update...")
     else:
         logging.info("Invalid option.")
-
     raise SystemExit
 
 def check_updates():
@@ -705,7 +709,7 @@ def check_file_integrity():
     current_hash = hashlib.sha256(file_content).hexdigest()
     if current_hash != expected_hash:
         clear()
-        logging.error("File Integrity Protection: File has been modified!\n Or FIP is outdated. \nExiting...")
+        logging.error("File Integrity Protection: File has been modified!\nOr this version is outdated.\nExiting...")
         raise SystemExit
     
 def main():
@@ -729,7 +733,7 @@ def main():
             "a": about,
             "q": lambda: sys.exit("\nThanks for using UXTU4Mac\nHave a nice day!"),
         }
-        logging.info("1. Apply Preset\n2. Settings")
+        logging.info("1. Apply SMU\n2. Settings")
         logging.info("")
         logging.info("H. Hardware Information")
         logging.info("A. About UXTU4Mac")
@@ -738,7 +742,7 @@ def main():
         if action := options.get(choice):
             action()
         else:
-            logging.info("Invalid Option.")
+            logging.info("Invalid option.")
             input("Press Enter to continue...")
                 
 if __name__ == "__main__":
