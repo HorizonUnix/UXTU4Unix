@@ -47,8 +47,8 @@
 ![Screenshot 2024-02-12 at 15 52 16](https://github.com/AppleOSX/UXTU4Mac/assets/98001973/19e1481a-07ae-4efb-9b50-fac0cf137e0a)
 ### Special thanks to
 - [corpnewt](https://github.com/corpnewt) for OCSnapShot
-- [NotchApple1703](https://github.com/NotchApple1703) for the GUI (after ver 0.1.x)
-- [b00t0x](https://github.com/b00t0x) for the guide
+- [NotchApple1703](https://github.com/NotchApple1703) for the GUI (after ver 0.3.x)
+- [b00t0x](https://github.com/b00t0x) for guide build ryzenAdj based on DirectHW and pciutils-osx
 - [JamesCJ60](https://github.com/JamesCJ60) for [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility)
 > [!NOTE]
 > - If you run this tool successfully, please check our tester list under ‘About UXTU4Mac’ to see if your CPU is listed. If it isn’t, then create an issue for us to complete the support board, and you will be listed at our testers list!
