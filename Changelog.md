@@ -1,3 +1,8 @@
+## [0.1.72]
+
+- Rework CLI
+- Remove some function in About UXTU4Mac
+- Improve logic
 ## [0.1.71]
 
 - Small changes for code structure
