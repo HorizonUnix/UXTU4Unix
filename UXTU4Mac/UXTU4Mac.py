@@ -22,6 +22,9 @@ logging.basicConfig(filename='Logs/UXTU4Mac.log', filemode='w', encoding='utf-8'
 logging.getLogger().addHandler(logging.StreamHandler())
 cfg = ConfigParser()
 cfg.read(CONFIG_PATH)
+current_dir = os.path.dirname(os.path.realpath(__file__))
+command_file = os.path.join(current_dir, 'UXTU4Mac.command')
+command_file_name = os.path.basename(command_file)
 
 def clear():
     os.system('clear')
@@ -200,6 +203,7 @@ def settings():
         "5": fip_cfg,
         "6": pass_cfg,
         "i": install_menu,
+        "r": reset,
         "b": "break"
     }
     while True:
@@ -209,6 +213,7 @@ def settings():
         logging.info("3. Run on Startup\n4. Software Update")
         logging.info("5. File Integrity Protection\n6. Sudo password\n")
         logging.info("I. Install UXTU4Mac kexts and dependencies")
+        logging.info("R. Reset all saved settings")
         logging.info("B. Back")
         settings_choice = input("Option: ").lower()
         action = options.get(settings_choice, None)
@@ -220,6 +225,13 @@ def settings():
         else:
             action()
 
+def reset():
+    os.remove(CONFIG_PATH)
+    clear()
+    logging.info("Reset successfully")
+    input("Press Enter to continue...")
+    welcome_tutorial()
+    
 def preset_menu():
     clear()
     logging.info("Apply SMU:")
@@ -316,9 +328,6 @@ def login_cfg():
     while True:
         clear()
         logging.info("--------------- Run on Startup ---------------")
-        current_dir = os.path.dirname(os.path.realpath(__file__))
-        command_file = os.path.join(current_dir, 'UXTU4Mac.command')
-        command_file_name = os.path.basename(command_file)
         check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
         login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
         if login_enabled:
@@ -466,9 +475,6 @@ def welcome_tutorial():
             break
         else:
             logging.info("Incorrect sudo password. Please try again.")
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    command_file = os.path.join(current_dir, 'UXTU4Mac.command')
-    command_file_name = os.path.basename(command_file)
     check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
     login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
     if not login_enabled:
@@ -490,7 +496,8 @@ def welcome_tutorial():
         cfg.write(config_file)
     preset_cfg()
     clear()
-    install_menu()
+    if not check_run():
+       install_menu()
 
 def edit_config(config_path):
     with open(config_path, 'rb') as f:
@@ -541,7 +548,7 @@ def check_run():
 
 def install_menu():
     clear()
-    logging.info("Installing UXTU4Mac kext and dependencies\n")
+    logging.info("UXTU4Mac kext and dependencies\n")
     logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)\n2. Manual install (Specify your config.plist path)\n")
     logging.info("B. Back")
     choice = input("Option (default is 1): ")
@@ -557,8 +564,7 @@ def install_menu():
         
 def install_auto():
     clear()
-    logging.info("Installing UXTU4Mac kext and dependencies (Auto)...")
-    script_directory = os.path.dirname(os.path.realpath(__file__))
+    logging.info("UXTU4Mac kext and dependencies (Auto)...")
     password = cfg.get('User', 'Password', fallback='')
     try:
         subprocess.run(["sudo", "-S", "diskutil", "mount", "EFI"], input=password.encode(), check=True)
@@ -568,7 +574,7 @@ def install_auto():
         input("Press Enter to continue...")
         return
     try:
-        kext_source_path = os.path.join(script_directory, "Assets/Kexts/DirectHW.kext")
+        kext_source_path = os.path.join(current_dir, "Assets/Kexts/DirectHW.kext")
         kext_destination_path = "/Volumes/EFI/EFI/OC/Kexts"
         subprocess.run(["sudo", "-S", "cp", "-r", kext_source_path, kext_destination_path], input=password.encode(), check=True)
     except subprocess.CalledProcessError as e:
@@ -583,7 +589,7 @@ def install_auto():
         subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
         return
     config_path = os.path.join("/Volumes/EFI/EFI/OC/config.plist")
-    ocsnapshot_script_path = os.path.join(script_directory, "Assets/OCSnapshot/OCSnapshot.py")
+    ocsnapshot_script_path = os.path.join(current_dir, "Assets/OCSnapshot/OCSnapshot.py")
     subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
     edit_config(config_path)
     logging.info("Successfully updated boot-args and SIP settings.")
@@ -599,8 +605,7 @@ def install_auto():
 
 def install_manual():
     clear()
-    logging.info("Installing UXTU4Mac kext and dependencies (Manual)...")
-    script_directory = os.path.dirname(os.path.realpath(__file__))
+    logging.info("UXTU4Mac kext and dependencies (Manual)...")
     password = cfg.get('User', 'Password', fallback='')
     config_path = input("Please drag and drop the target plist: ").strip()
     if not os.path.exists(config_path):
@@ -608,10 +613,10 @@ def install_manual():
         input("Press Enter to continue...")
         return
     oc_path = os.path.dirname(config_path)
-    kext_source_path = os.path.join(script_directory, "Assets/Kexts/DirectHW.kext")
+    kext_source_path = os.path.join(current_dir, "Assets/Kexts/DirectHW.kext")
     kext_destination_path = os.path.join(oc_path, "Kexts")
     subprocess.run(["sudo", "-S", "cp", "-r", kext_source_path, kext_destination_path], input=password.encode(), check=True)
-    ocsnapshot_script_path = os.path.join(script_directory, "Assets/OCSnapshot/OCSnapshot.py")
+    ocsnapshot_script_path = os.path.join(current_dir, "Assets/OCSnapshot/OCSnapshot.py")
     subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
     edit_config(config_path)
     logging.info("Successfully updated boot-args and SIP settings.")
