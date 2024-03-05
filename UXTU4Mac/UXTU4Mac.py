@@ -5,7 +5,7 @@ from configparser import ConfigParser
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.72"
+LOCAL_VERSION = "0.1.73"
 SIP = '%0b%08%00%00'
 
 PRESETS = {
@@ -166,7 +166,7 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Mac")
-        logging.info("The Loop Update (1S15A09D)")
+        logging.info("The Loop Update (1L0SE50A50)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
@@ -189,8 +189,9 @@ def tester_list():
     clear()
     logging.info("Special thanks to our testers:")
     logging.info("")
-    logging.info("- GorouFlex for AMD Ryzen 5 4500U (Renoir)")
-    logging.info("- nlqanh524 for AMD Ryzen 5 5500U (Lucienne)")
+    logging.info("- GorouFlex for testing on Internal Beta Test Program")
+    logging.info("- GorouFlex for testing on AMD Ryzen 5 4500U (Renoir)")
+    logging.info("- nlqanh524 for testing on AMD Ryzen 5 5500U (Lucienne)")
     logging.info("")
     input("Press Enter to continue...")
     
@@ -234,8 +235,8 @@ def reset():
     
 def preset_menu():
     clear()
-    logging.info("Apply SMU:")
-    logging.info("1. Load saved settings from config file\n2. Load from available preset\n3. Custom preset (Beta)\n")
+    logging.info("Apply power management settings:")
+    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n3. Custom (Beta)\n")
     logging.info("B. Back")
     preset_choice = input("Option: ")
     if preset_choice == "1":
@@ -268,7 +269,7 @@ def preset_menu():
         except ValueError:
             logging.info("Invalid input. Please enter a number.")
     elif preset_choice == "3":
-        custom_args = input("Custom arguments (preset): ")
+        custom_args = input("Custom arguments: ")
         clear()
         user_mode = "Custom"
         apply_smu(custom_args, user_mode)
@@ -595,11 +596,9 @@ def install_auto():
     logging.info("Successfully updated boot-args and SIP settings.")
     subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
     logging.info("Kext and dependencies installation completed.")
-    logging.info("Please restart your computer for the changes to take effect.")
-    input("Press Enter to continue...")
-    restart_command = '''osascript -e 'tell app "System Events" to display dialog "Please restart your computer to take effects" buttons {"Yes", "No"} default button 2' '''
-    result = subprocess.check_output(restart_command, shell=True).decode("utf-8").strip()
-    if "Yes" in result:
+    choice = input("Do you want to restart your computer to take effects? (y/n)")
+    if choice.lower() == "y":
+        input("Saved your current work before restarting. Press Enter to continue")
         restart_command = '''osascript -e 'tell app "System Events" to restart' '''
         subprocess.call(restart_command, shell=True)
 
@@ -621,18 +620,16 @@ def install_manual():
     edit_config(config_path)
     logging.info("Successfully updated boot-args and SIP settings.")
     logging.info("Kext and dependencies installation completed.")
-    logging.info("Please restart your computer for the changes to take effect.")
-    input("Press Enter to continue...")
-    restart_command = '''osascript -e 'tell app "System Events" to display dialog "Please restart your computer to take effects" buttons {"Yes", "No"} default button 2' '''
-    result = subprocess.check_output(restart_command, shell=True).decode("utf-8").strip()
-    if "Yes" in result:
+    choice = input("Do you want to restart your computer to take effects? (y/n)")
+    if choice.lower() == "y":
+        input("Saved your current work before restarting. Press Enter to continue")
         restart_command = '''osascript -e 'tell app "System Events" to restart' '''
         subprocess.call(restart_command, shell=True)
         
 def updater():
     clear()
     changelog = get_changelog()
-    logging.info("--------- UXTU4Mac Software Update ---------")
+    logging.info("--------------- UXTU4Mac Software Update ---------------")
     logging.info("A new update is available!")
     logging.info(
         f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}"
@@ -663,7 +660,8 @@ def check_updates():
     elif LOCAL_VERSION > latest_version:
         clear()
         logging.info("Welcome to the UXTU4Mac Beta Program.")
-        logging.info("This build may not be as stable as expected. It's intended only for testing purposes!")
+        logging.info("This build may not be as stable as expected")
+        logging.info("It's intended only for testing purposes!")
         result = input("Do you want to continue? (y/n): ").lower()
         if result != "y":
             logging.info("Quitting...")
@@ -707,8 +705,8 @@ def check_file_integrity():
             expected_hash = response.read().decode().strip()
     except urllib.error.URLError:
         clear()
-        logging.error(f"File Integrity Protection: {hash_file_url} not found. Exiting...")
-        raise SystemExit
+        logging.error(f"File Integrity Protection: {hash_file_url} not found. Resetting...")
+        reset()
     with open(__file__, 'rb') as file:
         file_content = file.read()
     current_hash = hashlib.sha256(file_content).hexdigest()
@@ -738,7 +736,7 @@ def main():
             "a": about,
             "q": lambda: sys.exit("\nThanks for using UXTU4Mac\nHave a nice day!"),
         }
-        logging.info("1. Apply SMU\n2. Settings")
+        logging.info("1. Apply power management settings\n2. Settings")
         logging.info("")
         logging.info("H. Hardware Information")
         logging.info("A. About UXTU4Mac")
