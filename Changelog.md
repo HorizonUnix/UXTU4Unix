@@ -1,3 +1,6 @@
+## [0.1.73]
+
+- Small changes to main menu, install menu and processes
 ## [0.1.72]
 
 - Rework CLI
