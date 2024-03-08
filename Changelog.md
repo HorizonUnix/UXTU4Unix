@@ -1,3 +1,7 @@
+## [0.1.82]
+
+- Proper support for Dynamic mode
+- Fix various bug about Dynamic mode and preset
 ## [0.1.81]
 
 - Fix a bug with Dynamic mode
