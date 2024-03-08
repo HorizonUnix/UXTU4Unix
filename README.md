@@ -36,10 +36,10 @@
 
 <p align="left">
   <img src="/Img/main_menu.png">
+  <img src="/Img/apply_preset.png">
   <img src="/Img/preset.png">
   <img src="/Img/preset_setting.png">
-  <img src="/Img/hi1.png">
-  <img src="/Img/hi2.png">
+  <img src="/Img/settings.png">
 </p>
 
 ### Extreme Preset
