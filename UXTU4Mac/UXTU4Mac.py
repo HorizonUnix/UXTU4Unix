@@ -5,14 +5,14 @@ from configparser import ConfigParser
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.8"
+LOCAL_VERSION = "0.1.81"
 SIP = '%0b%08%00%00'
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
     "Performance": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=28000 --fast-limit=28000 --stapm-time=64 --slow-limit=28000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000 ",
     "Extreme": "--max-performance",
-    "Auto": "--power-saving"
+    "Balance": "--power-saving"
 }
 
 os.makedirs('Logs', exist_ok=True)
@@ -214,7 +214,7 @@ def settings():
         logging.info("1. Preset\n2. Sleep time")
         logging.info("3. Run on Startup\n4. Software Update")
         logging.info("5. File Integrity Protection\n6. Sudo password")
-        logging.info("7. Dynamic mode (Beta)\n")
+        logging.info("7. Dynamic Mode (Beta)\n")
         logging.info("I. Install UXTU4Mac kexts and dependencies")
         logging.info("R. Reset all saved settings")
         logging.info("B. Back")
@@ -460,6 +460,7 @@ def preset_cfg():
     for i, mode in enumerate(PRESETS, start=1):
         logging.info(f"{i}. {mode}")
     logging.info("C. Custom (Beta)")
+    logging.info("D. Dynamic Mode (Beta)")
     logging.info("\nB. Back")
     logging.info("We recommend using the Auto preset for normal tasks and better power management based on your CPU usage, and the Extreme preset for unlocking full")
     logging.info("potential performance.")
@@ -470,6 +471,9 @@ def preset_cfg():
         cfg.set('User', 'CustomArgs', custom_args)
         logging.info("Set preset sucessfully!")
         input("Press Enter to continue...")
+    elif choice.lower() == 'd':
+         cfg.set('User', 'dynamic', '1')
+         cfg.set('User', 'Mode', 'Balance')
     elif choice.lower() == 'b':
         return
     else:
@@ -712,15 +716,20 @@ def apply_smu(args, user_mode):
             cpu_usage = [float(i) for i in cpu_usage[1:] if i]
             ram_usage = os.popen("ps -A -o %mem").readlines()
             ram_usage = [float(i) for i in ram_usage[1:] if i]
-            if any(i > 50 for i in cpu_usage) or any(i > 50 for i in ram_usage):
-                user_mode = 'Extreme'
+            if any(i > 70 for i in cpu_usage) or any(i > 70 for i in ram_usage):
+               user_mode = 'Extreme'
+            elif all(50 <= i <= 70 for i in cpu_usage) and all(30 <= i <= 50 for i in ram_usage):
+               user_mode = 'Balance'
+            elif all(i < 50 for i in cpu_usage) and all(i < 30 for i in ram_usage):
+               user_mode = 'Eco'
             else:
-                user_mode = 'Auto'
+               user_mode = 'Performance'
         if args == 'Custom':
             custom_args = cfg.get('User', 'CustomArgs', fallback='')
             command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
         else:
-            command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
+            args = PRESETS[user_mode]
+        command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
         clear()
         logging.info(f"Using mode: {user_mode}")
         dm_enabled = cfg.get('User', 'dynamic', fallback='0') == '1'
