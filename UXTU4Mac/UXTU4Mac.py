@@ -583,7 +583,7 @@ def check_cfg_integrity() -> None:
         return
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
-    required_keys = ['password', 'softwareupdate', 'fip', 'dynamicmode', 'time', 'mode']
+    required_keys = ['password', 'softwareupdate', 'fip', 'dynamicmode', 'sip', 'time', 'mode']
     if not cfg.has_section('User') or any(key not in cfg['User'] for key in required_keys):
         welcome_tutorial()
 
