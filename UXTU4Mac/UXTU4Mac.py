@@ -480,7 +480,7 @@ def fip_cfg():
 def preset_cfg():
     clear()
     logging.info("--------------- Preset ---------------")
-    logging.info("Premade preset:")
+    logging.info("Preset:")
     for i, mode in enumerate(PRESETS, start=1):
         logging.info(f"{i}. {mode}")
     logging.info("\nD. Dynamic Mode (Beta)")
@@ -725,7 +725,7 @@ def apply_smu(args, user_mode):
             ram_usage = [float(i) for i in ram_usage[1:] if i]
             if any(i > 70 for i in cpu_usage) or any(i > 70 for i in ram_usage):
                user_mode = 'Extreme'
-            elif all(10 <= i <= 70 for i in cpu_usage) or all( 10<= i <= 70 for i in ram_usage):
+            elif all(10 <= i <= 70 for i in cpu_usage) or all(10 <= i <= 70 for i in ram_usage):
                user_mode = 'Balance'
             elif all(i < 10 for i in cpu_usage) or all(i < 10 for i in ram_usage):
                user_mode = 'Eco'
@@ -745,7 +745,7 @@ def apply_smu(args, user_mode):
         logging.info(f"Script will be reapplied every {sleep_time} seconds")
         logging.info("Press B then Enter to go back to the main menu")
         logging.info("(Please ignore the 'Password:')")
-        logging.info("------ RyzenAdj Log ------")
+        logging.info("--------------- RyzenAdj Log ---------------")
         result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logging.info(result.stdout.decode())
         if result.stderr:
