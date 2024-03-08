@@ -1,3 +1,7 @@
+## [0.1.81]
+
+- Fix a bug with Dynamic mode
+## Please delete your old `config.ini` since it will not worked on this version
 ## [0.1.8]
 
 - Support Dynamic mode aka Adaptive mode on UXTU, still in beta process
