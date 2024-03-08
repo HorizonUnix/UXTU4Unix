@@ -1,3 +1,9 @@
+## [0.1.9]
+
+- Remove OcSnapShot
+- Remove `DirectHW.kext` since ryzenAdj already do that with pciutils
+- Fix a bug about Dynamic Mode
+- New `SIP Flags` under Settings which change the required SIP flags
 ## [0.1.82]
 
 - Proper support for Dynamic mode
