@@ -1,12 +1,11 @@
-import os, time, subprocess, getpass, webbrowser, logging, sys
+import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
 import urllib.request, plistlib, base64, json, hashlib, select
 from configparser import ConfigParser
 
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.82"
-SIP = '%0b%08%00%00'
+LOCAL_VERSION = "0.1.9"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -137,19 +136,15 @@ def hardware_info():
             f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Condition'")}"""
         )
     logging.info("")
+    SIP = cfg.get('User', 'SIP', fallback='03080000')
     logging.info("UXTU4Mac dependencies:")
-    result = subprocess.run(['kextstat'], capture_output=True, text=True)
-    if 'DirectHW' not in result.stdout:
-        logging.info(" - DirectHW.kext: Missing")
-    else:
-        logging.info(" - DirectHW.kext: OK")
     result = subprocess.run(['nvram', 'boot-args'], capture_output=True, text=True)
     if 'debug=0x144' not in result.stdout:
         logging.info(" - debug=0x144: Missing")
     else:
         logging.info(" - debug=0x144: OK")
     result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
-    if SIP not in result.stdout:
+    if SIP not in result.stdout.replace('%', ''):
         logging.info(" - SIP: Not set / Incorrect flags")
     else:
         logging.info(" - SIP: OK")
@@ -170,7 +165,7 @@ def about():
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
-        logging.info("OCSnapshot: CorpNewt\nCommand file: CorpNewt")
+        logging.info("Command file: CorpNewt")
         logging.info("----------------------------")
         logging.info("T. Tester list")
         logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
@@ -204,6 +199,7 @@ def settings():
         "5": cfu_cfg,
         "6": fip_cfg,
         "7": pass_cfg,
+        "8": sip_cfg,
         "i": install_menu,
         "r": reset,
         "b": "break"
@@ -214,8 +210,9 @@ def settings():
         logging.info("1. Preset\n2. Sleep time")
         logging.info("3. Dynamic Mode (Beta)")
         logging.info("4. Run on Startup\n5. Software Update")
-        logging.info("6. File Integrity Protection\n7. Sudo password\n")
-        logging.info("I. Install UXTU4Mac kexts and dependencies")
+        logging.info("6. File Integrity Protection\n7. Sudo password")
+        logging.info("8. SIP Flags\n")
+        logging.info("I. Install UXTU4Mac dependencies")
         logging.info("R. Reset all saved settings")
         logging.info("B. Back")
         settings_choice = input("Option: ").lower()
@@ -235,6 +232,30 @@ def reset():
     input("Press Enter to continue...")
     welcome_tutorial()
 
+def sip_cfg():
+    while True:
+        clear()
+        logging.info("--------------- SIP Flags---------------")
+        logging.info("(Change your required SIP Flags)")
+        SIP = cfg.get('User', 'SIP', fallback='03080000')
+        logging.info(f"Current required SIP: {SIP}")
+        logging.info("")
+        logging.info("1. Change SIP Flags\n")
+        logging.info("B. Back")
+        choice = input("Option: ")
+        if choice == "1":
+            logging.info("Caution: Must have atleast ALLOW_UNTRUSTED_KEXTS (0x1)")
+            SIP = input("Enter your required SIP Flags: ")
+            cfg.set('User', 'SIP', SIP)
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
+            continue
+        with open(CONFIG_PATH, 'w') as config_file:
+            cfg.write(config_file)
+            
 def dynamic_cfg():
     while True:
         clear()
@@ -459,7 +480,7 @@ def fip_cfg():
 def preset_cfg():
     clear()
     logging.info("--------------- Preset ---------------")
-    logging.info("Preset:")
+    logging.info("Premade preset:")
     for i, mode in enumerate(PRESETS, start=1):
         logging.info(f"{i}. {mode}")
     logging.info("\nD. Dynamic Mode (Beta)")
@@ -524,6 +545,7 @@ def welcome_tutorial():
         cfg.set('User', 'Password', password)
         cfg.set('User', 'Time', '30')
         cfg.set('User', 'DynamicMode', '0')
+        cfg.set('User', 'SIP', '03080000')
         cfg.set('User', 'SoftwareUpdate', '1')
         cfg.set('User', 'FIP', '0')
     except ValueError:
@@ -537,6 +559,7 @@ def welcome_tutorial():
        install_menu()
 
 def edit_config(config_path):
+    SIP = cfg.get('User', 'SIP', fallback='03080000')
     with open(config_path, 'rb') as f:
         config = plistlib.load(f)
     if 'NVRAM' in config and 'Add' in config['NVRAM'] and '7C436110-AB2A-4BBB-A880-FE41995C9F82' in config['NVRAM']['Add']:
@@ -546,7 +569,8 @@ def edit_config(config_path):
                 config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82'][
                     'boot-args'
                 ] = f'{boot_args} debug=0x144'
-        config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['csr-active-config'] = base64.b64decode('CwgAAA==')
+        SIP_bytes = binascii.unhexlify(SIP)
+        config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['csr-active-config'] = SIP_bytes
     with open(config_path, 'wb') as f:
         plistlib.dump(config, f)
 
@@ -574,18 +598,16 @@ def get_changelog():
     return data['body']
 
 def check_run():
-    result = subprocess.run(['kextstat'], capture_output=True, text=True)
-    if 'DirectHW' not in result.stdout:
-        return False
+    SIP = cfg.get('User', 'SIP', fallback='03080000')
     result = subprocess.run(['nvram', 'boot-args'], capture_output=True, text=True)
     if 'debug=0x144' not in result.stdout:
         return False
     result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
-    return '%0b%08%00%00' in result.stdout
+    return SIP in result.stdout.replace('%', '')
 
 def install_menu():
     clear()
-    logging.info("UXTU4Mac kext and dependencies\n")
+    logging.info("UXTU4Mac dependencies\n")
     logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)\n2. Manual install (Specify your config.plist path)\n")
     logging.info("B. Back")
     choice = input("Option (default is 1): ")
@@ -601,21 +623,12 @@ def install_menu():
         
 def install_auto():
     clear()
-    logging.info("UXTU4Mac kext and dependencies (Auto)...")
+    logging.info("Installing UXTU4Mac dependencies (Auto)...")
     password = cfg.get('User', 'Password', fallback='')
     try:
         subprocess.run(["sudo", "-S", "diskutil", "mount", "EFI"], input=password.encode(), check=True)
     except subprocess.CalledProcessError as e:
         logging.error(f"Failed to mount EFI partition: {e}")
-        logging.error("Please run in Manual mode.")
-        input("Press Enter to continue...")
-        return
-    try:
-        kext_source_path = os.path.join(current_dir, "Assets/Kexts/DirectHW.kext")
-        kext_destination_path = "/Volumes/EFI/EFI/OC/Kexts"
-        subprocess.run(["sudo", "-S", "cp", "-r", kext_source_path, kext_destination_path], input=password.encode(), check=True)
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to move DirectHW.kext: {e}")
         logging.error("Please run in Manual mode.")
         input("Press Enter to continue...")
         return
@@ -626,12 +639,10 @@ def install_auto():
         subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
         return
     config_path = os.path.join("/Volumes/EFI/EFI/OC/config.plist")
-    ocsnapshot_script_path = os.path.join(current_dir, "Assets/OCSnapshot/OCSnapshot.py")
-    subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
     edit_config(config_path)
     logging.info("Successfully updated boot-args and SIP settings.")
     subprocess.run(["sudo", "diskutil", "unmount", "force", "EFI"], input=password.encode(), check=True)
-    logging.info("Kext and dependencies installation completed.")
+    logging.info("UXTU4Mac dependencies installation completed.")
     choice = input("Do you want to restart your computer to take effects? (y/n)")
     if choice.lower() == "y":
         input("Saved your current work before restarting. Press Enter to continue")
@@ -640,22 +651,16 @@ def install_auto():
 
 def install_manual():
     clear()
-    logging.info("UXTU4Mac kext and dependencies (Manual)...")
+    logging.info("Installing UXTU4Mac dependencies (Manual)...")
     password = cfg.get('User', 'Password', fallback='')
     config_path = input("Please drag and drop the target plist: ").strip()
     if not os.path.exists(config_path):
         logging.error(f"The specified path '{config_path}' does not exist.")
         input("Press Enter to continue...")
         return
-    oc_path = os.path.dirname(config_path)
-    kext_source_path = os.path.join(current_dir, "Assets/Kexts/DirectHW.kext")
-    kext_destination_path = os.path.join(oc_path, "Kexts")
-    subprocess.run(["sudo", "-S", "cp", "-r", kext_source_path, kext_destination_path], input=password.encode(), check=True)
-    ocsnapshot_script_path = os.path.join(current_dir, "Assets/OCSnapshot/OCSnapshot.py")
-    subprocess.run(["python3", ocsnapshot_script_path, "-s", oc_path, "-i", config_path])
     edit_config(config_path)
     logging.info("Successfully updated boot-args and SIP settings.")
-    logging.info("Kext and dependencies installation completed.")
+    logging.info("UXTU4Mac dependencies installation completed.")
     choice = input("Do you want to restart your computer to take effects? (y/n)")
     if choice.lower() == "y":
         input("Saved your current work before restarting. Press Enter to continue")
@@ -706,7 +711,7 @@ def check_updates():
 def apply_smu(args, user_mode):
     if not check_run():
         clear()
-        logging.info("Cannot run RyzenAdj because your computer is missing DirectHW.kext or \ndebug=0x144 or 0B080000 SIP is not SET yet\nPlease run Install UXTU4Mac Kexts and Dependencies under Setting \nand restart after install.")
+        logging.info("Cannot run RyzenAdj because your computer is missing debug=0x144 or required SIP is not SET yet\nPlease run Install UXTU4Mac dependencies under Setting \nand restart after install.")
         input("Press Enter to continue...")
         return
     sleep_time = cfg.get('User', 'Time', fallback='30')
@@ -720,9 +725,9 @@ def apply_smu(args, user_mode):
             ram_usage = [float(i) for i in ram_usage[1:] if i]
             if any(i > 70 for i in cpu_usage) or any(i > 70 for i in ram_usage):
                user_mode = 'Extreme'
-            elif all(10 <= i <= 70 for i in cpu_usage) or all( 0<= i <= 70 for i in ram_usage):
+            elif all(10 <= i <= 70 for i in cpu_usage) or all( 10<= i <= 70 for i in ram_usage):
                user_mode = 'Balance'
-            elif all(i < 10 for i in cpu_usage) or all(i < 5 for i in ram_usage):
+            elif all(i < 10 for i in cpu_usage) or all(i < 10 for i in ram_usage):
                user_mode = 'Eco'
         if args == 'Custom':
             custom_args = cfg.get('User', 'CustomArgs', fallback='')
