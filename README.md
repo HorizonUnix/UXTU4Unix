@@ -25,9 +25,8 @@
 | Adjust power management settings | ✅ | ✅ |
 | Premade presets | ✅ | ✅ |
 | Custom presets | ✅ | ✅ |
-| Adaptive mode tracking | ✅ | ❌ |
-| Games mode tracking | ✅ | ❌ |
-| Auto mode | ✅ | ✅ |
+| Adaptive mode tracking | ✅ | ✅ |
+| Game mode tracking | ✅ | ❓ |
 | Support for many hardware | ✅ | ❌ Only for some AMD Ryzen APU/CPU models, [see here](#supported-cpuapu) |
 
 # Preview
