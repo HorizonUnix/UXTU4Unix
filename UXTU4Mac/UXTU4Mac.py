@@ -5,7 +5,7 @@ from configparser import ConfigParser
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.73"
+LOCAL_VERSION = "0.1.8"
 SIP = '%0b%08%00%00'
 
 PRESETS = {
@@ -166,7 +166,7 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Mac")
-        logging.info("The Loop Update (1L0SE50A50)")
+        logging.info("The Loop Update (1W0MENDAY)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
@@ -203,6 +203,7 @@ def settings():
         "4": cfu_cfg,
         "5": fip_cfg,
         "6": pass_cfg,
+        "7": dynamic_cfg,
         "i": install_menu,
         "r": reset,
         "b": "break"
@@ -212,7 +213,8 @@ def settings():
         logging.info("--------------- Settings ---------------")
         logging.info("1. Preset\n2. Sleep time")
         logging.info("3. Run on Startup\n4. Software Update")
-        logging.info("5. File Integrity Protection\n6. Sudo password\n")
+        logging.info("5. File Integrity Protection\n6. Sudo password")
+        logging.info("7. Dynamic mode (Beta)\n")
         logging.info("I. Install UXTU4Mac kexts and dependencies")
         logging.info("R. Reset all saved settings")
         logging.info("B. Back")
@@ -232,7 +234,34 @@ def reset():
     logging.info("Reset successfully")
     input("Press Enter to continue...")
     welcome_tutorial()
-    
+
+def dynamic_cfg():
+    while True:
+        clear()
+        logging.info("--------------- Dynamic Mode (Beta) ---------------")
+        logging.info("(Automatically switch mode based on your usage)")
+        dm_enabled = cfg.get('User', 'dynamic', fallback='0') == '1'
+        if dm_enabled:
+            logging.info("Status: Enabled")
+        else:
+            logging.info("Status: Disabled")
+        logging.info("")
+        logging.info("1. Enable Dynamic Mode\n2. Disable Dynamic Mode\n")
+        logging.info("B. Back")
+        choice = input("Option: ")
+        if choice == "1":
+            cfg.set('User', 'dynamic', '1')
+        elif choice == "2":
+            cfg.set('User', 'dynamic', '0')
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
+            continue
+        with open(CONFIG_PATH, 'w') as config_file:
+            cfg.write(config_file)
+            
 def preset_menu():
     clear()
     logging.info("Apply power management settings:")
@@ -489,6 +518,7 @@ def welcome_tutorial():
         cfg.set('User', 'Password', password)
         cfg.set('User', 'CFU', '1')
         cfg.set('User', 'FIP', '0')
+        cfg.set('User', 'dynamic', '0')
         cfg.set('User', 'Time', '30')
     except ValueError:
         logging.info("Invalid option.")
@@ -523,7 +553,7 @@ def check_cfg_integrity() -> None:
         return
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
-    required_keys = ['password', 'cfu', 'fip', 'time', 'mode']
+    required_keys = ['password', 'cfu', 'fip', 'dynamic', 'time', 'mode']
     if not cfg.has_section('User') or any(key not in cfg['User'] for key in required_keys):
         welcome_tutorial()
 
@@ -675,14 +705,29 @@ def apply_smu(args, user_mode):
         return
     sleep_time = cfg.get('User', 'Time', fallback='30')
     password = cfg.get('User', 'Password', fallback='')
-    if args == 'Custom':
-        custom_args = cfg.get('User', 'CustomArgs', fallback='')
-        command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
-    else:
-        command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
+    dynamic = cfg.get('User', 'dynamic', fallback='0')
     while True:
+        if dynamic == '1':
+            cpu_usage = os.popen("ps -A -o %cpu").readlines()
+            cpu_usage = [float(i) for i in cpu_usage[1:] if i]
+            ram_usage = os.popen("ps -A -o %mem").readlines()
+            ram_usage = [float(i) for i in ram_usage[1:] if i]
+            if any(i > 50 for i in cpu_usage) or any(i > 50 for i in ram_usage):
+                user_mode = 'Extreme'
+            else:
+                user_mode = 'Auto'
+        if args == 'Custom':
+            custom_args = cfg.get('User', 'CustomArgs', fallback='')
+            command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
+        else:
+            command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
         clear()
         logging.info(f"Using mode: {user_mode}")
+        dm_enabled = cfg.get('User', 'dynamic', fallback='0') == '1'
+        if dm_enabled:
+            logging.info("Dynamic mode: Enabled")
+        else:
+            logging.info("Dynamic mode: Disabled")
         logging.info(f"Script will be reapplied every {sleep_time} seconds")
         logging.info("Press B then Enter to go back to the main menu")
         logging.info("(Please ignore the 'Password:')")
@@ -697,7 +742,7 @@ def apply_smu(args, user_mode):
                 if line.lower().strip() == 'b':
                     return
             time.sleep(1)
-            
+
 def check_file_integrity():
     hash_file_url = 'https://raw.githubusercontent.com/AppleOSX/UXTU4Mac/master/Hash.txt'
     try:
