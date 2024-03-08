@@ -161,7 +161,7 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Mac")
-        logging.info("The Loop Update (1HAPPYW0MENDAY)")
+        logging.info("The Loop Update (1FR2ED0M)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
