@@ -1,3 +1,7 @@
+## [0.1.8]
+
+- Support Dynamic mode aka Adaptive mode on UXTU, still in beta process
+### Happy Women Day (8/3)!
 ## [0.1.73]
 
 - Small changes to main menu, install menu and processes
