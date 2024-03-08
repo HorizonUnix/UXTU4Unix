@@ -5,7 +5,7 @@ from configparser import ConfigParser
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.81"
+LOCAL_VERSION = "0.1.82"
 SIP = '%0b%08%00%00'
 
 PRESETS = {
@@ -166,7 +166,7 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Mac")
-        logging.info("The Loop Update (1W0MENDAY)")
+        logging.info("The Loop Update (1HAPPYW0MENDAY)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
@@ -199,11 +199,11 @@ def settings():
     options = {
         "1": preset_cfg,
         "2": sleep_cfg,
-        "3": login_cfg,
-        "4": cfu_cfg,
-        "5": fip_cfg,
-        "6": pass_cfg,
-        "7": dynamic_cfg,
+        "3": dynamic_cfg,
+        "4": login_cfg,
+        "5": cfu_cfg,
+        "6": fip_cfg,
+        "7": pass_cfg,
         "i": install_menu,
         "r": reset,
         "b": "break"
@@ -212,9 +212,9 @@ def settings():
         clear()
         logging.info("--------------- Settings ---------------")
         logging.info("1. Preset\n2. Sleep time")
-        logging.info("3. Run on Startup\n4. Software Update")
-        logging.info("5. File Integrity Protection\n6. Sudo password")
-        logging.info("7. Dynamic Mode (Beta)\n")
+        logging.info("3. Dynamic Mode (Beta)")
+        logging.info("4. Run on Startup\n5. Software Update")
+        logging.info("6. File Integrity Protection\n7. Sudo password\n")
         logging.info("I. Install UXTU4Mac kexts and dependencies")
         logging.info("R. Reset all saved settings")
         logging.info("B. Back")
@@ -239,8 +239,8 @@ def dynamic_cfg():
     while True:
         clear()
         logging.info("--------------- Dynamic Mode (Beta) ---------------")
-        logging.info("(Automatically switch mode based on your usage)")
-        dm_enabled = cfg.get('User', 'dynamic', fallback='0') == '1'
+        logging.info("(Automatically switch preset based on your CPU and RAM usage)")
+        dm_enabled = cfg.get('User', 'DynamicMode', fallback='0') == '1'
         if dm_enabled:
             logging.info("Status: Enabled")
         else:
@@ -250,9 +250,9 @@ def dynamic_cfg():
         logging.info("B. Back")
         choice = input("Option: ")
         if choice == "1":
-            cfg.set('User', 'dynamic', '1')
+            cfg.set('User', 'DynamicMode', '1')
         elif choice == "2":
-            cfg.set('User', 'dynamic', '0')
+            cfg.set('User', 'DynamicMode', '0')
         elif choice.lower() == "b":
             break
         else:
@@ -265,7 +265,7 @@ def dynamic_cfg():
 def preset_menu():
     clear()
     logging.info("Apply power management settings:")
-    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n3. Custom (Beta)\n")
+    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n\nD. Dynamic Mode (Beta)\nC. Custom (Beta)")
     logging.info("B. Back")
     preset_choice = input("Option: ")
     if preset_choice == "1":
@@ -297,7 +297,10 @@ def preset_menu():
                 input("Press Enter to continue...")
         except ValueError:
             logging.info("Invalid input. Please enter a number.")
-    elif preset_choice == "3":
+    elif preset_choice.lower() == "d":
+         cfg.set('User', 'DynamicMode', '1')
+         apply_smu(PRESETS['Balance'], 'Balance')
+    elif preset_choice.lower() == "c":
         custom_args = input("Custom arguments: ")
         clear()
         user_mode = "Custom"
@@ -393,7 +396,7 @@ def cfu_cfg():
     while True:
         clear()
         logging.info("--------------- Software Update ---------------")
-        cfu_enabled = cfg.get('User', 'CFU', fallback='1') == '1'
+        cfu_enabled = cfg.get('User', 'SoftwareUpdate', fallback='1') == '1'
         if cfu_enabled:
             logging.info("Status: Enabled")
         else:
@@ -403,7 +406,7 @@ def cfu_cfg():
         logging.info("B. Back")
         choice = input("Option: ")
         if choice == "1":
-            cfg.set('User', 'CFU', '1')
+            cfg.set('User', 'SoftwareUpdate', '1')
         elif choice == "2":
             fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
             if fip_enabled:
@@ -411,7 +414,7 @@ def cfu_cfg():
                 input("Press Enter to continue...")
                 continue
             else:
-                cfg.set('User', 'CFU', '0')
+                cfg.set('User', 'SoftwareUpdate', '0')
         elif choice.lower() == "b":
             break
         else:
@@ -434,7 +437,7 @@ def fip_cfg():
         logging.info("1. Enable File Integrity Protection\n2. Disable File Integrity Protection\n")
         logging.info("B. Back")
         choice = input("Option: ")
-        cfu_enabled = cfg.get('User', 'CFU', fallback='1') == '1'
+        cfu_enabled = cfg.get('User', 'SoftwareUpdate', fallback='1') == '1'
         if choice == "1":
             if cfu_enabled:
                 cfg.set('User', 'FIP', '1')
@@ -456,14 +459,13 @@ def fip_cfg():
 def preset_cfg():
     clear()
     logging.info("--------------- Preset ---------------")
-    logging.info("Premade preset:")
+    logging.info("Preset:")
     for i, mode in enumerate(PRESETS, start=1):
         logging.info(f"{i}. {mode}")
+    logging.info("\nD. Dynamic Mode (Beta)")
     logging.info("C. Custom (Beta)")
-    logging.info("D. Dynamic Mode (Beta)")
-    logging.info("\nB. Back")
-    logging.info("We recommend using the Auto preset for normal tasks and better power management based on your CPU usage, and the Extreme preset for unlocking full")
-    logging.info("potential performance.")
+    logging.info("B. Back")
+    logging.info("We recommend using the Dynamic Mode for normal tasks and better power management")
     choice = input("Option: ")
     if choice.lower() == 'c':
         custom_args = input("Enter your custom arguments: ")
@@ -472,7 +474,7 @@ def preset_cfg():
         logging.info("Set preset sucessfully!")
         input("Press Enter to continue...")
     elif choice.lower() == 'd':
-         cfg.set('User', 'dynamic', '1')
+         cfg.set('User', 'DynamicMode', '1')
          cfg.set('User', 'Mode', 'Balance')
     elif choice.lower() == 'b':
         return
@@ -520,10 +522,10 @@ def welcome_tutorial():
             cfg.write(config_file)
     try:
         cfg.set('User', 'Password', password)
-        cfg.set('User', 'CFU', '1')
-        cfg.set('User', 'FIP', '0')
-        cfg.set('User', 'dynamic', '0')
         cfg.set('User', 'Time', '30')
+        cfg.set('User', 'DynamicMode', '0')
+        cfg.set('User', 'SoftwareUpdate', '1')
+        cfg.set('User', 'FIP', '0')
     except ValueError:
         logging.info("Invalid option.")
         raise SystemExit
@@ -557,7 +559,7 @@ def check_cfg_integrity() -> None:
         return
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
-    required_keys = ['password', 'cfu', 'fip', 'dynamic', 'time', 'mode']
+    required_keys = ['password', 'softwareupdate', 'fip', 'dynamicmode', 'time', 'mode']
     if not cfg.has_section('User') or any(key not in cfg['User'] for key in required_keys):
         welcome_tutorial()
 
@@ -709,7 +711,7 @@ def apply_smu(args, user_mode):
         return
     sleep_time = cfg.get('User', 'Time', fallback='30')
     password = cfg.get('User', 'Password', fallback='')
-    dynamic = cfg.get('User', 'dynamic', fallback='0')
+    dynamic = cfg.get('User', 'DynamicMode', fallback='0')
     while True:
         if dynamic == '1':
             cpu_usage = os.popen("ps -A -o %cpu").readlines()
@@ -718,12 +720,10 @@ def apply_smu(args, user_mode):
             ram_usage = [float(i) for i in ram_usage[1:] if i]
             if any(i > 70 for i in cpu_usage) or any(i > 70 for i in ram_usage):
                user_mode = 'Extreme'
-            elif all(50 <= i <= 70 for i in cpu_usage) and all(30 <= i <= 50 for i in ram_usage):
+            elif all(10 <= i <= 70 for i in cpu_usage) or all( 0<= i <= 70 for i in ram_usage):
                user_mode = 'Balance'
-            elif all(i < 50 for i in cpu_usage) and all(i < 30 for i in ram_usage):
+            elif all(i < 10 for i in cpu_usage) or all(i < 5 for i in ram_usage):
                user_mode = 'Eco'
-            else:
-               user_mode = 'Performance'
         if args == 'Custom':
             custom_args = cfg.get('User', 'CustomArgs', fallback='')
             command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
@@ -731,8 +731,8 @@ def apply_smu(args, user_mode):
             args = PRESETS[user_mode]
         command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
         clear()
-        logging.info(f"Using mode: {user_mode}")
-        dm_enabled = cfg.get('User', 'dynamic', fallback='0') == '1'
+        logging.info(f"Using preset: {user_mode}")
+        dm_enabled = cfg.get('User', 'DynamicMode', fallback='0') == '1'
         if dm_enabled:
             logging.info("Dynamic mode: Enabled")
         else:
@@ -771,7 +771,7 @@ def check_file_integrity():
     
 def main():
     check_cfg_integrity()
-    if cfg.get('User', 'cfu', fallback='1') == '1':
+    if cfg.get('User', 'SoftwareUpdate', fallback='1') == '1':
         check_updates()
     if cfg.get('User', 'FIP', fallback='0') == '1':
         check_file_integrity()
