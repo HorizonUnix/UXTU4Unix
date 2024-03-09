@@ -5,13 +5,15 @@ from configparser import ConfigParser
 CONFIG_PATH = 'config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.1.9"
+LOCAL_VERSION = "0.2.0"
 
 PRESETS = {
-    "Eco": "--tctl-temp=95 --apu-skin-temp=45 --stapm-limit=6000 --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
-    "Performance": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=28000 --fast-limit=28000 --stapm-time=64 --slow-limit=28000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000 ",
-    "Extreme": "--max-performance",
-    "Balance": "--power-saving"
+    "Eco": "--tctl-temp=95 --apu-skin-temp=70 --stapm-limit=6000  --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
+    "Balance": "--tctl-temp=95 --apu-skin-temp=70 --stapm-limit=22000  --fast-limit=24000 --stapm-time=64 --slow-limit=22000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
+    "Performance": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=28000  --fast-limit=28000 --stapm-time=64 --slow-limit=28000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
+    "Extreme": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=30000  --fast-limit=34000 --stapm-time=64 --slow-limit=32000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
+    "AC": "--max-performance",
+    "DC": "--power-saving"
 }
 
 os.makedirs('Logs', exist_ok=True)
@@ -27,12 +29,15 @@ command_file_name = os.path.basename(command_file)
 
 def clear():
     os.system('clear')
-    logging.info(r"""   _   ___  _______ _   _ _ _  __  __
-  | | | \ \/ /_   _| | | | | ||  \/  |__ _ __
-  | |_| |>  <  | | | |_| |_  _| |\/| / _` / _|
-   \___//_/\_\ |_|  \___/  |_||_|  |_\__,_\__|
-  Version: {}
-""".format(LOCAL_VERSION))
+    logging.info(r"""    __  ___  __________  ______ __  ___
+   / / / / |/_/_  __/ / / / / //  |/  /__ _____
+  / /_/ />  <  / / / /_/ /_  _/ /|_/ / _ `/ __/
+  \____/_/|_| /_/  \____/ /_//_/  /_/\_,_/\__/ """)
+    logging.info(
+        f'  {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
+    )
+    logging.info(f"  Version: {LOCAL_VERSION}")
+    logging.info("")
     
 def get_hardware_info(command, use_sudo=False):
     password = cfg.get('User', 'Password', fallback='')
@@ -50,74 +55,62 @@ def hardware_info():
     logging.info("Device Information:")
     logging.info(f' - Name: {get_hardware_info("scutil --get ComputerName")}')
     logging.info(f' - Model (SMBios): {get_hardware_info("sysctl -n hw.model")}')
-    logging.info(
-        f""" - {get_hardware_info("system_profiler SPHardwareDataType | grep 'Serial Number'")}"""
-    )
+    logging.info(f' - Serial Number: {get_hardware_info("system_profiler SPHardwareDataType | grep 'Serial Number'").split(":")[1].strip()}')
     logging.info(f' - macOS version: {get_hardware_info("sysctl -n kern.osproductversion")} ({get_hardware_info("sysctl -n kern.osversion")})')
 
     logging.info("\nProcessor Information:")
-    logging.info(
-        f' - Processor: {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
-    )
+    logging.info(f' - Processor: {get_hardware_info("sysctl -n machdep.cpu.brand_string")}')
     cpu_family = get_hardware_info("Assets/ryzenadj -i | grep 'CPU Family'", use_sudo=True).strip()
     smu_version = get_hardware_info("Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
     if cpu_family:
-        logging.info(f' - {cpu_family}')
+        logging.info(f' - CPU Family: {cpu_family.split(":")[1].strip()}')
     if smu_version:
-        logging.info(f' - {smu_version}')
+        logging.info(f' - SMU BIOS Interface Version: {smu_version.split(":")[1].strip()}')
     logging.info(f' - Cores: {get_hardware_info("sysctl -n hw.physicalcpu")}')
     logging.info(f' - Threads: {get_hardware_info("sysctl -n hw.logicalcpu")}')
-    logging.info(
-        f""" - {get_hardware_info("system_profiler SPHardwareDataType | grep 'L2'")}"""
-    )
-    logging.info(
-        f""" - {get_hardware_info("system_profiler SPHardwareDataType | grep 'L3'")}"""
-    )
+    logging.info(f' - L2 Cache: {get_hardware_info("system_profiler SPHardwareDataType | grep 'L2'").split(":")[1].strip()}')
+    logging.info(f' - L3 Cache: {get_hardware_info("system_profiler SPHardwareDataType | grep 'L3'").split(":")[1].strip()}')
     base_clock = float(get_hardware_info("sysctl -n hw.cpufrequency_max")) / (10**9)
-    logging.info(" - Base clock: {:.2f} GHz".format(base_clock))
+    logging.info(f" - Base clock: {base_clock:.2f} GHz")
     logging.info(f' - Vendor: {get_hardware_info("sysctl -n machdep.cpu.vendor")}')
-    logging.info(
-        f' - Instruction: {get_hardware_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]}'
-    )
+    logging.info(f' - Instruction: {get_hardware_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]}')
+
     logging.info("\nMemory Information:")
     memory = float(get_hardware_info("sysctl -n hw.memsize")) / (1024**3)
-    logging.info(" - Total of RAM: {:.2f} GB".format(memory))
+    logging.info(f" - Total of RAM: {memory:.2f} GB")
     ram_info = get_hardware_info("system_profiler SPMemoryDataType")
     ram_info_lines = ram_info.split('\n')
     ram_slot_names = ["BANK","SODIMM","DIMM"]
     slot_info = []
-    try:
-        for i, line in enumerate(ram_info_lines):  
-           if any(slot_name in line for slot_name in ram_slot_names): 
-             slot_name = line.strip()
-             size = ram_info_lines[i+2].strip().split(":")[1].strip()
-             type = ram_info_lines[i+3].strip().split(":")[1].strip()
-             speed = ram_info_lines[i+4].strip().split(":")[1].strip()
-             manufacturer = ram_info_lines[i+5].strip().split(":")[1].strip()
-             part_number = ram_info_lines[i+6].strip().split(":")[1].strip()
-             serial_number = ram_info_lines[i+7].strip().split(":")[1].strip()
-             slot_info.append((slot_name, size, type, speed, manufacturer, part_number, serial_number))
-        for i in range(0, len(slot_info), 2):
-            logging.info(
-                f" - Size: {slot_info[i][1]} / {slot_info[i + 1][1] if i + 1 < len(slot_info) else 'N/A'}"
-            )
-            logging.info(
-                f" - Type: {slot_info[i][2]} / {slot_info[i + 1][2] if i + 1 < len(slot_info) else 'N/A'}"
-            )
-            logging.info(
-                f" - Speed: {slot_info[i][3]} / {slot_info[i + 1][3] if i + 1 < len(slot_info) else 'N/A'}"
-            )
-            logging.info(
-                f" - Manufacturer: {slot_info[i][5]} / {slot_info[i + 1][5] if i + 1 < len(slot_info) else 'N/A'}"
-            )
-            logging.info(
-                f" - Status: {slot_info[i][4]} / {slot_info[i + 1][4] if i + 1 < len(slot_info) else 'N/A'}"
-            )
-            logging.info(
-                f" - Part Number: {slot_info[i][6]} / {slot_info[i + 1][6] if i + 1 < len(slot_info) else 'N/A'}"
-            )
-    except:
-        logging.info("Pardon me for my horrible search for displaying RAM information")
+    for i, line in enumerate(ram_info_lines):
+       if any(slot_name in line for slot_name in ram_slot_names):
+         slot_name = line.strip()
+         size = ram_info_lines[i+2].strip().split(":")[1].strip()
+         type = ram_info_lines[i+3].strip().split(":")[1].strip()
+         speed = ram_info_lines[i+4].strip().split(":")[1].strip()
+         manufacturer = ram_info_lines[i+5].strip().split(":")[1].strip()
+         part_number = ram_info_lines[i+6].strip().split(":")[1].strip()
+         serial_number = ram_info_lines[i+7].strip().split(":")[1].strip()
+         slot_info.append((slot_name, size, type, speed, manufacturer, part_number, serial_number))
+    for i in range(0, len(slot_info), 2):
+        logging.info(
+            f" - Size: {slot_info[i][1]} / {slot_info[i + 1][1] if i + 1 < len(slot_info) else 'N/A'}"
+        )
+        logging.info(
+            f" - Type: {slot_info[i][2]} / {slot_info[i + 1][2] if i + 1 < len(slot_info) else 'N/A'}"
+        )
+        logging.info(
+            f" - Speed: {slot_info[i][3]} / {slot_info[i + 1][3] if i + 1 < len(slot_info) else 'N/A'}"
+        )
+        logging.info(
+            f" - Manufacturer: {slot_info[i][4]} / {slot_info[i + 1][4] if i + 1 < len(slot_info) else 'N/A'}"
+        )
+        logging.info(
+            f" - Status: {slot_info[i][5]} / {slot_info[i + 1][5] if i + 1 < len(slot_info) else 'N/A'}"
+        )
+        logging.info(
+            f" - Part Number: {slot_info[i][6]} / {slot_info[i + 1][6] if i + 1 < len(slot_info) else 'N/A'}"
+        )
     if has_battery := get_hardware_info(
         "system_profiler SPPowerDataType | grep 'Battery Information'"
     ):
@@ -161,7 +154,7 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Mac")
-        logging.info("The Loop Update (1FR2ED0M)")
+        logging.info("The Dynamic Update (2R1ELUXTU)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
@@ -195,11 +188,12 @@ def settings():
         "1": preset_cfg,
         "2": sleep_cfg,
         "3": dynamic_cfg,
-        "4": login_cfg,
-        "5": cfu_cfg,
-        "6": fip_cfg,
-        "7": pass_cfg,
-        "8": sip_cfg,
+        "4": reapply_cfg,
+        "5": login_cfg,
+        "6": cfu_cfg,
+        "7": fip_cfg,
+        "8": pass_cfg,
+        "9": sip_cfg,
         "i": install_menu,
         "r": reset,
         "b": "break"
@@ -208,10 +202,11 @@ def settings():
         clear()
         logging.info("--------------- Settings ---------------")
         logging.info("1. Preset\n2. Sleep time")
-        logging.info("3. Dynamic Mode (Beta)")
-        logging.info("4. Run on Startup\n5. Software Update")
-        logging.info("6. File Integrity Protection\n7. Sudo password")
-        logging.info("8. SIP Flags\n")
+        logging.info("3. Dynamic mode")
+        logging.info("4. Auto reapply")
+        logging.info("5. Run on startup\n6. Software update")
+        logging.info("7. File integrity protection\n8. Sudo password")
+        logging.info("9. SIP flags\n")
         logging.info("I. Install UXTU4Mac dependencies")
         logging.info("R. Reset all saved settings")
         logging.info("B. Back")
@@ -232,6 +227,32 @@ def reset():
     input("Press Enter to continue...")
     welcome_tutorial()
 
+def reapply_cfg():
+    while True:
+        clear()
+        logging.info("--------------- Auto Reapply ---------------")
+        reapply_enabled = cfg.get('User', 'ReApply', fallback='0') == '1'
+        if reapply_enabled:
+            logging.info("Status: Enabled")
+        else:
+            logging.info("Status: Disabled")
+        logging.info("")
+        logging.info("1. Enable Auto Reapply\n2. Disable Auto Reapply")
+        logging.info("B. Back")
+        choice = input("Option: ")
+        if choice == "1":
+            cfg.set('User', 'ReApply', '1')
+        elif choice == "2":
+            cfg.set('User', 'ReApply', '0')
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
+            continue
+        with open(CONFIG_PATH, 'w') as config_file:
+            cfg.write(config_file)
+            
 def sip_cfg():
     while True:
         clear()
@@ -259,8 +280,8 @@ def sip_cfg():
 def dynamic_cfg():
     while True:
         clear()
-        logging.info("--------------- Dynamic Mode (Beta) ---------------")
-        logging.info("(Automatically switch preset based on your CPU and RAM usage)")
+        logging.info("--------------- Dynamic Mode ---------------")
+        logging.info("(Automatically switch preset based on your battery usage)")
         dm_enabled = cfg.get('User', 'DynamicMode', fallback='0') == '1'
         if dm_enabled:
             logging.info("Status: Enabled")
@@ -286,7 +307,7 @@ def dynamic_cfg():
 def preset_menu():
     clear()
     logging.info("Apply power management settings:")
-    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n\nD. Dynamic Mode (Beta)\nC. Custom (Beta)")
+    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n\nD. Dynamic Mode\nC. Custom (Beta)")
     logging.info("B. Back")
     preset_choice = input("Option: ")
     if preset_choice == "1":
@@ -320,6 +341,7 @@ def preset_menu():
             logging.info("Invalid input. Please enter a number.")
     elif preset_choice.lower() == "d":
          cfg.set('User', 'DynamicMode', '1')
+         cfg.set('User', 'ReApply', '1')
          apply_smu(PRESETS['Balance'], 'Balance')
     elif preset_choice.lower() == "c":
         custom_args = input("Custom arguments: ")
@@ -335,13 +357,12 @@ def sleep_cfg():
     while True:
         clear()
         logging.info("--------------- Sleep time ---------------")
-        logging.info("(Sleep time between next apply to SMU using ryzenAdj)")
         time = cfg.get('User', 'Time', fallback='30')
-        logging.info(f"Current sleep time: {time}")
-        logging.info("\n1. Change sleep time\n\nB. Back")
+        logging.info(f"Auto reapply every: {time} seconds")
+        logging.info("\n1. Change\n\nB. Back")
         choice = input("Option: ")
         if choice == "1":
-            set_time = input("Enter your sleep time (Default is 30s): ")
+            set_time = input("Enter your auto reapply time (Default is 30s): ")
             cfg.set('User', 'Time', set_time)
             with open(CONFIG_PATH, 'w') as config_file:
                 cfg.write(config_file)
@@ -483,7 +504,7 @@ def preset_cfg():
     logging.info("Preset:")
     for i, mode in enumerate(PRESETS, start=1):
         logging.info(f"{i}. {mode}")
-    logging.info("\nD. Dynamic Mode (Beta)")
+    logging.info("\nD. Dynamic Mode")
     logging.info("C. Custom (Beta)")
     logging.info("B. Back")
     logging.info("We recommend using the Dynamic Mode for normal tasks and better power management")
@@ -497,6 +518,7 @@ def preset_cfg():
     elif choice.lower() == 'd':
          cfg.set('User', 'DynamicMode', '1')
          cfg.set('User', 'Mode', 'Balance')
+         cfg.set('User', 'ReApply', '1')
     elif choice.lower() == 'b':
         return
     else:
@@ -546,6 +568,7 @@ def welcome_tutorial():
         cfg.set('User', 'Time', '30')
         cfg.set('User', 'DynamicMode', '0')
         cfg.set('User', 'SIP', '03080000')
+        cfg.set('User', 'ReApply', '0')
         cfg.set('User', 'SoftwareUpdate', '1')
         cfg.set('User', 'FIP', '0')
     except ValueError:
@@ -583,7 +606,7 @@ def check_cfg_integrity() -> None:
         return
     cfg = ConfigParser()
     cfg.read(CONFIG_PATH)
-    required_keys = ['password', 'softwareupdate', 'fip', 'dynamicmode', 'sip', 'time', 'mode']
+    required_keys = ['password', 'softwareupdate', 'fip', 'dynamicmode', 'reapply', 'sip', 'time', 'mode']
     if not cfg.has_section('User') or any(key not in cfg['User'] for key in required_keys):
         welcome_tutorial()
 
@@ -716,46 +739,69 @@ def apply_smu(args, user_mode):
         return
     sleep_time = cfg.get('User', 'Time', fallback='30')
     password = cfg.get('User', 'Password', fallback='')
-    dynamic = cfg.get('User', 'DynamicMode', fallback='0')
-    while True:
+    reapply = cfg.get('User', 'ReApply', fallback='0')
+    dynamic = cfg.get('User', 'dynamicmode', fallback='0')
+    prev_mode = None
+    if reapply == '1':
+      while True:
         if dynamic == '1':
-            cpu_usage = os.popen("ps -A -o %cpu").readlines()
-            cpu_usage = [float(i) for i in cpu_usage[1:] if i]
-            ram_usage = os.popen("ps -A -o %mem").readlines()
-            ram_usage = [float(i) for i in ram_usage[1:] if i]
-            if any(i > 70 for i in cpu_usage) or any(i > 70 for i in ram_usage):
-               user_mode = 'Extreme'
-            elif all(10 <= i <= 70 for i in cpu_usage) or all(10 <= i <= 70 for i in ram_usage):
-               user_mode = 'Balance'
-            elif all(i < 10 for i in cpu_usage) or all(i < 10 for i in ram_usage):
-               user_mode = 'Eco'
+            has_battery = subprocess.check_output(["system_profiler", "SPPowerDataType", "|", "grep", "'Battery Information'"]).decode("utf-8")
+            if has_battery:
+                battery_status = subprocess.check_output(["pmset", "-g", "batt"]).decode("utf-8")
+                if 'AC Power' in battery_status:
+                    user_mode = 'Extreme'
+                else:
+                    user_mode = 'Eco'
+            else:
+                user_mode = 'Extreme'
+        if prev_mode == user_mode and dynamic == '1':
+            for _ in range(int(float(sleep_time))):
+                for _ in range(1):
+                    time.sleep(1)
+                    if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                        line = sys.stdin.readline()
+                        if line.lower().strip() == 'b':
+                            return
+            continue
+        prev_mode = user_mode
+        clear()
         if args == 'Custom':
             custom_args = cfg.get('User', 'CustomArgs', fallback='')
             command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
         else:
             args = PRESETS[user_mode]
         command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
-        clear()
         logging.info(f"Using preset: {user_mode}")
         dm_enabled = cfg.get('User', 'DynamicMode', fallback='0') == '1'
         if dm_enabled:
             logging.info("Dynamic mode: Enabled")
         else:
             logging.info("Dynamic mode: Disabled")
-        logging.info(f"Script will be reapplied every {sleep_time} seconds")
+        logging.info(f"Script will check and auto reapply if need every {sleep_time} seconds")
         logging.info("Press B then Enter to go back to the main menu")
-        logging.info("(Please ignore the 'Password:')")
         logging.info("--------------- RyzenAdj Log ---------------")
         result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logging.info(result.stdout.decode())
-        if result.stderr:
-            logging.info(f"{result.stderr.decode()}")
         for _ in range(int(float(sleep_time))):
-            if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-                line = sys.stdin.readline()
-                if line.lower().strip() == 'b':
-                    return
-            time.sleep(1)
+            for _ in range(1):
+                time.sleep(1)
+                if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                    line = sys.stdin.readline()
+                    if line.lower().strip() == 'b':
+                        return
+    else:
+          clear()
+          if args == 'Custom':
+            custom_args = cfg.get('User', 'CustomArgs', fallback='')
+            command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
+          else:
+            args = PRESETS[user_mode]
+          command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
+          logging.info(f"Using preset: {user_mode}")
+          logging.info("--------------- RyzenAdj Log ---------------")
+          result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+          logging.info(result.stdout.decode())
+          input("Press Enter to continue...")
 
 def check_file_integrity():
     hash_file_url = 'https://raw.githubusercontent.com/AppleOSX/UXTU4Mac/master/Hash.txt'
