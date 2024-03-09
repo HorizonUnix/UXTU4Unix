@@ -1,3 +1,20 @@
+## [0.2.0]
+
+### This update brings to you a similar experience from the UXTU from Windows
+## Dynamic Mode
+- Reworked dynamic mode logic
+- Now, instead of tracking processes, it will track the battery to switch suit modes
+- Added a new logical check: if it's still the same mode, it will not reapply
+## Settings
+- Added a new `4. Auto reapply` option under `Settings` to enable/disable auto reapply preset function
+- Default setting will disable auto reapply
+## Preset
+- Properly ported preset from UXTU
+- Added new presets `AC` and `DC` which are for some APU/CPU
+## Other
+- Using a new banner
+- Displaying CPU name under the banner
+
 ## [0.1.9]
 
 - Remove OcSnapShot
