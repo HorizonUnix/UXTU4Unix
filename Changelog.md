@@ -1,3 +1,10 @@
+## [0.2.1]
+## Input
+- Improve user input handle
+## .command file
+- Default Terminal window when open now 100x30 instead of 80x20
+## Other
+- Reorder code structure
 ## [0.2.0]
 
 ### This update brings to you a similar experience from the UXTU from Windows
