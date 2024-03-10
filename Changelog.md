@@ -1,22 +1,22 @@
 ## [0.2.2]
 
-FIP:
+### FIP:
 - Removed/dropped support for FIP
 - Removed FIP check in CFU
-Settings:
+### Settings:
 - Fixed various bugs related to `1. Preset` settings
 - Fixed various bugs related to Dynamic Mode
 - Reworked some logic
 - Default config file is now located in `UXTU4Mac/Assets`
 - New config file structure
-Welcome Tutorial:
+### Welcome Tutorial:
 - Improved some processes
-Hardware Information:
+### Hardware Information:
 - Removed `Device Information`
 - Removed `UXTU4Mac dependencies`
-Checks For Update:
+### Checks For Update:
 - Now, if the script fails to fetch the latest version, it will retry 10 times. Afterward, it will ask whether to skip CFU or not.
-Other:
+### Other:
 - Completely reworked the entire code structure
 ## [0.2.1]
 ## Input
