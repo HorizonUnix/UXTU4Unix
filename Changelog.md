@@ -1,3 +1,17 @@
+## [0.2.2]
+## FIP
+- Remove FIP
+- Remove FIP check in CFU
+## Settings
+- Fix various bug about `1. Preset` settings
+- Fix various bug about Dynamic Mode
+- Rework some logic
+- Default config file now is `UXTU4Mac/Assets`
+- New config file structure
+## Welcome tutorial
+- Improve some processes
+## 
+
 ## [0.2.1]
 ## Input
 - Improve user input handle
