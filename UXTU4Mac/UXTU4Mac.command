@@ -1,4 +1,5 @@
 # Thanks CorpNewt for this source code
+printf '\e[8;30;100t'
 cd "$(dirname "$0")"
 args=( "$@" )
 dir="${0%/*}"

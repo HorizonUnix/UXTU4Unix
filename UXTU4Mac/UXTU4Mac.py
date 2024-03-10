@@ -156,45 +156,52 @@ def hardware_info():
     logging.info("")
     input("Press Enter to continue...")
 
-def about():
-    options = {
-        "1": lambda: webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac"),
-        "t": tester_list,
-        "f": updater,
-        "b": "break"
-    }
+def welcome_tutorial():
+    if not cfg.has_section('User'):
+        cfg.add_section('User')
+    clear()
+    logging.info("Welcome to UXTU4Mac!")
+    logging.info("Created by GorouFlex, designed for AMD Zen-based processors on macOS.")
+    logging.info("Based on RyzenAdj and inspired by UXTU.")
+    logging.info("Let's get started with some initial setup.")
+    input("Press Enter to continue...")
+    clear()
     while True:
-        clear()
-        logging.info("About UXTU4Mac")
-        logging.info("The Dynamic Update (2R1ELUXTU)")
-        logging.info("----------------------------")
-        logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
-        logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
-        logging.info("Command file: CorpNewt")
-        logging.info("----------------------------")
-        logging.info("T. Tester list")
-        logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
-        logging.info("\nB. Back")
-        choice = input("Option: ").lower()
-        action = options.get(choice, None)
-        if action is None:
-            logging.info("Invalid option.")
-            input("Press Enter to continue...")
-        elif action == "break":
+        subprocess.run("sudo -k", shell=True)
+        password = getpass.getpass("Enter your sudo (login) password: ")
+        sudo_check_command = f"echo '{password}' | sudo -S ls /"
+        sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if sudo_check_process.returncode == 0:
             break
         else:
-            action()
-
-def tester_list():
+            logging.info("Incorrect sudo password. Please try again.")
+    check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
+    login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
+    if not login_enabled:
+        start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower().strip()
+        if start_with_macos == 'y':
+            command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+            subprocess.call(command, shell=True)
+        with open(CONFIG_PATH, 'w') as config_file:
+            cfg.write(config_file)
+    try:
+        cfg.set('User', 'Password', password)
+        cfg.set('User', 'Time', '30')
+        cfg.set('User', 'DynamicMode', '0')
+        cfg.set('User', 'SIP', '03080000')
+        cfg.set('User', 'ReApply', '0')
+        cfg.set('User', 'SoftwareUpdate', '1')
+        cfg.set('User', 'FIP', '0')
+    except ValueError:
+        logging.info("Invalid option.")
+        raise SystemExit
+    with open(CONFIG_PATH, 'w') as config_file:
+        cfg.write(config_file)
+    preset_cfg()
     clear()
-    logging.info("Special thanks to our testers:")
-    logging.info("")
-    logging.info("- GorouFlex for testing on Internal Beta Test Program")
-    logging.info("- GorouFlex for testing on AMD Ryzen 5 4500U (Renoir)")
-    logging.info("- nlqanh524 for testing on AMD Ryzen 5 5500U (Lucienne)")
-    logging.info("")
-    input("Press Enter to continue...")
-    
+    if not check_run():
+       install_menu()
+       
 def settings():
     options = {
         "1": preset_cfg,
@@ -222,7 +229,7 @@ def settings():
         logging.info("I. Install UXTU4Mac dependencies")
         logging.info("R. Reset all saved settings")
         logging.info("B. Back")
-        settings_choice = input("Option: ").lower()
+        settings_choice = input("Option: ").lower().strip()
         action = options.get(settings_choice, None)
         if action is None:
             logging.info("Invalid option.")
@@ -231,13 +238,6 @@ def settings():
             break
         else:
             action()
-
-def reset():
-    os.remove(CONFIG_PATH)
-    clear()
-    logging.info("Reset successfully")
-    input("Press Enter to continue...")
-    welcome_tutorial()
 
 def reapply_cfg():
     while True:
@@ -252,11 +252,11 @@ def reapply_cfg():
         logging.info("1. Enable Auto Reapply\n2. Disable Auto Reapply")
         logging.info("B. Back")
         choice = input("Option: ")
-        if choice == "1":
+        if choice.strip() == "1":
             cfg.set('User', 'ReApply', '1')
-        elif choice == "2":
+        elif choice.strip() == "2":
             cfg.set('User', 'ReApply', '0')
-        elif choice.lower() == "b":
+        elif choice.lower().strip() == "b":
             break
         else:
             logging.info("Invalid option.")
@@ -276,11 +276,11 @@ def sip_cfg():
         logging.info("1. Change SIP Flags\n")
         logging.info("B. Back")
         choice = input("Option: ")
-        if choice == "1":
+        if choice.strip() == "1":
             logging.info("Caution: Must have atleast ALLOW_UNTRUSTED_KEXTS (0x1)")
             SIP = input("Enter your required SIP Flags: ")
             cfg.set('User', 'SIP', SIP)
-        elif choice.lower() == "b":
+        elif choice.lower().strip() == "b":
             break
         else:
             logging.info("Invalid option.")
@@ -303,11 +303,11 @@ def dynamic_cfg():
         logging.info("1. Enable Dynamic Mode\n2. Disable Dynamic Mode\n")
         logging.info("B. Back")
         choice = input("Option: ")
-        if choice == "1":
+        if choice.strip() == "1":
             cfg.set('User', 'DynamicMode', '1')
-        elif choice == "2":
+        elif choice.strip() == "2":
             cfg.set('User', 'DynamicMode', '0')
-        elif choice.lower() == "b":
+        elif choice.lower().strip() == "b":
             break
         else:
             logging.info("Invalid option.")
@@ -316,55 +316,6 @@ def dynamic_cfg():
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
             
-def preset_menu():
-    clear()
-    logging.info("Apply power management settings:")
-    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n\nD. Dynamic Mode\nC. Custom (Beta)")
-    logging.info("B. Back")
-    preset_choice = input("Option: ")
-    if preset_choice == "1":
-        if user_mode := read_cfg():
-            if user_mode in PRESETS:
-                apply_smu(PRESETS[user_mode], user_mode)
-            else:
-                apply_smu(user_mode, user_mode)
-        else:
-            logging.info("Config file is missing or invalid")
-            logging.info("Reset config file..")
-            input("Press Enter to continue...")
-            welcome_tutorial()
-    elif preset_choice == "2":
-        clear()
-        logging.info("Select a premade preset:")
-        for i, mode in enumerate(PRESETS, start=1):
-            logging.info(f"{i}. {mode}")
-        preset_number = input("Option: ")
-        try:
-            preset_number = int(preset_number)
-            if 1 <= preset_number <= len(PRESETS):
-                selected_preset = list(PRESETS.keys())[preset_number - 1]
-                clear()
-                user_mode = selected_preset
-                apply_smu(PRESETS[user_mode], user_mode)
-            else:
-                logging.info("Invalid option.")
-                input("Press Enter to continue...")
-        except ValueError:
-            logging.info("Invalid input. Please enter a number.")
-    elif preset_choice.lower() == "d":
-         cfg.set('User', 'DynamicMode', '1')
-         cfg.set('User', 'ReApply', '1')
-         apply_smu(PRESETS['Balance'], 'Balance')
-    elif preset_choice.lower() == "c":
-        custom_args = input("Custom arguments: ")
-        clear()
-        user_mode = "Custom"
-        apply_smu(custom_args, user_mode)
-    elif preset_choice.lower() == "b":
-        return
-    else:
-        logging.info("Invalid option.")
-        
 def sleep_cfg():
     while True:
         clear()
@@ -373,12 +324,12 @@ def sleep_cfg():
         logging.info(f"Auto reapply every: {time} seconds")
         logging.info("\n1. Change\n\nB. Back")
         choice = input("Option: ")
-        if choice == "1":
+        if choice.strip() == "1":
             set_time = input("Enter your auto reapply time (Default is 30s): ")
             cfg.set('User', 'Time', set_time)
             with open(CONFIG_PATH, 'w') as config_file:
                 cfg.write(config_file)
-        elif choice.lower() == "b":
+        elif choice.lower().strip() == "b":
             break
         else:
             logging.info("Invalid option.")
@@ -392,7 +343,7 @@ def pass_cfg():
         logging.info(f"Current sudo (login) password: {pswd}")
         logging.info("\n1. Change password\n\nB. Back")
         choice = input("Option: ")
-        if choice == "1":
+        if choice.strip() == "1":
             while True:
                 subprocess.run("sudo -k", shell=True)
                 password = getpass.getpass("Enter your sudo (login) password: ")
@@ -405,7 +356,7 @@ def pass_cfg():
                     break
                 else:
                     logging.info("Incorrect sudo password. Please try again.")
-        elif choice.lower() == "b":
+        elif choice.lower().strip() == "b":
             break
         else:
             logging.info("Invalid option.")
@@ -425,21 +376,21 @@ def login_cfg():
         logging.info("1. Enable Run on Startup\n2. Disable Run on Startup\n")
         logging.info("B. Back")
         choice = input("Option: ")
-        if choice == "1":
+        if choice.strip() == "1":
             if not login_enabled:
                command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
                subprocess.call(command, shell=True)
             else:
                 logging.info("You already add this script to Login Items")
                 input("Press Enter to continue")
-        elif choice == "2":
+        elif choice.strip() == "2":
             if login_enabled:
               command = f"osascript -e 'tell application \"System Events\" to delete login item \"{command_file_name}\"'"
               subprocess.call(command, shell=True)
             else:
               logging.info("Cannot remove this script because it's does not exist on Login Items")
               input("Press Enter to continue")
-        elif choice.lower() == "b":
+        elif choice.lower().strip() == "b":
             break
         else:
             logging.info("Invalid option.")
@@ -459,9 +410,9 @@ def cfu_cfg():
         logging.info("1. Enable Software Update\n2. Disable Software Update\n")
         logging.info("B. Back")
         choice = input("Option: ")
-        if choice == "1":
+        if choice.strip() == "1":
             cfg.set('User', 'SoftwareUpdate', '1')
-        elif choice == "2":
+        elif choice.strip() == "2":
             fip_enabled = cfg.get('User', 'FIP', fallback='0') == '1'
             if fip_enabled:
                 logging.info("Cannot disable Software Update because File Integrity Protection is currently on")
@@ -469,7 +420,7 @@ def cfu_cfg():
                 continue
             else:
                 cfg.set('User', 'SoftwareUpdate', '0')
-        elif choice.lower() == "b":
+        elif choice.lower().strip() == "b":
             break
         else:
             logging.info("Invalid option.")
@@ -492,16 +443,16 @@ def fip_cfg():
         logging.info("B. Back")
         choice = input("Option: ")
         cfu_enabled = cfg.get('User', 'SoftwareUpdate', fallback='1') == '1'
-        if choice == "1":
+        if choice.strip() == "1":
             if cfu_enabled:
                 cfg.set('User', 'FIP', '1')
             else:
                 logging.info("Cannot enable File Integrity Protection because Software Update is currently Off")
                 input("Press Enter to continue...")
                 continue
-        elif choice == "2":
+        elif choice.strip() == "2":
             cfg.set('User', 'FIP', '0')
-        elif choice.lower() == "b":
+        elif choice.lower().strip() == "b":
             break
         else:
             logging.info("Invalid option.")
@@ -521,17 +472,17 @@ def preset_cfg():
     logging.info("B. Back")
     logging.info("We recommend using the Dynamic Mode for normal tasks and better power management")
     choice = input("Option: ")
-    if choice.lower() == 'c':
+    if choice.lower().strip() == 'c':
         custom_args = input("Enter your custom arguments: ")
         cfg.set('User', 'Mode', 'Custom')
         cfg.set('User', 'CustomArgs', custom_args)
         logging.info("Set preset sucessfully!")
         input("Press Enter to continue...")
-    elif choice.lower() == 'd':
+    elif choice.lower().strip() == 'd':
          cfg.set('User', 'DynamicMode', '1')
          cfg.set('User', 'Mode', 'Balance')
          cfg.set('User', 'ReApply', '1')
-    elif choice.lower() == 'b':
+    elif choice.lower().strip() == 'b':
         return
     else:
         try:
@@ -547,52 +498,6 @@ def preset_cfg():
     with open(CONFIG_PATH, 'w') as config_file:
         cfg.write(config_file)
     
-def welcome_tutorial():
-    if not cfg.has_section('User'):
-        cfg.add_section('User')
-    clear()
-    logging.info("Welcome to UXTU4Mac!")
-    logging.info("Created by GorouFlex, designed for AMD Zen-based processors on macOS.")
-    logging.info("Based on RyzenAdj and inspired by UXTU.")
-    logging.info("Let's get started with some initial setup.")
-    input("Press Enter to continue...")
-    clear()
-    while True:
-        subprocess.run("sudo -k", shell=True)
-        password = getpass.getpass("Enter your sudo (login) password: ")
-        sudo_check_command = f"echo '{password}' | sudo -S ls /"
-        sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if sudo_check_process.returncode == 0:
-            break
-        else:
-            logging.info("Incorrect sudo password. Please try again.")
-    check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
-    login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
-    if not login_enabled:
-        start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower()
-        if start_with_macos == 'y':
-            command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
-            subprocess.call(command, shell=True)
-        with open(CONFIG_PATH, 'w') as config_file:
-            cfg.write(config_file)
-    try:
-        cfg.set('User', 'Password', password)
-        cfg.set('User', 'Time', '30')
-        cfg.set('User', 'DynamicMode', '0')
-        cfg.set('User', 'SIP', '03080000')
-        cfg.set('User', 'ReApply', '0')
-        cfg.set('User', 'SoftwareUpdate', '1')
-        cfg.set('User', 'FIP', '0')
-    except ValueError:
-        logging.info("Invalid option.")
-        raise SystemExit
-    with open(CONFIG_PATH, 'w') as config_file:
-        cfg.write(config_file)
-    preset_cfg()
-    clear()
-    if not check_run():
-       install_menu()
-
 def edit_config(config_path):
     SIP = cfg.get('User', 'SIP', fallback='03080000')
     with open(config_path, 'rb') as f:
@@ -609,48 +514,17 @@ def edit_config(config_path):
     with open(config_path, 'wb') as f:
         plistlib.dump(config, f)
 
-def read_cfg() -> str:
-    return cfg.get('User', 'Mode', fallback='')
-
-def check_cfg_integrity() -> None:
-    if not os.path.isfile(CONFIG_PATH) or os.stat(CONFIG_PATH).st_size == 0:
-        welcome_tutorial()
-        return
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
-    required_keys = ['password', 'softwareupdate', 'fip', 'dynamicmode', 'reapply', 'sip', 'time', 'mode']
-    if not cfg.has_section('User') or any(key not in cfg['User'] for key in required_keys):
-        welcome_tutorial()
-
-def get_latest_ver():
-    latest_version = urllib.request.urlopen(LATEST_VERSION_URL).geturl()
-    return latest_version.split("/")[-1]
-
-def get_changelog():
-    request = urllib.request.Request(GITHUB_API_URL)
-    response = urllib.request.urlopen(request)
-    data = json.loads(response.read())
-    return data['body']
-
-def check_run():
-    SIP = cfg.get('User', 'SIP', fallback='03080000')
-    result = subprocess.run(['nvram', 'boot-args'], capture_output=True, text=True)
-    if 'debug=0x144' not in result.stdout:
-        return False
-    result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
-    return SIP in result.stdout.replace('%', '')
-
 def install_menu():
     clear()
     logging.info("UXTU4Mac dependencies\n")
     logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)\n2. Manual install (Specify your config.plist path)\n")
     logging.info("B. Back")
     choice = input("Option (default is 1): ")
-    if choice == "1":
+    if choice.strip() == "1":
         install_auto()
-    elif choice == "2":
+    elif choice.strip() == "2":
         install_manual()
-    elif choice.lower() == "b":
+    elif choice.lower().strip() == "b":
         return
     else:
         logging.info("Invalid option. Please try again.")
@@ -702,6 +576,61 @@ def install_manual():
         restart_command = '''osascript -e 'tell app "System Events" to restart' '''
         subprocess.call(restart_command, shell=True)
         
+def reset():
+    os.remove(CONFIG_PATH)
+    clear()
+    logging.info("Reset successfully")
+    input("Press Enter to continue...")
+    
+    welcome_tutorial()
+def read_cfg() -> str:
+    return cfg.get('User', 'Mode', fallback='')
+
+def check_cfg_integrity() -> None:
+    if not os.path.isfile(CONFIG_PATH) or os.stat(CONFIG_PATH).st_size == 0:
+        welcome_tutorial()
+        return
+    cfg = ConfigParser()
+    cfg.read(CONFIG_PATH)
+    required_keys = ['password', 'softwareupdate', 'fip', 'dynamicmode', 'reapply', 'sip', 'time', 'mode']
+    if not cfg.has_section('User') or any(key not in cfg['User'] for key in required_keys):
+        welcome_tutorial()
+
+def get_latest_ver():
+    latest_version = urllib.request.urlopen(LATEST_VERSION_URL).geturl()
+    return latest_version.split("/")[-1]
+
+def get_changelog():
+    request = urllib.request.Request(GITHUB_API_URL)
+    response = urllib.request.urlopen(request)
+    data = json.loads(response.read())
+    return data['body']
+
+def check_run():
+    SIP = cfg.get('User', 'SIP', fallback='03080000')
+    result = subprocess.run(['nvram', 'boot-args'], capture_output=True, text=True)
+    if 'debug=0x144' not in result.stdout:
+        return False
+    result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
+    return SIP in result.stdout.replace('%', '')
+
+def check_file_integrity():
+    hash_file_url = 'https://raw.githubusercontent.com/AppleOSX/UXTU4Mac/master/Hash.txt'
+    try:
+        with urllib.request.urlopen(hash_file_url) as response:
+            expected_hash = response.read().decode().strip()
+    except urllib.error.URLError:
+        clear()
+        logging.error(f"File Integrity Protection: {hash_file_url} not found. Resetting...")
+        reset()
+    with open(__file__, 'rb') as file:
+        file_content = file.read()
+    current_hash = hashlib.sha256(file_content).hexdigest()
+    if current_hash != expected_hash:
+        clear()
+        logging.error("File Integrity Protection: File has been modified!\nOr this version is outdated.\nExiting...")
+        raise SystemExit
+            
 def updater():
     clear()
     changelog = get_changelog()
@@ -711,7 +640,7 @@ def updater():
         f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}"
     )
     logging.info("Do you want to update? (y/n): ")
-    choice = input("Option: ").lower()
+    choice = input("Option: ").lower().strip()
     if choice == "y":    
         subprocess.run(["python3", "Assets/SU.py"])
         logging.info("Updating...")
@@ -738,11 +667,101 @@ def check_updates():
         logging.info("Welcome to the UXTU4Mac Beta Program.")
         logging.info("This build may not be as stable as expected")
         logging.info("It's intended only for testing purposes!")
-        result = input("Do you want to continue? (y/n): ").lower()
+        result = input("Do you want to continue? (y/n): ").lower().strip()
         if result != "y":
             logging.info("Quitting...")
             raise SystemExit
 
+def about():
+    options = {
+        "1": lambda: webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac"),
+        "t": tester_list,
+        "f": updater,
+        "b": "break"
+    }
+    while True:
+        clear()
+        logging.info("About UXTU4Mac")
+        logging.info("The Dynamic Update (2S84R69S83)")
+        logging.info("----------------------------")
+        logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
+        logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
+        logging.info("Command file: CorpNewt")
+        logging.info("----------------------------")
+        logging.info("T. Tester list")
+        logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
+        logging.info("\nB. Back")
+        choice = input("Option: ").lower().strip()
+        action = options.get(choice, None)
+        if action is None:
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
+        elif action == "break":
+            break
+        else:
+            action()
+
+def tester_list():
+    clear()
+    logging.info("Special thanks to our testers:")
+    logging.info("")
+    logging.info("- GorouFlex for testing on Internal Beta Test Program")
+    logging.info("- GorouFlex for testing on AMD Ryzen 5 4500U (Renoir)")
+    logging.info("- nlqanh524 for testing on AMD Ryzen 5 5500U (Lucienne)")
+    logging.info("")
+    input("Press Enter to continue...")
+    
+def preset_menu():
+    clear()
+    logging.info("Apply power management settings:")
+    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n\nD. Dynamic Mode\nC. Custom (Beta)")
+    logging.info("B. Back")
+    preset_choice = input("Option: ")
+    if preset_choice.strip() == "1":
+        if user_mode := read_cfg():
+            if user_mode in PRESETS:
+                apply_smu(PRESETS[user_mode], user_mode)
+            else:
+                apply_smu(user_mode, user_mode)
+        else:
+            logging.info("Config file is missing or invalid")
+            logging.info("Reset config file..")
+            input("Press Enter to continue...")
+            welcome_tutorial()
+    elif preset_choice.strip() == "2":
+        clear()
+        logging.info("Select a premade preset:")
+        for i, mode in enumerate(PRESETS, start=1):
+            logging.info(f"{i}. {mode}")
+        preset_number = input("Option: ")
+        try:
+            preset_number = int(preset_number)
+            if 1 <= preset_number <= len(PRESETS):
+                selected_preset = list(PRESETS.keys())[preset_number - 1]
+                clear()
+                user_mode = selected_preset
+                apply_smu(PRESETS[user_mode], user_mode)
+            else:
+                logging.info("Invalid option.")
+                input("Press Enter to continue...")
+        except ValueError:
+            logging.info("Invalid input. Please enter a number.")
+    elif preset_choice.lower().strip() == "d":
+         last_mode = cfg.get('User', 'DynamicMode', fallback='0')
+         cfg.set('User', 'DynamicMode', '1')
+         cfg.set('User', 'ReApply', '1')
+         apply_smu(PRESETS['Balance'], 'Balance')
+         cfg.set('User', 'DynamicMode', last_mode)
+    elif preset_choice.lower().strip() == "c":
+        custom_args = input("Custom arguments: ")
+        clear()
+        user_mode = "Custom"
+        apply_smu(custom_args, user_mode)
+    elif preset_choice.lower().strip() == "b":
+        return
+    else:
+        logging.info("Invalid option.")
+        
 def apply_smu(args, user_mode):
     if not check_run():
         clear()
@@ -814,23 +833,6 @@ def apply_smu(args, user_mode):
           result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
           logging.info(result.stdout.decode())
           input("Press Enter to continue...")
-
-def check_file_integrity():
-    hash_file_url = 'https://raw.githubusercontent.com/AppleOSX/UXTU4Mac/master/Hash.txt'
-    try:
-        with urllib.request.urlopen(hash_file_url) as response:
-            expected_hash = response.read().decode().strip()
-    except urllib.error.URLError:
-        clear()
-        logging.error(f"File Integrity Protection: {hash_file_url} not found. Resetting...")
-        reset()
-    with open(__file__, 'rb') as file:
-        file_content = file.read()
-    current_hash = hashlib.sha256(file_content).hexdigest()
-    if current_hash != expected_hash:
-        clear()
-        logging.error("File Integrity Protection: File has been modified!\nOr this version is outdated.\nExiting...")
-        raise SystemExit
     
 def main():
     check_cfg_integrity()
@@ -858,7 +860,7 @@ def main():
         logging.info("H. Hardware Information")
         logging.info("A. About UXTU4Mac")
         logging.info("Q. Quit")
-        choice = input("Option: ").lower()
+        choice = input("Option: ").lower().strip()
         if action := options.get(choice):
             action()
         else:
