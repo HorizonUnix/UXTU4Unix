@@ -2,7 +2,7 @@ import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
 import urllib.request, plistlib, base64, json, select
 from configparser import ConfigParser
 
-CONFIG_PATH = 'config.ini'
+CONFIG_PATH = 'Assets/config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
 LOCAL_VERSION = "0.2.2"
@@ -84,8 +84,8 @@ def hardware_info():
     ram_slot_names = ["BANK","SODIMM","DIMM"]
     slot_info = []
     try:
-        for i, line in enumerate(ram_info_lines):  
-           if any(slot_name in line for slot_name in ram_slot_names): 
+        for i, line in enumerate(ram_info_lines):
+           if any(slot_name in line for slot_name in ram_slot_names):
              slot_name = line.strip()
              size = ram_info_lines[i+2].strip().split(":")[1].strip()
              type = ram_info_lines[i+3].strip().split(":")[1].strip()
@@ -138,6 +138,8 @@ def hardware_info():
 def welcome_tutorial():
     if not cfg.has_section('User'):
         cfg.add_section('User')
+    if not cfg.has_section('Settings'):
+        cfg.add_section('Settings')
     clear()
     logging.info("--------------- Welcome to UXTU4Mac ---------------")
     logging.info("Designed for AMD Zen-based processors on macOS")
@@ -165,11 +167,11 @@ def welcome_tutorial():
             cfg.write(config_file)
     try:
         cfg.set('User', 'Password', password)
-        cfg.set('User', 'Time', '30')
-        cfg.set('User', 'DynamicMode', '0')
-        cfg.set('User', 'SIP', '03080000')
-        cfg.set('User', 'ReApply', '0')
-        cfg.set('User', 'SoftwareUpdate', '1')
+        cfg.set('Settings', 'Time', '30')
+        cfg.set('Settings', 'SoftwareUpdate', '1')
+        cfg.set('Settings', 'ReApply', '0')
+        cfg.set('Settings', 'DynamicMode', '0')
+        cfg.set('Settings', 'SIP', '03080000')
     except ValueError:
         logging.info("Invalid option.")
         raise SystemExit
@@ -218,15 +220,15 @@ def reapply_cfg():
     while True:
         clear()
         logging.info("--------------- Auto reapply ---------------")
-        reapply_enabled = cfg.get('User', 'ReApply', fallback='0') == '1'
+        reapply_enabled = cfg.get('Settings', 'ReApply', fallback='0') == '1'
         logging.info("Status: Enabled" if reapply_enabled else "Status: Disabled")
         logging.info("\n1. Enable Auto reapply\n2. Disable Auto reapply")
         logging.info("B. Back")
         choice = input("Option: ").strip()
         if choice == "1":
-            cfg.set('User', 'ReApply', '1')
+            cfg.set('Settings', 'ReApply', '1')
         elif choice == "2":
-            cfg.set('User', 'ReApply', '0')
+            cfg.set('Settings', 'ReApply', '0')
         elif choice.lower() == "b":
             break
         else:
@@ -240,7 +242,7 @@ def sip_cfg():
         clear()
         logging.info("--------------- SIP flags---------------")
         logging.info("(Change your required SIP flags)")
-        SIP = cfg.get('User', 'SIP', fallback='03080000')
+        SIP = cfg.get('Settings', 'SIP', fallback='03080000')
         logging.info(f"Current required SIP: {SIP}")
         logging.info("\n1. Change SIP flags")
         logging.info("B. Back")
@@ -248,7 +250,7 @@ def sip_cfg():
         if choice == "1":
             logging.info("Caution: Must have at least ALLOW_UNTRUSTED_KEXTS (0x1)")
             SIP = input("Enter your required SIP Flags: ")
-            cfg.set('User', 'SIP', SIP)
+            cfg.set('Settings', 'SIP', SIP)
         elif choice.lower() == "b":
             break
         else:
@@ -260,15 +262,15 @@ def sip_cfg():
 def dynamic_cfg():
     while True:
         clear()
-        dm_enabled = cfg.get('User', 'DynamicMode', fallback='0') == '1'
+        dm_enabled = cfg.get('Settings', 'DynamicMode', fallback='0') == '1'
         logging.info("--------------- Dynamic Mode ---------------")
         logging.info("Status: Enabled" if dm_enabled else "Status: Disabled")
         logging.info("\n1. Enable Dynamic Mode\n2. Disable Dynamic Mode\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
-            cfg.set('User', 'DynamicMode', '1')
+            cfg.set('Settings', 'DynamicMode', '1')
         elif choice == "2":
-            cfg.set('User', 'DynamicMode', '0')
+            cfg.set('Settings', 'DynamicMode', '0')
         elif choice.lower() == "b":
             break
         else:
@@ -280,14 +282,14 @@ def dynamic_cfg():
 def sleep_cfg():
     while True:
         clear()
-        time = cfg.get('User', 'Time', fallback='30')
+        time = cfg.get('Settings', 'Time', fallback='30')
         logging.info("--------------- Sleep time ---------------")
         logging.info(f"Auto reapply every: {time} seconds")
         logging.info("\n1. Change\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
             set_time = input("Enter your auto reapply time (Default is 30s): ")
-            cfg.set('User', 'Time', set_time)
+            cfg.set('Settings', 'Time', set_time)
             with open(CONFIG_PATH, 'w') as config_file:
                 cfg.write(config_file)
         elif choice.lower() == "b":
@@ -355,15 +357,15 @@ def login_cfg():
 def cfu_cfg():
     while True:
         clear()
-        cfu_enabled = cfg.get('User', 'SoftwareUpdate', fallback='1') == '1'
+        cfu_enabled = cfg.get('Settings', 'SoftwareUpdate', fallback='1') == '1'
         logging.info("--------------- Software update ---------------")
         logging.info(f"Status: {'Enabled' if cfu_enabled else 'Disabled'}")
         logging.info("\n1. Enable Software update\n2. Disable Software update\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
-            cfg.set('User', 'SoftwareUpdate', '1')
+            cfg.set('Settings', 'SoftwareUpdate', '1')
         elif choice == "2":
-            cfg.set('User', 'SoftwareUpdate', '0')
+            cfg.set('Settings', 'SoftwareUpdate', '0')
         elif choice.lower() == "b":
             break
         else:
@@ -373,41 +375,53 @@ def cfu_cfg():
             cfg.write(config_file)
 
 def preset_cfg():
-    clear()
-    logging.info("--------------- Preset ---------------")
-    logging.info("Preset:")
-    for i, mode in enumerate(PRESETS, start=1):
-        logging.info(f"{i}. {mode}")
-    logging.info("\nD. Dynamic Mode")
-    logging.info("C. Custom (Beta)")
-    logging.info("B. Back")
-    logging.info("We recommend using the Dynamic Mode for normal tasks and better power management")
-    choice = input("Option: ").lower().strip()
-    if choice == 'c':
-        custom_args = input("Enter your custom arguments: ")
-        cfg.set('User', 'Mode', 'Custom')
-        cfg.set('User', 'CustomArgs', custom_args)
-    elif choice == 'd':
-         cfg.set('User', 'DynamicMode', '1')
-         cfg.set('User', 'Mode', 'Balance')
-         cfg.set('User', 'ReApply', '1')
-    elif choice == 'b':
-        return
-    else:
-        try:
-            preset_number = int(choice)
-            preset_name = list(PRESETS.keys())[preset_number - 1]
-            cfg.set('User', 'Mode', preset_name)
-        except ValueError:
-            logging.info("Invalid option.")
-            preset_cfg()
-    logging.info("Set preset successfully!")
-    input("Press Enter to continue...")
-    with open(CONFIG_PATH, 'w') as config_file:
-        cfg.write(config_file)
+    while True:
+        clear()
+        logging.info("--------------- Preset ---------------")
+        logging.info("Preset:")
+        for i, mode in enumerate(PRESETS, start=1):
+            logging.info(f"{i}. {mode}")
+        logging.info("\nD. Dynamic Mode")
+        logging.info("C. Custom (Beta)")
+        logging.info("B. Back")
+        logging.info("We recommend using the Dynamic Mode for normal tasks and better power management")
+        choice = input("Option: ").lower().strip()
+        if choice == 'c':
+            custom_args = input("Enter your custom arguments: ")
+            cfg.set('User', 'Mode', 'Custom')
+            cfg.set('User', 'CustomArgs', custom_args)
+            logging.info("Set preset successfully!")
+            input("Press Enter to continue...")
+            with open(CONFIG_PATH, 'w') as config_file:
+                cfg.write(config_file)
+            break
+        elif choice == 'd':
+            cfg.set('User', 'Mode', 'Balance')
+            cfg.set('Settings', 'DynamicMode', '1')
+            cfg.set('Settings', 'ReApply', '1')
+            logging.info("Set preset successfully!")
+            input("Press Enter to continue...")
+            with open(CONFIG_PATH, 'w') as config_file:
+                cfg.write(config_file)
+            break
+        elif choice == 'b':
+            return
+        else:
+            try:
+                preset_number = int(choice)
+                preset_name = list(PRESETS.keys())[preset_number - 1]
+                cfg.set('User', 'Mode', preset_name)
+                logging.info("Set preset successfully!")
+                input("Press Enter to continue...")
+                with open(CONFIG_PATH, 'w') as config_file:
+                    cfg.write(config_file)
+                break
+            except ValueError:
+                logging.info("Invalid option.")
+                input("Press Enter to continue")
 
 def edit_config(config_path):
-    SIP = cfg.get('User', 'SIP', fallback='03080000')
+    SIP = cfg.get('Settings', 'SIP', fallback='03080000')
     with open(config_path, 'rb') as f:
         config = plistlib.load(f)
     if 'NVRAM' in config and 'Add' in config['NVRAM'] and '7C436110-AB2A-4BBB-A880-FE41995C9F82' in config['NVRAM']['Add']:
@@ -482,9 +496,6 @@ def install_manual():
 
 def reset():
     os.remove(CONFIG_PATH)
-    clear()
-    logging.info("Reset successfully")
-    input("Press Enter to continue...")
     welcome_tutorial()
     
 def read_cfg() -> str:
@@ -494,11 +505,12 @@ def check_cfg_integrity() -> None:
     if not os.path.isfile(CONFIG_PATH) or os.stat(CONFIG_PATH).st_size == 0:
         welcome_tutorial()
         return
-    cfg = ConfigParser()
-    cfg.read(CONFIG_PATH)
-    required_keys = ['password', 'softwareupdate', 'dynamicmode', 'reapply', 'sip', 'time', 'mode']
-    if not cfg.has_section('User') or any(key not in cfg['User'] for key in required_keys):
-        welcome_tutorial()
+    required_keys_user = ['password', 'mode']
+    required_keys_settings = ['time', 'dynamicmode', 'sip', 'reapply', 'softwareupdate']
+    if not cfg.has_section('User') or not cfg.has_section('Settings') or \
+    any(key not in cfg['User'] for key in required_keys_user) or \
+    any(key not in cfg['Settings'] for key in required_keys_settings):
+      reset()
 
 def get_latest_ver():
     latest_version = urllib.request.urlopen(LATEST_VERSION_URL).geturl()
@@ -511,7 +523,7 @@ def get_changelog():
     return data['body']
 
 def check_run():
-    SIP = cfg.get('User', 'SIP', fallback='03080000')
+    SIP = cfg.get('Settings', 'SIP', fallback='03080000')
     result = subprocess.run(['nvram', 'boot-args'], capture_output=True, text=True)
     if 'debug=0x144' not in result.stdout:
         return False
@@ -622,11 +634,13 @@ def preset_menu():
         except ValueError:
             logging.info("Invalid input. Please enter a number.")
     elif preset_choice.lower() == "d":
-         last_mode = cfg.get('User', 'DynamicMode', fallback='0')
-         cfg.set('User', 'DynamicMode', '1')
-         cfg.set('User', 'ReApply', '1')
+         last_mode = cfg.get('Settings', 'DynamicMode', fallback='0')
+         last_apply = cfg.get('Settings', 'ReApply', fallback='0')
+         cfg.set('Settings', 'DynamicMode', '1')
+         cfg.set('Settings', 'ReApply', '1')
          apply_smu(PRESETS['Balance'], 'Balance')
-         cfg.set('User', 'DynamicMode', last_mode)
+         cfg.set('Settings', 'DynamicMode', last_mode)
+         cfg.set('Settings', 'ReApply', last_apply)
     elif preset_choice.lower() == "b":
         return
     else:
@@ -638,10 +652,10 @@ def apply_smu(args, user_mode):
         logging.info("Cannot run RyzenAdj because your computer is missing debug=0x144 or required SIP is not SET yet\nPlease run Install UXTU4Mac dependencies under Setting \nand restart after install.")
         input("Press Enter to continue...")
         return
-    sleep_time = cfg.get('User', 'Time', fallback='30')
-    password = cfg.get('User', 'Password', fallback='')
-    reapply = cfg.get('User', 'ReApply', fallback='0')
-    dynamic = cfg.get('User', 'dynamicmode', fallback='0')
+    sleep_time = cfg.get('Settings', 'Time', fallback='30')
+    password = cfg.get('Settings', 'Password', fallback='')
+    reapply = cfg.get('Settings', 'ReApply', fallback='0')
+    dynamic = cfg.get('Settings', 'dynamicmode', fallback='0')
     prev_mode = None
     if reapply == '1':
       while True:
@@ -673,7 +687,7 @@ def apply_smu(args, user_mode):
             args = PRESETS[user_mode]
             command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
         logging.info(f"Using preset: {user_mode}")
-        dm_enabled = cfg.get('User', 'DynamicMode', fallback='0') == '1'
+        dm_enabled = cfg.get('Settings', 'DynamicMode', fallback='0') == '1'
         if dm_enabled:
             logging.info("Dynamic mode: Enabled")
         else:
@@ -706,9 +720,8 @@ def apply_smu(args, user_mode):
           
 def main():
     check_cfg_integrity()
-    if cfg.get('User', 'SoftwareUpdate', fallback='1') == '1':
+    if cfg.get('Settings', 'SoftwareUpdate', fallback='1') == '1':
         check_updates()
-    time = cfg.get('User', 'Time', fallback='30')
     if user_mode := read_cfg():
         if user_mode in PRESETS:
             apply_smu(PRESETS[user_mode], user_mode)
