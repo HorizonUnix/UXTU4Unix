@@ -1,4 +1,5 @@
-[0.2.2]
+## [0.2.2]
+
 FIP:
 - Removed/dropped support for FIP
 - Removed FIP check in CFU
@@ -17,7 +18,6 @@ Checks For Update:
 - Now, if the script fails to fetch the latest version, it will retry 10 times. Afterward, it will ask whether to skip CFU or not.
 Other:
 - Completely reworked the entire code structure
-
 ## [0.2.1]
 ## Input
 - Improve user input handle
