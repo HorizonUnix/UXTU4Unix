@@ -8,8 +8,6 @@ def update():
     new_folder = os.path.join(current_dir, "UXTU4Mac_new")
     config_file = os.path.join(current_folder, "Assets", "config.ini")
     backup_config = os.path.join(current_dir, "config.ini.bak")
-    logs_folder = os.path.join(current_folder, "Logs")
-    backup_logs = os.path.join(current_dir, "Logs.bak")
     zip_file_path = os.path.join(current_dir, "UXTU4Mac.zip")
     if os.path.exists(config_file):
         shutil.copy2(config_file, backup_config)
@@ -26,8 +24,6 @@ def update():
     subprocess.call(['chmod', '+x', os.path.join(current_dir, "UXTU4Mac", "Assets", "ryzenadj")])
     if os.path.exists(backup_config):
         shutil.move(backup_config, config_file)
-    if os.path.exists(backup_logs):
-        shutil.move(backup_logs, logs_folder)
     if os.path.exists(zip_file_path):
         os.remove(zip_file_path)
 
