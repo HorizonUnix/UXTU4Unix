@@ -5,7 +5,7 @@ from configparser import ConfigParser
 CONFIG_PATH = 'Assets/config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.2.2"
+LOCAL_VERSION = "0.2.3"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=70 --stapm-limit=6000  --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -653,7 +653,7 @@ def apply_smu(args, user_mode):
         input("Press Enter to continue...")
         return
     sleep_time = cfg.get('Settings', 'Time', fallback='30')
-    password = cfg.get('Settings', 'Password', fallback='')
+    password = cfg.get('User', 'Password', fallback='')
     reapply = cfg.get('Settings', 'ReApply', fallback='0')
     dynamic = cfg.get('Settings', 'dynamicmode', fallback='0')
     prev_mode = None
@@ -697,6 +697,8 @@ def apply_smu(args, user_mode):
         logging.info("--------------- RyzenAdj Log ---------------")
         result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logging.info(result.stdout.decode())
+        if result.stderr:
+            logging.info(f"{result.stderr.decode()}")
         for _ in range(int(float(sleep_time))):
             for _ in range(1):
                 time.sleep(1)
@@ -716,6 +718,8 @@ def apply_smu(args, user_mode):
           logging.info("--------------- RyzenAdj Log ---------------")
           result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
           logging.info(result.stdout.decode())
+          if result.stderr:
+            logging.info(f"{result.stderr.decode()}")
           input("Press Enter to continue...")
           
 def main():
