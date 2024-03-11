@@ -1,3 +1,11 @@
+## [0.2.3]
+
+## Software Update
+- No longer keep Logs folder
+## Apply Preset
+- Fixed a stupid bug about sudo password
+- Restored debug function
+
 ## [0.2.2]
 
 ### FIP:
