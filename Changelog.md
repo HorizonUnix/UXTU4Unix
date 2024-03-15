@@ -1,3 +1,7 @@
+## [0.2.32]
+
+- Quick fix to Updater and CFU
+### Please download from GitHub if you failed update from built-in updater
 ## [0.2.31]
 
 - Fix line error in `Hardware Information`
