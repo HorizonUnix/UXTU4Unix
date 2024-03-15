@@ -5,7 +5,7 @@ from configparser import ConfigParser
 CONFIG_PATH = 'Assets/config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.2.3"
+LOCAL_VERSION = "0.2.31"
 
 PRESETS = {
     "Eco": "--tctl-temp=95 --apu-skin-temp=70 --stapm-limit=6000  --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
@@ -52,7 +52,7 @@ def get_hardware_info(command, use_sudo=False):
 
 def hardware_info():
     clear()
-    logging.info("\nProcessor Information:")
+    logging.info("Processor Information:")
     logging.info(
         f' - Processor: {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
     )
@@ -171,6 +171,7 @@ def welcome_tutorial():
         cfg.set('Settings', 'SoftwareUpdate', '1')
         cfg.set('Settings', 'ReApply', '0')
         cfg.set('Settings', 'DynamicMode', '0')
+        cfg.set('Settings', 'Debug', '1')
         cfg.set('Settings', 'SIP', '03080000')
     except ValueError:
         logging.info("Invalid option.")
@@ -192,6 +193,7 @@ def settings():
         "6": cfu_cfg,
         "7": pass_cfg,
         "8": sip_cfg,
+        "9": debug_cfg,
         "i": install_menu,
         "r": reset,
         "b": "break"
@@ -202,7 +204,8 @@ def settings():
         logging.info("1. Preset\n2. Sleep time")
         logging.info("3. Dynamic mode\n4. Auto reapply")
         logging.info("5. Run on Startup\n6. Software update")
-        logging.info("7. Sudo password\n8. SIP flags\n")
+        logging.info("7. Sudo password\n8. SIP flags")
+        logging.info("9. Debug\n")
         logging.info("I. Install UXTU4Mac dependencies")
         logging.info("R. Reset all saved settings")
         logging.info("B. Back")
@@ -216,6 +219,27 @@ def settings():
         else:
             action()
 
+def debug_cfg():
+    while True:
+        clear()
+        logging.info("--------------- Debug ---------------")
+        debug_enabled = cfg.get('Settings', 'Debug', fallback='1') == '1'
+        logging.info("Status: Enabled" if debug_enabled else "Status: Disabled")
+        logging.info("\n1. Enable Debug\n2. Disable Debug")
+        logging.info("B. Back")
+        choice = input("Option: ").strip()
+        if choice == "1":
+            cfg.set('Settings', 'Debug', '1')
+        elif choice == "2":
+            cfg.set('Settings', 'Debug', '0')
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
+        with open(CONFIG_PATH, 'w') as config_file:
+            cfg.write(config_file)
+            
 def reapply_cfg():
     while True:
         clear()
@@ -454,13 +478,15 @@ def install_auto():
     clear()
     logging.info("Installing UXTU4Mac dependencies (Auto)...")
     password = cfg.get('User', 'Password', fallback='')
-    try:
-        subprocess.run(["sudo", "-S", "diskutil", "mount", "EFI"], input=password.encode(), check=True)
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to mount EFI partition: {e}")
-        logging.error("Please run in Manual mode.")
-        input("Press Enter to continue...")
-        return
+    debug_enabled = cfg.get('Settings', 'Debug', fallback='1') == '1'
+    if debug_enabled:
+       try:
+          subprocess.run(["sudo", "-S", "diskutil", "mount", "EFI"], input=password.encode(), check=True)
+       except subprocess.CalledProcessError as e:
+          logging.error(f"Failed to mount EFI partition: {e}")
+          logging.error("Please run in Manual mode.")
+          input("Press Enter to continue...")
+          return
     oc_path = os.path.join("/Volumes/EFI/EFI/OC")
     if not os.path.exists(oc_path):
         logging.error("OC folder does not exist!")
@@ -506,7 +532,7 @@ def check_cfg_integrity() -> None:
         welcome_tutorial()
         return
     required_keys_user = ['password', 'mode']
-    required_keys_settings = ['time', 'dynamicmode', 'sip', 'reapply', 'softwareupdate']
+    required_keys_settings = ['time', 'dynamicmode', 'sip', 'reapply', 'softwareupdate', 'debug']
     if not cfg.has_section('User') or not cfg.has_section('Settings') or \
     any(key not in cfg['User'] for key in required_keys_user) or \
     any(key not in cfg['Settings'] for key in required_keys_settings):
@@ -697,8 +723,9 @@ def apply_smu(args, user_mode):
         logging.info("--------------- RyzenAdj Log ---------------")
         result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logging.info(result.stdout.decode())
-        if result.stderr:
-            logging.info(f"{result.stderr.decode()}")
+        if cfg.get('Settings', 'Debug', fallback='1') == '1':
+             if result.stderr:
+                logging.info(f"{result.stderr.decode()}")
         for _ in range(int(float(sleep_time))):
             for _ in range(1):
                 time.sleep(1)
@@ -718,8 +745,9 @@ def apply_smu(args, user_mode):
           logging.info("--------------- RyzenAdj Log ---------------")
           result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
           logging.info(result.stdout.decode())
-          if result.stderr:
-            logging.info(f"{result.stderr.decode()}")
+          if cfg.get('Settings', 'Debug', fallback='1') == '1':
+             if result.stderr:
+                logging.info(f"{result.stderr.decode()}")
           input("Press Enter to continue...")
           
 def main():
