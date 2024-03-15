@@ -1,3 +1,7 @@
+## [0.2.31]
+
+- Fix line error in `Hardware Information`
+- New `9. Debug` under `Settings` to enable/disable some debug processes
 ## [0.2.3]
 
 ## Software Update
