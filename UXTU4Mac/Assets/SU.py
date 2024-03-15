@@ -11,8 +11,6 @@ def update():
     zip_file_path = os.path.join(current_dir, "UXTU4Mac.zip")
     if os.path.exists(config_file):
         shutil.copy2(config_file, backup_config)
-    if os.path.exists(logs_folder):
-        shutil.copytree(logs_folder, backup_logs)
     urllib.request.urlretrieve(url, zip_file_path)
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
         zip_ref.extractall(new_folder)
