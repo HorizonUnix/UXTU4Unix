@@ -1,3 +1,7 @@
+## [0.2.4]
+
+- Extend Presets based on UXTU's preset
+
 ## [0.2.32]
 
 - Quick fix to Updater and CFU
