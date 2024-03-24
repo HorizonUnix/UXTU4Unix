@@ -1,9 +1,11 @@
 ## [0.2.4]
 
-- Extend Presets based on UXTU's preset
-- Support for each APU Generation Preset like UXTU
-### At this time, UXTU4Mac lacks support for CPU since some command in original UXTU are incompatible with ryzenAdj
-
+- Extended presets based on UXTU's preset.
+- Added support for each APU Generation Preset, similar to UXTU.
+- Quick fix to Updater and CFU.
+- Fix line error in `Hardware Information`
+- New `9. Debug` under `Settings` to enable/disable some debug processes
+### Currently, UXTU4Mac lacks CPU support because some commands in the original UXTU are incompatible with ryzenAdj.
 ## [0.2.32]
 
 - Quick fix to Updater and CFU
