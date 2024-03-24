@@ -5,17 +5,8 @@ from configparser import ConfigParser
 CONFIG_PATH = 'Assets/config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.2.32"
-
-PRESETS = {
-    "Eco": "--tctl-temp=95 --apu-skin-temp=70 --stapm-limit=6000  --fast-limit=8000 --stapm-time=64 --slow-limit=6000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
-    "Balance": "--tctl-temp=95 --apu-skin-temp=70 --stapm-limit=22000  --fast-limit=24000 --stapm-time=64 --slow-limit=22000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
-    "Performance": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=28000  --fast-limit=28000 --stapm-time=64 --slow-limit=28000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
-    "Extreme": "--tctl-temp=95 --apu-skin-temp=95 --stapm-limit=30000  --fast-limit=34000 --stapm-time=64 --slow-limit=32000 --slow-time=128 --vrm-current=180000 --vrmmax-current=180000 --vrmsoc-current=180000 --vrmsocmax-current=180000 --vrmgfx-current=180000",
-    "AC": "--max-performance",
-    "DC": "--power-saving"
-}
-
+LOCAL_VERSION = "0.2.4"
+cpu_hierarchy = ["Raven Ridge", "Dali", "Picasso", "Massite", "Renoir", "Lucienne", "Mendocino", "Cezanne", "Barcelo", "Barcelo-R", "Rembrandt", "Rembrandt-R", "Dragon Range", "Phoenix"]
 os.makedirs('Logs', exist_ok=True)
 logging.basicConfig(filename='Logs/UXTU4Mac.log', filemode='w', encoding='utf-8',
                     level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
@@ -27,6 +18,7 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 command_file = os.path.join(current_dir, 'UXTU4Mac.command')
 command_file_name = os.path.basename(command_file)
 
+    
 def clear():
     subprocess.call('clear', shell=True)
     logging.info(r"""    __  ___  __________  ______ __  ___
@@ -50,6 +42,60 @@ def get_hardware_info(command, use_sudo=False):
         output, error = process.communicate()
     return output.decode('utf-8').strip()
 
+def get_presets():
+    cpu_family = get_hardware_info("Assets/ryzenadj -i | grep 'CPU Family' | awk -F': ' '{print $2}'", use_sudo=True)
+    cpu_model = get_hardware_info("sysctl -n machdep.cpu.brand_string")
+    loca = None
+    if cpu_hierarchy.index(cpu_family) < cpu_hierarchy.index("Massite"):
+        if "U" in cpu_model or "e" in cpu_model or "Ce" in cpu_model:
+            loca = "Assets.Presets.AMDAPUPreMatisse_U_e_Ce"
+            from Assets.Presets.AMDAPUPreMatisse_U_e_Ce import PRESETS
+            logging.info("what")
+        elif "H" in cpu_model:
+            loca = "Assets.Presets.AMDAPUPreMatisse_H"
+            from Assets.Presets.AMDAPUPreMatisse_H import PRESETS
+        elif "GE" in cpu_model:
+            loca = "Assets.Presets.AMDAPUPreMatisse_GE"
+            from Assets.Presets.AMDAPUPreMatisse_GE import PRESETS
+        elif "G" in cpu_model:
+            loca = "Assets.Presets.AMDAPUPreMatisse_G"
+            from Assets.Presets.AMDAPUPreMatisse_G import PRESETS
+        else:
+            loca = "Assets.Presets.AMDCPU"
+            from Assets.Presets.AMDCPU import PRESETS
+    elif cpu_hierarchy.index(cpu_family) > cpu_hierarchy.index("Massite"):
+        if "U" in cpu_model:
+            loca = "Assets.Presets.AMDAPUPostMatisse_U"
+            from Assets.Presets.AMDAPUPostMatisse_U import PRESETS
+        elif "HX" in cpu_model:
+            loca = "Assets.Presets.AMDAPUPostMatisse_HX"
+            from Assets.Presets.AMDAPUPostMatisse_HX import PRESETS
+        elif "HS" in cpu_model:
+            loca = "Assets.Presets.AMDAPUPostMatisse_HS"
+            from Assets.Presets.AMDAPUPostMatisse_HS import PRESETS
+        elif "H" in cpu_model:
+            loca = "Assets.Presets.AMDAPUPostMatisse_H"
+            from Assets.Presets.AMDAPUPostMatisse_H import PRESETS
+        elif "G" in cpu_model:
+            loca = "Assets.Presets.AMDAPUPostMatisse_G"
+            from Assets.Presets.AMDAPUPostMatisse_G import PRESETS
+        elif "GE" in cpu_model:
+            loca = "Assets.Presets.AMDAPUPostMatisse_GE"
+            from Assets.Presets.AMDAPUPostMatisse_GE import PRESETS
+        else:
+            loca = "Assets.Presets.AMDCPU"
+            from Assets.Presets.AMDCPU import PRESETS
+    elif cpu_hierarchy.index(cpu_family) == cpu_hierarchy.index("Mendocino") and "U" in cpu_model:
+        loca = "Assets.Presets.AMDAPUMendocino_U"
+        from Assets.Presets.AMDAPUMendocino_U import PRESETS
+    else:
+        loca = "Assets.Presets.AMDCPU"
+        from Assets.Presets.AMDCPU import PRESETS
+    cfg.set('User', 'Preset', loca)
+    with open(CONFIG_PATH, 'w') as config_file:
+        cfg.write(config_file)
+    return PRESETS
+
 def hardware_info():
     clear()
     logging.info("Processor Information:")
@@ -59,7 +105,7 @@ def hardware_info():
     cpu_family = get_hardware_info("Assets/ryzenadj -i | grep 'CPU Family'", use_sudo=True).strip()
     smu_version = get_hardware_info("Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
     if cpu_family:
-        logging.info(f' - {cpu_family}')
+        logging.info(f' - {cpu_family} ( {cfg.get('User','Preset', fallback = '')} )')
     if smu_version:
         logging.info(f' - {smu_version}')
     logging.info(f' - Cores: {get_hardware_info("sysctl -n hw.physicalcpu")}')
@@ -399,12 +445,12 @@ def cfu_cfg():
             cfg.write(config_file)
 
 def preset_cfg():
+    PRESETS = get_presets()
     while True:
         clear()
         logging.info("--------------- Preset ---------------")
-        logging.info("Preset:")
-        for i, mode in enumerate(PRESETS, start=1):
-            logging.info(f"{i}. {mode}")
+        for i, (preset_name, preset_value) in enumerate(PRESETS.items(), start=1):
+            logging.info(f"{i}. {preset_name}")
         logging.info("\nD. Dynamic Mode")
         logging.info("C. Custom (Beta)")
         logging.info("B. Back")
@@ -605,7 +651,7 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Mac")
-        logging.info("The Dynamic Update (2F16CI)")
+        logging.info("The Dynamic Update (2UXTUPRESETS2403)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
@@ -624,6 +670,7 @@ def about():
             action()
 
 def preset_menu():
+    PRESETS = get_presets()
     clear()
     logging.info("Apply power management settings:")
     logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n\nD. Dynamic Mode")
@@ -682,6 +729,7 @@ def apply_smu(args, user_mode):
     reapply = cfg.get('Settings', 'ReApply', fallback='0')
     dynamic = cfg.get('Settings', 'dynamicmode', fallback='0')
     prev_mode = None
+    PRESETS = get_presets()
     if reapply == '1':
       while True:
         if dynamic == '1':
@@ -723,6 +771,7 @@ def apply_smu(args, user_mode):
         result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logging.info(result.stdout.decode())
         if cfg.get('Settings', 'Debug', fallback='1') == '1':
+             logging.info(cfg.get('User', 'Preset',fallback = ''))
              if result.stderr:
                 logging.info(f"{result.stderr.decode()}")
         for _ in range(int(float(sleep_time))):
@@ -745,12 +794,14 @@ def apply_smu(args, user_mode):
           result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
           logging.info(result.stdout.decode())
           if cfg.get('Settings', 'Debug', fallback='1') == '1':
+             logging.info(cfg.get('User', 'Preset',fallback = ''))
              if result.stderr:
                 logging.info(f"{result.stderr.decode()}")
           input("Press Enter to continue...")
           
 def main():
     check_cfg_integrity()
+    PRESETS = get_presets()
     if cfg.get('Settings', 'SoftwareUpdate', fallback='1') == '1':
         check_updates()
     if user_mode := read_cfg():

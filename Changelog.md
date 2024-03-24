@@ -1,6 +1,8 @@
 ## [0.2.4]
 
 - Extend Presets based on UXTU's preset
+- Support for each APU Generation Preset like UXTU
+### At this time, UXTU4Mac lacks support for CPU since some command in original UXTU are incompatible with ryzenAdj
 
 ## [0.2.32]
 
