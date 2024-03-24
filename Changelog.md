@@ -1,3 +1,8 @@
+## [0.2.41]
+
+- Fix various bug related to Welcome tutorial and get presets
+- Fix filename
+
 ## [0.2.4]
 
 - Extended presets based on UXTU's preset.

@@ -5,7 +5,7 @@ from configparser import ConfigParser
 CONFIG_PATH = 'Assets/config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.2.4"
+LOCAL_VERSION = "0.2.41"
 cpu_hierarchy = ["Raven Ridge", "Dali", "Picasso", "Massite", "Renoir", "Lucienne", "Mendocino", "Cezanne", "Barcelo", "Barcelo-R", "Rembrandt", "Rembrandt-R", "Dragon Range", "Phoenix"]
 os.makedirs('Logs', exist_ok=True)
 logging.basicConfig(filename='Logs/UXTU4Mac.log', filemode='w', encoding='utf-8',
@@ -46,49 +46,49 @@ def get_presets():
     cpu_family = get_hardware_info("Assets/ryzenadj -i | grep 'CPU Family' | awk -F': ' '{print $2}'", use_sudo=True)
     cpu_model = get_hardware_info("sysctl -n machdep.cpu.brand_string")
     loca = None
-    if cpu_hierarchy.index(cpu_family) < cpu_hierarchy.index("Massite"):
-        if "U" in cpu_model or "e" in cpu_model or "Ce" in cpu_model:
-            loca = "Assets.Presets.AMDAPUPreMatisse_U_e_Ce"
-            from Assets.Presets.AMDAPUPreMatisse_U_e_Ce import PRESETS
-            logging.info("what")
-        elif "H" in cpu_model:
-            loca = "Assets.Presets.AMDAPUPreMatisse_H"
-            from Assets.Presets.AMDAPUPreMatisse_H import PRESETS
-        elif "GE" in cpu_model:
-            loca = "Assets.Presets.AMDAPUPreMatisse_GE"
-            from Assets.Presets.AMDAPUPreMatisse_GE import PRESETS
-        elif "G" in cpu_model:
-            loca = "Assets.Presets.AMDAPUPreMatisse_G"
-            from Assets.Presets.AMDAPUPreMatisse_G import PRESETS
-        else:
-            loca = "Assets.Presets.AMDCPU"
-            from Assets.Presets.AMDCPU import PRESETS
-    elif cpu_hierarchy.index(cpu_family) > cpu_hierarchy.index("Massite"):
-        if "U" in cpu_model:
-            loca = "Assets.Presets.AMDAPUPostMatisse_U"
-            from Assets.Presets.AMDAPUPostMatisse_U import PRESETS
-        elif "HX" in cpu_model:
-            loca = "Assets.Presets.AMDAPUPostMatisse_HX"
-            from Assets.Presets.AMDAPUPostMatisse_HX import PRESETS
-        elif "HS" in cpu_model:
-            loca = "Assets.Presets.AMDAPUPostMatisse_HS"
-            from Assets.Presets.AMDAPUPostMatisse_HS import PRESETS
-        elif "H" in cpu_model:
-            loca = "Assets.Presets.AMDAPUPostMatisse_H"
-            from Assets.Presets.AMDAPUPostMatisse_H import PRESETS
-        elif "G" in cpu_model:
-            loca = "Assets.Presets.AMDAPUPostMatisse_G"
-            from Assets.Presets.AMDAPUPostMatisse_G import PRESETS
-        elif "GE" in cpu_model:
-            loca = "Assets.Presets.AMDAPUPostMatisse_GE"
-            from Assets.Presets.AMDAPUPostMatisse_GE import PRESETS
-        else:
-            loca = "Assets.Presets.AMDCPU"
-            from Assets.Presets.AMDCPU import PRESETS
-    elif cpu_hierarchy.index(cpu_family) == cpu_hierarchy.index("Mendocino") and "U" in cpu_model:
-        loca = "Assets.Presets.AMDAPUMendocino_U"
-        from Assets.Presets.AMDAPUMendocino_U import PRESETS
-    else:
+    try:
+        if cpu_hierarchy.index(cpu_family) < cpu_hierarchy.index("Massite"):
+            if "U" in cpu_model or "e" in cpu_model or "Ce" in cpu_model:
+                loca = "Assets.Presets.AMDAPUPreMatisse_U_e_Ce"
+                from Assets.Presets.AMDAPUPreMatisse_U_e_Ce import PRESETS
+            elif "H" in cpu_model:
+                loca = "Assets.Presets.AMDAPUPreMatisse_H"
+                from Assets.Presets.AMDAPUPreMatisse_H import PRESETS
+            elif "GE" in cpu_model:
+                loca = "Assets.Presets.AMDAPUPreMatisse_GE"
+                from Assets.Presets.AMDAPUPreMatisse_GE import PRESETS
+            elif "G" in cpu_model:
+                loca = "Assets.Presets.AMDAPUPreMatisse_G"
+                from Assets.Presets.AMDAPUPreMatisse_G import PRESETS
+            else:
+                loca = "Assets.Presets.AMDCPU"
+                from Assets.Presets.AMDCPU import PRESETS
+        elif cpu_hierarchy.index(cpu_family) > cpu_hierarchy.index("Massite"):
+            if "U" in cpu_model:
+                loca = "Assets.Presets.AMDAPUPostMatisse_U"
+                from Assets.Presets.AMDAPUPostMatisse_U import PRESETS
+            elif "HX" in cpu_model:
+                loca = "Assets.Presets.AMDAPUPostMatisse_HX"
+                from Assets.Presets.AMDAPUPostMatisse_HX import PRESETS
+            elif "HS" in cpu_model:
+                loca = "Assets.Presets.AMDAPUPostMatisse_HS"
+                from Assets.Presets.AMDAPUPostMatisse_HS import PRESETS
+            elif "H" in cpu_model:
+                loca = "Assets.Presets.AMDAPUPostMatisse_H"
+                from Assets.Presets.AMDAPUPostMatisse_H import PRESETS
+            elif "G" in cpu_model:
+                loca = "Assets.Presets.AMDAPUPostMatisse_G"
+                from Assets.Presets.AMDAPUPostMatisse_G import PRESETS
+            elif "GE" in cpu_model:
+                loca = "Assets.Presets.AMDAPUPostMatisse_GE"
+                from Assets.Presets.AMDAPUPostMatisse_GE import PRESETS
+            else:
+                loca = "Assets.Presets.AMDCPU"
+                from Assets.Presets.AMDCPU import PRESETS
+        elif cpu_hierarchy.index(cpu_family) == cpu_hierarchy.index("Mendocino") and "U" in cpu_model:
+            loca = "Assets.Presets.AMDAPUMendocino_U"
+            from Assets.Presets.AMDAPUMendocino_U import PRESETS
+    except:  
         loca = "Assets.Presets.AMDCPU"
         from Assets.Presets.AMDCPU import PRESETS
     cfg.set('User', 'Preset', loca)
@@ -224,10 +224,10 @@ def welcome_tutorial():
         raise SystemExit
     with open(CONFIG_PATH, 'w') as config_file:
         cfg.write(config_file)
-    preset_cfg()
-    clear()
     if not check_run():
        install_menu()
+    preset_cfg()
+    clear()
        
 def settings():
     options = {
