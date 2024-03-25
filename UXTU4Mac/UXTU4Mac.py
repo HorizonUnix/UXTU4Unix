@@ -1,11 +1,11 @@
 import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
-import urllib.request, plistlib, base64, json, select
+import urllib.request, plistlib, base64, json, select, importlib.util
 from configparser import ConfigParser
 
 CONFIG_PATH = 'Assets/config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.2.41"
+LOCAL_VERSION = "0.2.5"
 cpu_hierarchy = ["Raven Ridge", "Dali", "Picasso", "Massite", "Renoir", "Lucienne", "Mendocino", "Cezanne", "Barcelo", "Barcelo-R", "Rembrandt", "Rembrandt-R", "Dragon Range", "Phoenix"]
 os.makedirs('Logs', exist_ok=True)
 logging.basicConfig(filename='Logs/UXTU4Mac.log', filemode='w', encoding='utf-8',
@@ -28,7 +28,9 @@ def clear():
     logging.info(
         f'  {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
     )
-    logging.info(f"  Version: {LOCAL_VERSION} by GorouFlex")
+    if cfg.get('Settings', 'Debug', fallback='0') == '1':
+        logging.info(f"  Loaded: {cfg.get('User', 'Preset',fallback = '')}")
+    logging.info(f"  Version: {LOCAL_VERSION} by GorouFlex and AppleOSX")
     logging.info("")
     
 def get_hardware_info(command, use_sudo=False):
@@ -625,6 +627,15 @@ def updater():
     raise SystemExit
 
 def check_updates():
+    spec = importlib.util.find_spec("certifi")
+    if spec is None:
+        clear()
+        logging.info("certifi module/SSL cerf is not installed.")
+        result = input("Do you want to install certifi? (y/n): ").lower().strip()
+        if result == "y":
+            subprocess.check_call(["pip3", "install", "certifi"])
+        else:
+            logging.info("Skipping certifi installation.")
     clear()
     max_retries = 10
     for i in range(max_retries):
@@ -639,8 +650,11 @@ def check_updates():
                 if result != "y":
                     logging.info("Quitting...")
                     raise SystemExit
-    if LOCAL_VERSION < latest_version:
-         updater()
+    try:
+        if LOCAL_VERSION < latest_version:
+            updater()
+    except:
+        pass
 
 def about():
     options = {
@@ -771,7 +785,6 @@ def apply_smu(args, user_mode):
         result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         logging.info(result.stdout.decode())
         if cfg.get('Settings', 'Debug', fallback='1') == '1':
-             logging.info(cfg.get('User', 'Preset',fallback = ''))
              if result.stderr:
                 logging.info(f"{result.stderr.decode()}")
         for _ in range(int(float(sleep_time))):
@@ -794,7 +807,6 @@ def apply_smu(args, user_mode):
           result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
           logging.info(result.stdout.decode())
           if cfg.get('Settings', 'Debug', fallback='1') == '1':
-             logging.info(cfg.get('User', 'Preset',fallback = ''))
              if result.stderr:
                 logging.info(f"{result.stderr.decode()}")
           input("Press Enter to continue...")
