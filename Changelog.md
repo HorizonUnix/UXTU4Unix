@@ -1,3 +1,9 @@
+## [0.2.6]
+
+- Extended APU support based on RyzenAdj
+- Supported RyzenAdj v0.15.0
+- Removed some information in Hardware information
+- Added a logic to preset
 ## [0.2.5]
 
 - Fixed a bug related to CFU
