@@ -1,3 +1,9 @@
+## [0.2.5]
+
+- Fixed a bug related to CFU
+- Fixed various bugs related to the get_presets function
+- Fixed the logic in the welcome_tutorial
+- Added an SSL certificate check before running CFU to avoid hangs (thanks to @nlqanh524)
 ## [0.2.41]
 
 - Fix various bug related to Welcome tutorial and get presets
