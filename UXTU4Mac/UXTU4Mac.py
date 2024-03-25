@@ -2,11 +2,11 @@ import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
 import urllib.request, plistlib, base64, json, select, importlib.util
 from configparser import ConfigParser
 
+LOCAL_VERSION = "0.2.6"
 CONFIG_PATH = 'Assets/config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-LOCAL_VERSION = "0.2.5"
-cpu_hierarchy = ["Raven Ridge", "Dali", "Picasso", "Massite", "Renoir", "Lucienne", "Mendocino", "Cezanne", "Barcelo", "Barcelo-R", "Rembrandt", "Rembrandt-R", "Dragon Range", "Phoenix"]
+cpu_hierarchy = ["Raven Ridge", "Dali", "Picasso", "Massite", "Renoir", "Lucienne", "Van Gogh", "Mendocino", "Cezanne", "Barcelo", "Barcelo-R", "Rembrandt", "Rembrandt-R", "Dragon Range", "Phoenix", "Hawk Point"]
 os.makedirs('Logs', exist_ok=True)
 logging.basicConfig(filename='Logs/UXTU4Mac.log', filemode='w', encoding='utf-8',
                     level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
@@ -21,10 +21,12 @@ command_file_name = os.path.basename(command_file)
     
 def clear():
     subprocess.call('clear', shell=True)
-    logging.info(r"""    __  ___  __________  ______ __  ___
+    logging.info(r"""
+    __  ___  __________  ______ __  ___
    / / / / |/_/_  __/ / / / / //  |/  /__ _____
   / /_/ />  <  / / / /_/ /_  _/ /|_/ / _ `/ __/
   \____/_/|_| /_/  \____/ /_//_/  /_/\_,_/\__/ """)
+    logging.info("")
     logging.info(
         f'  {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
     )
@@ -107,7 +109,7 @@ def hardware_info():
     cpu_family = get_hardware_info("Assets/ryzenadj -i | grep 'CPU Family'", use_sudo=True).strip()
     smu_version = get_hardware_info("Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
     if cpu_family:
-        logging.info(f' - {cpu_family} ( {cfg.get('User','Preset', fallback = '')} )')
+        logging.info(f' - {cpu_family}')
     if smu_version:
         logging.info(f' - {smu_version}')
     logging.info(f' - Cores: {get_hardware_info("sysctl -n hw.physicalcpu")}')
@@ -124,62 +126,6 @@ def hardware_info():
     logging.info(
         f' - Instruction: {get_hardware_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]}'
     )
-    logging.info("\nMemory Information:")
-    memory = float(get_hardware_info("sysctl -n hw.memsize")) / (1024**3)
-    logging.info(" - Total of RAM: {:.2f} GB".format(memory))
-    ram_info = get_hardware_info("system_profiler SPMemoryDataType")
-    ram_info_lines = ram_info.split('\n')
-    ram_slot_names = ["BANK","SODIMM","DIMM"]
-    slot_info = []
-    try:
-        for i, line in enumerate(ram_info_lines):
-           if any(slot_name in line for slot_name in ram_slot_names):
-             slot_name = line.strip()
-             size = ram_info_lines[i+2].strip().split(":")[1].strip()
-             type = ram_info_lines[i+3].strip().split(":")[1].strip()
-             speed = ram_info_lines[i+4].strip().split(":")[1].strip()
-             manufacturer = ram_info_lines[i+5].strip().split(":")[1].strip()
-             part_number = ram_info_lines[i+6].strip().split(":")[1].strip()
-             serial_number = ram_info_lines[i+7].strip().split(":")[1].strip()
-             slot_info.append((slot_name, size, type, speed, manufacturer, part_number, serial_number))
-        for i in range(0, len(slot_info), 2):
-            logging.info(
-                f" - Size: {slot_info[i][1]} / {slot_info[i + 1][1] if i + 1 < len(slot_info) else 'N/A'}"
-            )
-            logging.info(
-                f" - Type: {slot_info[i][2]} / {slot_info[i + 1][2] if i + 1 < len(slot_info) else 'N/A'}"
-            )
-            logging.info(
-                f" - Speed: {slot_info[i][3]} / {slot_info[i + 1][3] if i + 1 < len(slot_info) else 'N/A'}"
-            )
-            logging.info(
-                f" - Manufacturer: {slot_info[i][5]} / {slot_info[i + 1][5] if i + 1 < len(slot_info) else 'N/A'}"
-            )
-            logging.info(
-                f" - Status: {slot_info[i][4]} / {slot_info[i + 1][4] if i + 1 < len(slot_info) else 'N/A'}"
-            )
-            logging.info(
-                f" - Part Number: {slot_info[i][6]} / {slot_info[i + 1][6] if i + 1 < len(slot_info) else 'N/A'}"
-            )
-    except:
-        logging.info("Pardon me for my horrible search for displaying RAM information")
-    if has_battery := get_hardware_info(
-        "system_profiler SPPowerDataType | grep 'Battery Information'"
-    ):
-        logging.info("\nBattery Information:")
-        logging.info(
-            f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Manufacturer'")}"""
-        )
-        logging.info(" - State of Charge (%): {}".format(get_hardware_info("pmset -g batt | egrep '([0-9]+\\%).*' -o --colour=auto | cut -f1 -d';'")))
-        logging.info(
-            f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Cycle Count'")}"""
-        )
-        logging.info(
-            f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Full Charge Capacity'")}"""
-        )
-        logging.info(
-            f""" - {get_hardware_info("system_profiler SPPowerDataType | grep 'Condition'")}"""
-        )
     logging.info("")
     input("Press Enter to continue...")
 
@@ -665,13 +611,16 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Mac")
-        logging.info("The Dynamic Update (2UXTUPRESETS2403)")
+        logging.info("The Dynamic Update (2R493ZAE)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
-        logging.info("Command file: CorpNewt")
+        logging.info("Command file: CorpNewt\nTester: nlqanh524")
         logging.info("----------------------------")
-        logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
+        try:
+          logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
+        except:
+           pass
         logging.info("\nB. Back")
         choice = input("Option: ").lower().strip()
         action = options.get(choice, None)
@@ -712,8 +661,11 @@ def preset_menu():
             if 1 <= preset_number <= len(PRESETS):
                 selected_preset = list(PRESETS.keys())[preset_number - 1]
                 clear()
+                last_mode = cfg.get('Settings', 'DynamicMode', fallback='0')
+                cfg.set('Settings', 'DynamicMode', '0')
                 user_mode = selected_preset
                 apply_smu(PRESETS[user_mode], user_mode)
+                cfg.set('Settings', 'DynamicMode', last_mode)
             else:
                 logging.info("Invalid option.")
                 input("Press Enter to continue...")
