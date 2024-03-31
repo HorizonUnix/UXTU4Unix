@@ -57,5 +57,5 @@ P-State Functions
 
 WARNING: Use at your own risk!
 By Jiaxun Yang <jiaxun.yang@flygoat.com>, Under LGPL.
-Version: v0.14.0
+Version: v0.15.0
 ```
