@@ -51,7 +51,14 @@ def get_presets():
     cpu_model = get_hardware_info("sysctl -n machdep.cpu.brand_string")
     loca = None
     try:
-        if cpu_codename.index(cpu_family) < cpu_codename.index("Massite"):
+        if cpu_codename.index(cpu_family) == cpu_codename.index("Mendocino"):
+            if "U" in cpu_model:
+                loca = "Assets.Presets.AMDAPUMendocino_U"
+                from Assets.Presets.AMDAPUMendocino_U import PRESETS
+            else:
+                loca = "Assets.Presets.AMDCPU"
+                from Assets.Presets.AMDCPU import PRESETS
+        elif cpu_codename.index(cpu_family) < cpu_codename.index("Massite"):
             if "U" in cpu_model or "e" in cpu_model or "Ce" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPreMatisse_U_e_Ce"
                 from Assets.Presets.AMDAPUPreMatisse_U_e_Ce import PRESETS
@@ -71,9 +78,6 @@ def get_presets():
             if "U" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_U"
                 from Assets.Presets.AMDAPUPostMatisse_U import PRESETS
-            elif cpu_codename.index(cpu_family) == cpu_codename.index("Mendocino") and "U" in cpu_model:
-                loca = "Assets.Presets.AMDAPUMendocino_U"
-                from Assets.Presets.AMDAPUMendocino_U import PRESETS
             elif "HX" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_HX"
                 from Assets.Presets.AMDAPUPostMatisse_HX import PRESETS
