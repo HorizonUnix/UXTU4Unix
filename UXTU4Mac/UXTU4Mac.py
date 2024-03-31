@@ -2,11 +2,11 @@ import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
 import urllib.request, plistlib, base64, json, select, importlib.util
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.2.6"
+LOCAL_VERSION = "0.2.7"
 CONFIG_PATH = 'Assets/config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
-cpu_hierarchy = ["Raven Ridge", "Dali", "Picasso", "Massite", "Renoir", "Lucienne", "Van Gogh", "Mendocino", "Cezanne", "Barcelo", "Barcelo-R", "Rembrandt", "Rembrandt-R", "Dragon Range", "Phoenix", "Hawk Point"]
+cpu_codename = ["Raven Ridge", "Dali", "Picasso", "Massite", "Renoir", "Lucienne", "Van Gogh", "Mendocino", "Cezanne", "Barcelo", "Barcelo-R", "Rembrandt", "Rembrandt-R", "Dragon Range", "Phoenix", "Hawk Point"]
 os.makedirs('Logs', exist_ok=True)
 logging.basicConfig(filename='Logs/UXTU4Mac.log', filemode='w', encoding='utf-8',
                     level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
@@ -18,7 +18,6 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 command_file = os.path.join(current_dir, 'UXTU4Mac.command')
 command_file_name = os.path.basename(command_file)
 
-    
 def clear():
     subprocess.call('clear', shell=True)
     logging.info(r"""
@@ -30,6 +29,7 @@ def clear():
     logging.info(
         f'  {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
     )
+    #logging.info(f'  {get_hardware_info("system_profiler SPDisplaysDataType | grep 'Chipset Model' | cut -d ':' -f2")}')
     if cfg.get('Settings', 'Debug', fallback='0') == '1':
         logging.info(f"  Loaded: {cfg.get('User', 'Preset',fallback = '')}")
     logging.info(f"  Version: {LOCAL_VERSION} by GorouFlex and AppleOSX")
@@ -51,7 +51,7 @@ def get_presets():
     cpu_model = get_hardware_info("sysctl -n machdep.cpu.brand_string")
     loca = None
     try:
-        if cpu_hierarchy.index(cpu_family) < cpu_hierarchy.index("Massite"):
+        if cpu_codename.index(cpu_family) < cpu_codename.index("Massite"):
             if "U" in cpu_model or "e" in cpu_model or "Ce" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPreMatisse_U_e_Ce"
                 from Assets.Presets.AMDAPUPreMatisse_U_e_Ce import PRESETS
@@ -67,10 +67,13 @@ def get_presets():
             else:
                 loca = "Assets.Presets.AMDCPU"
                 from Assets.Presets.AMDCPU import PRESETS
-        elif cpu_hierarchy.index(cpu_family) > cpu_hierarchy.index("Massite"):
+        elif cpu_codename.index(cpu_family) > cpu_codename.index("Massite"):
             if "U" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_U"
                 from Assets.Presets.AMDAPUPostMatisse_U import PRESETS
+            elif cpu_codename.index(cpu_family) == cpu_codename.index("Mendocino") and "U" in cpu_model:
+                loca = "Assets.Presets.AMDAPUMendocino_U"
+                from Assets.Presets.AMDAPUMendocino_U import PRESETS
             elif "HX" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_HX"
                 from Assets.Presets.AMDAPUPostMatisse_HX import PRESETS
@@ -89,9 +92,6 @@ def get_presets():
             else:
                 loca = "Assets.Presets.AMDCPU"
                 from Assets.Presets.AMDCPU import PRESETS
-        elif cpu_hierarchy.index(cpu_family) == cpu_hierarchy.index("Mendocino") and "U" in cpu_model:
-            loca = "Assets.Presets.AMDAPUMendocino_U"
-            from Assets.Presets.AMDAPUMendocino_U import PRESETS
     except:  
         loca = "Assets.Presets.AMDCPU"
         from Assets.Presets.AMDCPU import PRESETS
@@ -106,6 +106,7 @@ def hardware_info():
     logging.info(
         f' - Processor: {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
     )
+    logging.info(f' - GPU/APU: {get_hardware_info("system_profiler SPDisplaysDataType | grep 'Chipset Model' | cut -d ':' -f2")}')
     cpu_family = get_hardware_info("Assets/ryzenadj -i | grep 'CPU Family'", use_sudo=True).strip()
     smu_version = get_hardware_info("Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
     if cpu_family:
@@ -164,6 +165,7 @@ def welcome_tutorial():
         cfg.set('Settings', 'Time', '30')
         cfg.set('Settings', 'SoftwareUpdate', '1')
         cfg.set('Settings', 'ReApply', '0')
+        cfg.set('Settings', 'ApplyOnStart', '1')
         cfg.set('Settings', 'DynamicMode', '0')
         cfg.set('Settings', 'Debug', '1')
         cfg.set('Settings', 'SIP', '03080000')
@@ -183,11 +185,12 @@ def settings():
         "2": sleep_cfg,
         "3": dynamic_cfg,
         "4": reapply_cfg,
-        "5": login_cfg,
-        "6": cfu_cfg,
-        "7": pass_cfg,
-        "8": sip_cfg,
-        "9": debug_cfg,
+        "5": applystart_cfg,
+        "6": login_cfg,
+        "7": cfu_cfg,
+        "8": pass_cfg,
+        "9": sip_cfg,
+        "10": debug_cfg,
         "i": install_menu,
         "r": reset,
         "b": "break"
@@ -197,9 +200,10 @@ def settings():
         logging.info("--------------- Settings ---------------")
         logging.info("1. Preset\n2. Sleep time")
         logging.info("3. Dynamic mode\n4. Auto reapply")
-        logging.info("5. Run on Startup\n6. Software update")
-        logging.info("7. Sudo password\n8. SIP flags")
-        logging.info("9. Debug\n")
+        logging.info("5. Apply on start")
+        logging.info("6. Run on startup\n7. Software update")
+        logging.info("8. Sudo password\n9. SIP flags")
+        logging.info("10. Debug\n")
         logging.info("I. Install UXTU4Mac dependencies")
         logging.info("R. Reset all saved settings")
         logging.info("B. Back")
@@ -213,14 +217,37 @@ def settings():
         else:
             action()
 
+def applystart_cfg():
+    while True:
+        clear()
+        logging.info("--------------- Apply on start ---------------")
+        logging.info("(Apply preset when start)")
+        start_enabled = cfg.get('Settings', 'ApplyOnStart', fallback='1') == '1'
+        logging.info("Status: Enabled" if start_enabled else "Status: Disabled")
+        logging.info("\n1. Enable Apply on start\n2. Disable Apply on start")
+        logging.info("\nB. Back")
+        choice = input("Option: ").strip()
+        if choice == "1":
+            cfg.set('Settings', 'ApplyOnStart', '1')
+        elif choice == "2":
+            cfg.set('Settings', 'ApplyOnStart', '0')
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
+        with open(CONFIG_PATH, 'w') as config_file:
+            cfg.write(config_file)
+            
 def debug_cfg():
     while True:
         clear()
         logging.info("--------------- Debug ---------------")
+        logging.info("(Display some process information)")
         debug_enabled = cfg.get('Settings', 'Debug', fallback='1') == '1'
         logging.info("Status: Enabled" if debug_enabled else "Status: Disabled")
         logging.info("\n1. Enable Debug\n2. Disable Debug")
-        logging.info("B. Back")
+        logging.info("\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
             cfg.set('Settings', 'Debug', '1')
@@ -238,10 +265,11 @@ def reapply_cfg():
     while True:
         clear()
         logging.info("--------------- Auto reapply ---------------")
+        logging.info("(Automatic reapply preset)")
         reapply_enabled = cfg.get('Settings', 'ReApply', fallback='0') == '1'
         logging.info("Status: Enabled" if reapply_enabled else "Status: Disabled")
         logging.info("\n1. Enable Auto reapply\n2. Disable Auto reapply")
-        logging.info("B. Back")
+        logging.info("\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
             cfg.set('Settings', 'ReApply', '1')
@@ -263,7 +291,7 @@ def sip_cfg():
         SIP = cfg.get('Settings', 'SIP', fallback='03080000')
         logging.info(f"Current required SIP: {SIP}")
         logging.info("\n1. Change SIP flags")
-        logging.info("B. Back")
+        logging.info("\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
             logging.info("Caution: Must have at least ALLOW_UNTRUSTED_KEXTS (0x1)")
@@ -281,9 +309,10 @@ def dynamic_cfg():
     while True:
         clear()
         dm_enabled = cfg.get('Settings', 'DynamicMode', fallback='0') == '1'
-        logging.info("--------------- Dynamic Mode ---------------")
+        logging.info("--------------- Dynamic mode ---------------")
+        logging.info("(Automatic switch preset based on your battery usage)")
         logging.info("Status: Enabled" if dm_enabled else "Status: Disabled")
-        logging.info("\n1. Enable Dynamic Mode\n2. Disable Dynamic Mode\nB. Back")
+        logging.info("\n1. Enable Dynamic Mode\n2. Disable Dynamic Mode\n\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
             cfg.set('Settings', 'DynamicMode', '1')
@@ -303,7 +332,7 @@ def sleep_cfg():
         time = cfg.get('Settings', 'Time', fallback='30')
         logging.info("--------------- Sleep time ---------------")
         logging.info(f"Auto reapply every: {time} seconds")
-        logging.info("\n1. Change\nB. Back")
+        logging.info("\n1. Change\n\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
             set_time = input("Enter your auto reapply time (Default is 30s): ")
@@ -322,7 +351,7 @@ def pass_cfg():
         pswd = cfg.get('User', 'Password', fallback='')
         logging.info("--------------- Sudo password ---------------")
         logging.info(f"Current sudo (login) password: {pswd}")
-        logging.info("\n1. Change password\nB. Back")
+        logging.info("\n1. Change password\n\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
             while True:
@@ -348,9 +377,9 @@ def login_cfg():
         clear()
         check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
         login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
-        logging.info("--------------- Run on Startup ---------------")
+        logging.info("--------------- Run on startup ---------------")
         logging.info(f"Status: {'Enable' if login_enabled else 'Disable'}")
-        logging.info("\n1. Enable Run on Startup\n2. Disable Run on Startup\nB. Back")
+        logging.info("\n1. Enable Run on Startup\n2. Disable Run on Startup\n\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
             if not login_enabled:
@@ -378,7 +407,7 @@ def cfu_cfg():
         cfu_enabled = cfg.get('Settings', 'SoftwareUpdate', fallback='1') == '1'
         logging.info("--------------- Software update ---------------")
         logging.info(f"Status: {'Enabled' if cfu_enabled else 'Disabled'}")
-        logging.info("\n1. Enable Software update\n2. Disable Software update\nB. Back")
+        logging.info("\n1. Enable Software update\n2. Disable Software update\n\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
             cfg.set('Settings', 'SoftwareUpdate', '1')
@@ -526,7 +555,7 @@ def check_cfg_integrity() -> None:
         welcome_tutorial()
         return
     required_keys_user = ['password', 'mode']
-    required_keys_settings = ['time', 'dynamicmode', 'sip', 'reapply', 'softwareupdate', 'debug']
+    required_keys_settings = ['time', 'dynamicmode', 'sip', 'reapply', 'applyonstart', 'softwareupdate', 'debug']
     if not cfg.has_section('User') or not cfg.has_section('Settings') or \
     any(key not in cfg['User'] for key in required_keys_user) or \
     any(key not in cfg['Settings'] for key in required_keys_settings):
@@ -611,7 +640,7 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Mac")
-        logging.info("The Dynamic Update (2R493ZAE)")
+        logging.info("The Dynamic Update (2WORLDSCLI)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
@@ -699,12 +728,10 @@ def apply_smu(args, user_mode):
     if reapply == '1':
       while True:
         if dynamic == '1':
-            has_battery = subprocess.check_output(["system_profiler", "SPPowerDataType", "|", "grep", "'Battery Information'"]).decode("utf-8")
-            if has_battery:
-                battery_status = subprocess.check_output(["pmset", "-g", "batt"]).decode("utf-8")
-                if 'AC Power' in battery_status:
-                    user_mode = 'Extreme'
-                else:
+            battery_status = subprocess.check_output(["pmset", "-g", "batt"]).decode("utf-8")
+            if 'AC Power' in battery_status:
+                user_mode = 'Extreme'
+            elif 'Battery Power' in battery_status:
                     user_mode = 'Eco'
             else:
                 user_mode = 'Extreme'
@@ -766,13 +793,14 @@ def apply_smu(args, user_mode):
 def main():
     check_cfg_integrity()
     PRESETS = get_presets()
-    if cfg.get('Settings', 'SoftwareUpdate', fallback='1') == '1':
+    if cfg.get('Settings', 'SoftwareUpdate', fallback='0') == '1':
         check_updates()
-    if user_mode := read_cfg():
-        if user_mode in PRESETS:
-            apply_smu(PRESETS[user_mode], user_mode)
-        else:
-            apply_smu(user_mode, user_mode)
+    if cfg.get('Settings', 'ApplyOnStart', fallback='1') == '1':  
+       if user_mode := read_cfg():
+          if user_mode in PRESETS:
+             apply_smu(PRESETS[user_mode], user_mode)
+          else:
+             apply_smu(user_mode, user_mode)
     while True:
         clear()
         options = {
@@ -796,3 +824,4 @@ def main():
                 
 if __name__ == "__main__":
     main()
+1
