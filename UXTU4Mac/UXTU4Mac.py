@@ -597,8 +597,6 @@ def updater():
         subprocess.run(["python3", "Assets/SU.py"])
         logging.info("Updating...")
         logging.info("Update complete. Restarting the application, please close this window...")
-        command_file_path = os.path.join(os.path.dirname(__file__), 'UXTU4Mac.command')
-        subprocess.Popen(['open', command_file_path])
     elif choice == "n":
         logging.info("Skipping update...")
     else:
@@ -617,6 +615,7 @@ def check_updates():
             logging.info("Skipping certifi installation.")
     clear()
     max_retries = 10
+    skip_update_check = False
     for i in range(max_retries):
         try:
             latest_version = get_latest_ver()
@@ -626,14 +625,13 @@ def check_updates():
                 time.sleep(5)
             else:
                 result = input("Do you want to skip the check for updates? (y/n): ").lower().strip()
-                if result != "y":
+                if result == "y":
+                    skip_update_check = True
+                else:
                     logging.info("Quitting...")
                     raise SystemExit
-    try:
-        if LOCAL_VERSION < latest_version:
-            updater()
-    except:
-        pass
+    if not skip_update_check and LOCAL_VERSION < latest_version:
+        updater()
 
 def about():
     options = {
@@ -828,4 +826,3 @@ def main():
                 
 if __name__ == "__main__":
     main()
-1
