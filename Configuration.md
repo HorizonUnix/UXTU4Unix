@@ -1,6 +1,6 @@
 ## This Section Explains UXTU's Configuration File
 
-- The configuration file, also known as the config file, is typically stored in the same folder as the script and is named `config.ini` (UXTU4Mac/config.ini). 
+- The configuration file, also known as the config file, is typically stored in the `Assets` folder, named `config.ini` (UXTU4Mac/Assets/config.ini). 
 - Here is an example of a `config.ini` file:
 
 ```ini
