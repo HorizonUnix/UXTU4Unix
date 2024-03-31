@@ -1,3 +1,10 @@
+## [0.2.7]
+
+- Fixed a bug with the Updater
+- Fixed a bug with CFU
+- Reformatted CLI
+- Improved support for Mendocino APU
+## This is the first official commercial version for everyone, after numerous bug fixes and improvements
 ## [0.2.6]
 
 - Extended APU support based on RyzenAdj
