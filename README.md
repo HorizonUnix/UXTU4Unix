@@ -38,9 +38,6 @@
 | Support for many hardware | ✅ | ❌ Only for some AMD Ryzen APU/CPU models, [see here](#supported-cpuapu) |
 
 # Preview
-> [!NOTE]
-> The `Dynamic Mode` logic results in better power management, providing 2:30 hours of battery usage
-> - The `Extreme` or `AC` presets yields the full potential performance that my Ryzen 5 4500U (Renoir) can handle, but it only lasts for 1:30 hours of battery usage. To achieve maximum performance, please use the device with AC power.
 
 <p align="left">
   <img src="/Img/main_menu.png">
