@@ -6,9 +6,28 @@
 
 ---
 
-## Supported APU
+## Supported APU & OS
 > [!NOTE]
 > - AMD Zen-based processors that are supported [NootedRed](https://github.com/ChefKissInc/NootedRed) **or** [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) **Premade Preset** section (or just simply support RyzenAdj)
+
+| Marketing name | Version |
+|    :---:     |    :---:   |
+| Mac OS X Tiger | 10.4 |
+| Mac OS X Leopard | 10.5 |
+| Mac OS X Snow Leopard | 10.6 |
+| OS X Lion | 10.7 |
+| OS X Mountain Lion | 10.8 |
+| OS X Mavericks | 10.9 |
+| OS X Yosemite | 10.10 |
+| OS X El Capitan | 10.11 |
+| macOS Sierra | 10.12 |
+| macOS High Sierra | 10.13 |
+| macOS Mojave | 10.14 |
+| macOS Catalina | 10.15 |
+| macOS Big Sur | 11 |
+| macOS Monterey | 12 |
+| macOS Ventura | 13 |
+| macOS Sonoma | 14 |
 
 ## Usage
 - Download the official build from Releases.
