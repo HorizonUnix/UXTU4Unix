@@ -31,7 +31,7 @@ jobs:
           mv Linux UXTU4Unix
           zip -r Linux.zip UXTU4Unix
           rm -rf UXTU4Unix
-          env:
+        env:
             TAG: ${{ env.TAG }}
           
       - id: generate-notes
