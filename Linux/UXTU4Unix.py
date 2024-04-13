@@ -1,5 +1,5 @@
 import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
-import urllib.request, plistlib, base64, json, select, importlib.util
+import urllib.request, json, select
 from configparser import ConfigParser
 
 LOCAL_VERSION = "0.2.8"
