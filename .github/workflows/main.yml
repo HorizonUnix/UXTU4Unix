@@ -20,10 +20,12 @@ jobs:
         run: |
             chmod +x UXTU4Mac/Assets/ryzenadj
             chmod +x UXTU4Mac/UXTU4Mac.command
-
+            chmod +x UXTU4Linux/Assets/ryzenadj
+            
       - name: Zip folder
         run: |
           zip -r UXTU4Mac.zip UXTU4Mac
+          zip -r UXTU4Linux.zip UXTU4Linux
         env:
           TAG: ${{ env.TAG }}
           
@@ -42,6 +44,6 @@ jobs:
           name: v${{ env.TAG }}
           tag_name: ${{ env.TAG }}
           body_path: ${{ github.workspace }}-RELEASE_NOTES.txt
-          files: UXTU4Mac.zip
+          files: UXTU4Mac.zip, UXTU4Linux.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
