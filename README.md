@@ -16,7 +16,7 @@
 
 ## Usage
 - Download the official build from Releases.
-- Run `UXTU4Mac.command` (macOS) or run `UXTU4Linux.py` by using `python3` command
+- Run `UXTU4Unix.command` (macOS) or run `UXTU4Unix.py` by using `python3` command ( `python3 /path/to/UXTU4Unix.py` )
 - Follow the instructions.
 - [Optional] Disable `Core Performance Boost` in BIOS using [Smokeless_UMAF](https://github.com/DavidS95/Smokeless_UMAF) to chieve better temperature but sacrifice a lot of CPU performance.
 
