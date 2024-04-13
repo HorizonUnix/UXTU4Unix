@@ -26,7 +26,6 @@ def update():
             shutil.move(backup_config, config_file)
         if os.path.exists(zip_file_path):
             os.remove(zip_file_path)
-        subprocess.Popen(['python3', command_file_path])
     except Exception as e:
         print(f"An error occurred: {e}")
 
