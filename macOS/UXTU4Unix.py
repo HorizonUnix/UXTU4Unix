@@ -2,7 +2,7 @@ import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
 import urllib.request, plistlib, base64, json, select, importlib.util
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.2.7"
+LOCAL_VERSION = "0.2.8"
 CONFIG_PATH = 'Assets/config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Unix/releases/latest"
@@ -15,7 +15,7 @@ logging.getLogger().addHandler(logging.StreamHandler())
 cfg = ConfigParser()
 cfg.read(CONFIG_PATH)
 current_dir = os.path.dirname(os.path.realpath(__file__))
-command_file = os.path.join(current_dir, 'UXTU4Mac.command')
+command_file = os.path.join(current_dir, 'UXTU4Unix.command')
 command_file_name = os.path.basename(command_file)
 
 def clear():
@@ -109,7 +109,6 @@ def hardware_info():
     logging.info(
         f' - Processor: {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
     )
-    logging.info(f' - GPU/APU: {get_hardware_info("system_profiler SPDisplaysDataType | grep 'Chipset Model' | cut -d ':' -f2")}')
     cpu_family = get_hardware_info("Assets/ryzenadj -i | grep 'CPU Family'", use_sudo=True).strip()
     smu_version = get_hardware_info("Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
     if cpu_family:
@@ -139,7 +138,7 @@ def welcome_tutorial():
     if not cfg.has_section('Settings'):
         cfg.add_section('Settings')
     clear()
-    logging.info("--------------- Welcome to UXTU4Mac ---------------")
+    logging.info("--------------- Welcome to UXTU4Unix ---------------")
     logging.info("Designed for AMD Zen-based processors on macOS")
     logging.info("Based on RyzenAdj and inspired by UXTU")
     logging.info("Let's get started with some initial setup ~~~")
@@ -207,7 +206,7 @@ def settings():
         logging.info("6. Run on startup\n7. Software update")
         logging.info("8. Sudo password\n9. SIP flags")
         logging.info("10. Debug\n")
-        logging.info("I. Install UXTU4Mac dependencies")
+        logging.info("I. Install UXTU4Unix dependencies")
         logging.info("R. Reset all saved settings")
         logging.info("B. Back")
         settings_choice = input("Option: ").lower().strip()
@@ -486,7 +485,7 @@ def edit_config(config_path):
 
 def install_menu():
     clear()
-    logging.info("UXTU4Mac dependencies\n")
+    logging.info("UXTU4Unix dependencies\n")
     logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)\n2. Manual install (Specify your config.plist path)\n")
     logging.info("B. Back")
     choice = input("Option (default is 1): ").strip()
@@ -502,7 +501,7 @@ def install_menu():
         
 def install_auto():
     clear()
-    logging.info("Installing UXTU4Mac dependencies (Auto)...")
+    logging.info("Installing UXTU4Unix dependencies (Auto)...")
     password = cfg.get('User', 'Password', fallback='')
     debug_enabled = cfg.get('Settings', 'Debug', fallback='1') == '1'
     if debug_enabled:
@@ -521,7 +520,7 @@ def install_auto():
     config_path = os.path.join("/Volumes/EFI/EFI/OC/config.plist")
     edit_config(config_path)
     logging.info("Successfully updated boot-args and SIP settings.")
-    logging.info("UXTU4Mac dependencies installation completed.")
+    logging.info("UXTU4Unix dependencies installation completed.")
     choice = input("Do you want to restart your computer to take effects? (y/n)").lower()
     if choice == "y":
         input("Saved your current work before restarting. Press Enter to continue")
@@ -530,7 +529,7 @@ def install_auto():
 
 def install_manual():
     clear()
-    logging.info("Installing UXTU4Mac dependencies (Manual)...")
+    logging.info("Installing UXTU4Unix dependencies (Manual)...")
     password = cfg.get('User', 'Password', fallback='')
     config_path = input("Please drag and drop the target plist: ").strip()
     if not os.path.exists(config_path):
@@ -539,7 +538,7 @@ def install_manual():
         return
     edit_config(config_path)
     logging.info("Successfully updated boot-args and SIP settings.")
-    logging.info("UXTU4Mac dependencies installation completed.")
+    logging.info("UXTU4Unix dependencies installation completed.")
     choice = input("Do you want to restart your computer to take effects? (y/n)").lower()
     if choice == "y":
         input("Saved your current work before restarting. Press Enter to continue")
@@ -585,7 +584,7 @@ def check_run():
 def updater():
     clear()
     changelog = get_changelog()
-    logging.info("--------------- UXTU4Mac Software Update ---------------")
+    logging.info("--------------- UXTU4Unix Software Update ---------------")
     logging.info("A new update is available!")
     logging.info(
         f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}"
@@ -717,7 +716,7 @@ def preset_menu():
 def apply_smu(args, user_mode):
     if not check_run():
         clear()
-        logging.info("Cannot run RyzenAdj because your computer is missing debug=0x144 or required SIP is not SET yet\nPlease run Install UXTU4Mac dependencies under Setting \nand restart after install.")
+        logging.info("Cannot run RyzenAdj because your computer is missing debug=0x144 or required SIP is not SET yet\nPlease run Install UXTU4Unix dependencies under Setting \nand restart after install.")
         input("Press Enter to continue...")
         return
     sleep_time = cfg.get('Settings', 'Time', fallback='30')
@@ -809,12 +808,12 @@ def main():
             "2": settings,
             "h": hardware_info,
             "a": about,
-            "q": lambda: sys.exit("\nThanks for using UXTU4Mac\nHave a nice day!"),
+            "q": lambda: sys.exit("\nThanks for using UXTU4Unix\nHave a nice day!"),
         }
         logging.info("1. Apply power management settings\n2. Settings")
         logging.info("")
         logging.info("H. Hardware Information")
-        logging.info("A. About UXTU4Mac")
+        logging.info("A. About UXTU4Unix")
         logging.info("Q. Quit")
         choice = input("Option: ").lower().strip()
         if action := options.get(choice):
