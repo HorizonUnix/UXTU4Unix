@@ -2,19 +2,21 @@ import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
 import urllib.request, plistlib, base64, json, select, importlib.util
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.2.8"
-LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Mac/releases/latest"
-GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Mac/releases/latest"
+LOCAL_VERSION = "0.2.7"
+CONFIG_PATH = 'Assets/config.ini'
+LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Unix/releases/latest"
+GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Unix/releases/latest"
 cpu_codename = ["Raven Ridge", "Dali", "Picasso", "Massite", "Renoir", "Lucienne", "Van Gogh", "Mendocino", "Cezanne", "Barcelo", "Barcelo-R", "Rembrandt", "Rembrandt-R", "Dragon Range", "Phoenix", "Hawk Point"]
 os.makedirs('Logs', exist_ok=True)
-logging.basicConfig(filename='Logs/UXTU4Mac.log', filemode='w', encoding='utf-8',
+logging.basicConfig(filename='Logs/UXTU4Unixlog', filemode='w', encoding='utf-8',
                     level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S')
 logging.getLogger().addHandler(logging.StreamHandler())
-current_dir = os.path.dirname(os.path.realpath(__file__))
-CONFIG_PATH = f'{current_dir}/Assets/config.ini'
 cfg = ConfigParser()
 cfg.read(CONFIG_PATH)
+current_dir = os.path.dirname(os.path.realpath(__file__))
+command_file = os.path.join(current_dir, 'UXTU4Mac.command')
+command_file_name = os.path.basename(command_file)
 
 def clear():
     subprocess.call('clear', shell=True)
@@ -24,11 +26,12 @@ def clear():
   | |_| |>  <  | | | |_| |_  _| |_| | ' \| \ \ /
    \___//_/\_\ |_|  \___/  |_| \___/|_||_|_/_\_\ """)
     logging.info("")
-    command = "grep -m 1 'model name' /proc/cpuinfo | awk -F ': ' '{print $2}'"
-    logging.info(f'  {get_hardware_info(command)}')
+    logging.info(
+        f'  {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
+    )
     if cfg.get('Settings', 'Debug', fallback='0') == '1':
         logging.info(f"  Loaded: {cfg.get('User', 'Preset',fallback = '')}")
-    logging.info(f"  Version: {LOCAL_VERSION} by GorouFlex and AppleOSX (Debian Edition)")
+    logging.info(f"  Version: {LOCAL_VERSION} by GorouFlex and AppleOSX (macOS Edition)")
     logging.info("")
     
 def get_hardware_info(command, use_sudo=False):
@@ -43,9 +46,8 @@ def get_hardware_info(command, use_sudo=False):
     return output.decode('utf-8').strip()
 
 def get_presets():
-    command = f"{current_dir}/Assets/ryzenadj -i | grep 'CPU Family' | awk -F': ' '{{print $2}}'"
-    cpu_family = get_hardware_info(command, use_sudo=True)
-    cpu_model = get_hardware_info("cat /proc/cpuinfo | grep 'model name' | head -1 | awk -F': ' '{print $2}'")
+    cpu_family = get_hardware_info("Assets/ryzenadj -i | grep 'CPU Family' | awk -F': ' '{print $2}'", use_sudo=True)
+    cpu_model = get_hardware_info("sysctl -n machdep.cpu.brand_string")
     loca = None
     try:
         if cpu_codename.index(cpu_family) == cpu_codename.index("Mendocino"):
@@ -101,6 +103,36 @@ def get_presets():
         cfg.write(config_file)
     return PRESETS
 
+def hardware_info():
+    clear()
+    logging.info("Processor Information:")
+    logging.info(
+        f' - Processor: {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
+    )
+    logging.info(f' - GPU/APU: {get_hardware_info("system_profiler SPDisplaysDataType | grep 'Chipset Model' | cut -d ':' -f2")}')
+    cpu_family = get_hardware_info("Assets/ryzenadj -i | grep 'CPU Family'", use_sudo=True).strip()
+    smu_version = get_hardware_info("Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
+    if cpu_family:
+        logging.info(f' - {cpu_family}')
+    if smu_version:
+        logging.info(f' - {smu_version}')
+    logging.info(f' - Cores: {get_hardware_info("sysctl -n hw.physicalcpu")}')
+    logging.info(f' - Threads: {get_hardware_info("sysctl -n hw.logicalcpu")}')
+    logging.info(
+        f""" - {get_hardware_info("system_profiler SPHardwareDataType | grep 'L2'")}"""
+    )
+    logging.info(
+        f""" - {get_hardware_info("system_profiler SPHardwareDataType | grep 'L3'")}"""
+    )
+    base_clock = float(get_hardware_info("sysctl -n hw.cpufrequency_max")) / (10**9)
+    logging.info(" - Base clock: {:.2f} GHz".format(base_clock))
+    logging.info(f' - Vendor: {get_hardware_info("sysctl -n machdep.cpu.vendor")}')
+    logging.info(
+        f' - Instruction: {get_hardware_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]}'
+    )
+    logging.info("")
+    input("Press Enter to continue...")
+
 def welcome_tutorial():
     if not cfg.has_section('User'):
         cfg.add_section('User')
@@ -122,6 +154,13 @@ def welcome_tutorial():
             break
         else:
             logging.info("Incorrect sudo password. Please try again.")
+    check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
+    login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
+    if not login_enabled:
+        start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower().strip()
+        if start_with_macos == 'y':
+            command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+            subprocess.call(command, shell=True)
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
     try:
@@ -138,6 +177,8 @@ def welcome_tutorial():
         raise SystemExit
     with open(CONFIG_PATH, 'w') as config_file:
         cfg.write(config_file)
+    if not check_run():
+       install_menu()
     preset_cfg()
     clear()
        
@@ -148,9 +189,12 @@ def settings():
         "3": dynamic_cfg,
         "4": reapply_cfg,
         "5": applystart_cfg,
-        "6": cfu_cfg,
-        "7": pass_cfg,
-        "8": debug_cfg,
+        "6": login_cfg,
+        "7": cfu_cfg,
+        "8": pass_cfg,
+        "9": sip_cfg,
+        "10": debug_cfg,
+        "i": install_menu,
         "r": reset,
         "b": "break"
     }
@@ -160,9 +204,10 @@ def settings():
         logging.info("1. Preset\n2. Sleep time")
         logging.info("3. Dynamic mode\n4. Auto reapply")
         logging.info("5. Apply on start")
-        logging.info("6. Software update")
-        logging.info("7. Sudo password")
-        logging.info("8. Debug\n")
+        logging.info("6. Run on startup\n7. Software update")
+        logging.info("8. Sudo password\n9. SIP flags")
+        logging.info("10. Debug\n")
+        logging.info("I. Install UXTU4Mac dependencies")
         logging.info("R. Reset all saved settings")
         logging.info("B. Back")
         settings_choice = input("Option: ").lower().strip()
@@ -240,7 +285,29 @@ def reapply_cfg():
             input("Press Enter to continue...")
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
-                        
+            
+def sip_cfg():
+    while True:
+        clear()
+        logging.info("--------------- SIP flags---------------")
+        logging.info("(Change your required SIP flags)")
+        SIP = cfg.get('Settings', 'SIP', fallback='03080000')
+        logging.info(f"Current required SIP: {SIP}")
+        logging.info("\n1. Change SIP flags")
+        logging.info("\nB. Back")
+        choice = input("Option: ").strip()
+        if choice == "1":
+            logging.info("Caution: Must have at least ALLOW_UNTRUSTED_KEXTS (0x1)")
+            SIP = input("Enter your required SIP Flags: ")
+            cfg.set('Settings', 'SIP', SIP)
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid option.")
+            input("Press Enter to continue...")
+        with open(CONFIG_PATH, 'w') as config_file:
+            cfg.write(config_file)
+            
 def dynamic_cfg():
     while True:
         clear()
@@ -308,6 +375,35 @@ def pass_cfg():
             logging.info("Invalid option.")
             input("Press Enter to continue...")
 
+def login_cfg():
+    while True:
+        clear()
+        check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
+        login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
+        logging.info("--------------- Run on startup ---------------")
+        logging.info(f"Status: {'Enable' if login_enabled else 'Disable'}")
+        logging.info("\n1. Enable Run on Startup\n2. Disable Run on Startup\n\nB. Back")
+        choice = input("Option: ").strip()
+        if choice == "1":
+            if not login_enabled:
+               command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+               subprocess.call(command, shell=True)
+            else:
+                logging.info("You already added this script to Login Items.")
+                input("Press Enter to continue.")
+        elif choice == "2":
+            if login_enabled:
+              command = f"osascript -e 'tell application \"System Events\" to delete login item \"{command_file_name}\"'"
+              subprocess.call(command, shell=True)
+            else:
+              logging.info("Cannot remove this script because it does not exist in Login Items.")
+              input("Press Enter to continue.")
+        elif choice.lower() == "b":
+            break
+        else:
+            logging.info("Invalid option.")
+            input("Press Enter to continue.")
+
 def cfu_cfg():
     while True:
         clear()
@@ -374,6 +470,82 @@ def preset_cfg():
                 logging.info("Invalid option.")
                 input("Press Enter to continue")
 
+def edit_config(config_path):
+    SIP = cfg.get('Settings', 'SIP', fallback='03080000')
+    with open(config_path, 'rb') as f:
+        config = plistlib.load(f)
+    if 'NVRAM' in config and 'Add' in config['NVRAM'] and '7C436110-AB2A-4BBB-A880-FE41995C9F82' in config['NVRAM']['Add']:
+        if 'boot-args' in config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']:
+            boot_args = config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['boot-args']
+            if 'debug=0x144' not in boot_args:
+                config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['boot-args'] = f'{boot_args} debug=0x144'
+        SIP_bytes = binascii.unhexlify(SIP)
+        config['NVRAM']['Add']['7C436110-AB2A-4BBB-A880-FE41995C9F82']['csr-active-config'] = SIP_bytes
+    with open(config_path, 'wb') as f:
+        plistlib.dump(config, f)
+
+def install_menu():
+    clear()
+    logging.info("UXTU4Mac dependencies\n")
+    logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)\n2. Manual install (Specify your config.plist path)\n")
+    logging.info("B. Back")
+    choice = input("Option (default is 1): ").strip()
+    if choice == "1":
+        install_auto()
+    elif choice == "2":
+        install_manual()
+    elif choice.lower() == "b":
+        return
+    else:
+        logging.info("Invalid option. Please try again.")
+        input("Press Enter to continue...")
+        
+def install_auto():
+    clear()
+    logging.info("Installing UXTU4Mac dependencies (Auto)...")
+    password = cfg.get('User', 'Password', fallback='')
+    debug_enabled = cfg.get('Settings', 'Debug', fallback='1') == '1'
+    if debug_enabled:
+       try:
+          subprocess.run(["sudo", "-S", "diskutil", "mount", "EFI"], input=password.encode(), check=True)
+       except subprocess.CalledProcessError as e:
+          logging.error(f"Failed to mount EFI partition: {e}")
+          logging.error("Please run in Manual mode.")
+          input("Press Enter to continue...")
+          return
+    oc_path = os.path.join("/Volumes/EFI/EFI/OC")
+    if not os.path.exists(oc_path):
+        logging.error("OC folder does not exist!")
+        input("Press Enter to continue...")
+        return
+    config_path = os.path.join("/Volumes/EFI/EFI/OC/config.plist")
+    edit_config(config_path)
+    logging.info("Successfully updated boot-args and SIP settings.")
+    logging.info("UXTU4Mac dependencies installation completed.")
+    choice = input("Do you want to restart your computer to take effects? (y/n)").lower()
+    if choice == "y":
+        input("Saved your current work before restarting. Press Enter to continue")
+        restart_command = '''osascript -e 'tell app "System Events" to restart' '''
+        subprocess.call(restart_command, shell=True)
+
+def install_manual():
+    clear()
+    logging.info("Installing UXTU4Mac dependencies (Manual)...")
+    password = cfg.get('User', 'Password', fallback='')
+    config_path = input("Please drag and drop the target plist: ").strip()
+    if not os.path.exists(config_path):
+        logging.error(f"The specified path '{config_path}' does not exist.")
+        input("Press Enter to continue...")
+        return
+    edit_config(config_path)
+    logging.info("Successfully updated boot-args and SIP settings.")
+    logging.info("UXTU4Mac dependencies installation completed.")
+    choice = input("Do you want to restart your computer to take effects? (y/n)").lower()
+    if choice == "y":
+        input("Saved your current work before restarting. Press Enter to continue")
+        restart_command = '''osascript -e 'tell app "System Events" to restart' '''
+        subprocess.call(restart_command, shell=True)
+
 def reset():
     os.remove(CONFIG_PATH)
     welcome_tutorial()
@@ -386,7 +558,7 @@ def check_cfg_integrity() -> None:
         welcome_tutorial()
         return
     required_keys_user = ['password', 'mode']
-    required_keys_settings = ['time', 'dynamicmode', 'reapply', 'applyonstart', 'softwareupdate', 'debug']
+    required_keys_settings = ['time', 'dynamicmode', 'sip', 'reapply', 'applyonstart', 'softwareupdate', 'debug']
     if not cfg.has_section('User') or not cfg.has_section('Settings') or \
     any(key not in cfg['User'] for key in required_keys_user) or \
     any(key not in cfg['Settings'] for key in required_keys_settings):
@@ -402,6 +574,14 @@ def get_changelog():
     data = json.loads(response.read())
     return data['body']
 
+def check_run():
+    SIP = cfg.get('Settings', 'SIP', fallback='03080000')
+    result = subprocess.run(['nvram', 'boot-args'], capture_output=True, text=True)
+    if 'debug=0x144' not in result.stdout:
+        return False
+    result = subprocess.run(['nvram', 'csr-active-config'], capture_output=True, text=True)
+    return SIP in result.stdout.replace('%', '')
+            
 def updater():
     clear()
     changelog = get_changelog()
@@ -413,7 +593,7 @@ def updater():
     logging.info("Do you want to update? (y/n): ")
     choice = input("Option: ").lower().strip()
     if choice == "y":
-        subprocess.run(["python3", f"{current_dir}/Assets/SU.py"])
+        subprocess.run(["python3", "Assets/SU.py"])
         logging.info("Updating...")
         logging.info("Update complete. Restarting the application, please close this window...")
     elif choice == "n":
@@ -423,6 +603,15 @@ def updater():
     raise SystemExit
 
 def check_updates():
+    spec = importlib.util.find_spec("certifi")
+    if spec is None:
+        clear()
+        logging.info("certifi module/SSL cerf is not installed.")
+        result = input("Do you want to install certifi? (y/n): ").lower().strip()
+        if result == "y":
+            subprocess.check_call(["pip3", "install", "certifi"])
+        else:
+            logging.info("Skipping certifi installation.")
     clear()
     max_retries = 10
     skip_update_check = False
@@ -445,14 +634,14 @@ def check_updates():
 
 def about():
     options = {
-        "1": lambda: webbrowser.open("https://www.github.com/AppleOSX/UXTU4Mac"),
+        "1": lambda: webbrowser.open("https://www.github.com/AppleOSX/UXTU4Unix"),
         "f": updater,
         "b": "break"
     }
     while True:
         clear()
         logging.info("About UXTU4Unix")
-        logging.info("The Unix Update (2MACSLOVELINUX)")
+        logging.info("The Unix Update (2MACLOVELINUX)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
@@ -526,6 +715,11 @@ def preset_menu():
         logging.info("Invalid option.")
         
 def apply_smu(args, user_mode):
+    if not check_run():
+        clear()
+        logging.info("Cannot run RyzenAdj because your computer is missing debug=0x144 or required SIP is not SET yet\nPlease run Install UXTU4Mac dependencies under Setting \nand restart after install.")
+        input("Press Enter to continue...")
+        return
     sleep_time = cfg.get('Settings', 'Time', fallback='30')
     password = cfg.get('User', 'Password', fallback='')
     reapply = cfg.get('Settings', 'ReApply', fallback='0')
@@ -535,10 +729,10 @@ def apply_smu(args, user_mode):
     if reapply == '1':
       while True:
         if dynamic == '1':
-            battery_status = subprocess.check_output(["upower", "-i", "/org/freedesktop/UPower/devices/battery_BAT0"]).decode("utf-8")
-            if 'state:               charging' in battery_status:
+            battery_status = subprocess.check_output(["pmset", "-g", "batt"]).decode("utf-8")
+            if 'AC Power' in battery_status:
                 user_mode = 'Extreme'
-            elif 'state:               discharging' in battery_status:
+            elif 'Battery Power' in battery_status:
                     user_mode = 'Eco'
             else:
                 user_mode = 'Extreme'
@@ -555,10 +749,10 @@ def apply_smu(args, user_mode):
         clear()
         if args == 'Custom':
             custom_args = cfg.get('User', 'CustomArgs', fallback='')
-            command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + custom_args.split()
+            command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
         else:
             args = PRESETS[user_mode]
-            command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + args.split()
+            command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
         logging.info(f"Using preset: {user_mode}")
         dm_enabled = cfg.get('Settings', 'DynamicMode', fallback='0') == '1'
         if dm_enabled:
@@ -584,10 +778,10 @@ def apply_smu(args, user_mode):
           clear()
           if args == 'Custom':
             custom_args = cfg.get('User', 'CustomArgs', fallback='')
-            command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + custom_args.split()
+            command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
           else:
             args = PRESETS[user_mode]
-            command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + args.split()
+            command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
           logging.info(f"Using preset: {user_mode}")
           logging.info("--------------- RyzenAdj Log ---------------")
           result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -596,7 +790,7 @@ def apply_smu(args, user_mode):
              if result.stderr:
                 logging.info(f"{result.stderr.decode()}")
           input("Press Enter to continue...")
-
+          
 def main():
     check_cfg_integrity()
     PRESETS = get_presets()
@@ -613,11 +807,13 @@ def main():
         options = {
             "1": preset_menu,
             "2": settings,
+            "h": hardware_info,
             "a": about,
             "q": lambda: sys.exit("\nThanks for using UXTU4Mac\nHave a nice day!"),
         }
         logging.info("1. Apply power management settings\n2. Settings")
         logging.info("")
+        logging.info("H. Hardware Information")
         logging.info("A. About UXTU4Mac")
         logging.info("Q. Quit")
         choice = input("Option: ").lower().strip()
