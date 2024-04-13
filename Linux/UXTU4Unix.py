@@ -28,7 +28,7 @@ def clear():
     logging.info(f'  {get_hardware_info(command)}')
     if cfg.get('Settings', 'Debug', fallback='0') == '1':
         logging.info(f"  Loaded: {cfg.get('User', 'Preset',fallback = '')}")
-    logging.info(f"  Version: {LOCAL_VERSION} by GorouFlex and AppleOSX (Debian Edition)")
+    logging.info(f"  Version: {LOCAL_VERSION} by GorouFlex and AppleOSX (Linux Edition)")
     logging.info("")
     
 def get_hardware_info(command, use_sudo=False):
