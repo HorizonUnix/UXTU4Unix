@@ -139,7 +139,7 @@ def welcome_tutorial():
         cfg.add_section('Settings')
     clear()
     logging.info("--------------- Welcome to UXTU4Unix ---------------")
-    logging.info("Designed for AMD Zen-based processors on macOS")
+    logging.info("Designed for AMD Zen-based processors on macOS/Linux")
     logging.info("Based on RyzenAdj and inspired by UXTU")
     logging.info("Let's get started with some initial setup ~~~")
     input("Press Enter to continue...")
