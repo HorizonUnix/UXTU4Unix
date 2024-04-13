@@ -1,3 +1,13 @@
+## [0.2.8]
+
+### General
+- Rename from `UXTU4Mac` to `UXTU4Unix`
+- Support Linux (tested on Debian-based distro)
+- Rework project structure
+### macOS 
+- Removed GPU/APU info
+### Please download from GitHub if you failed update from built-in updater
+
 ## [0.2.7]
 
 - Fixed a bug with the Updater
