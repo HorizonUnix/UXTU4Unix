@@ -12,7 +12,7 @@
 > [!NOTE]
 > - AMD Zen-based processors that are supported [NootedRed](https://github.com/ChefKissInc/NootedRed) **or** [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) **Premade Preset** section (or just simply support RyzenAdj)
 > - Support from macOS 10.4 to the latest version (14)
-> - Support Debian-based distro, may works in other distros (not tested)
+> - Support Linux, (tested on Debian-based distros, Fedora)
 
 ## Usage
 - Download the official build from Releases.
