@@ -12,13 +12,13 @@
 > [!NOTE]
 > - AMD Zen-based processors that are supported [NootedRed](https://github.com/ChefKissInc/NootedRed) **or** [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) **Premade Preset** section (or just simply support RyzenAdj)
 > - Support from macOS 10.4 to the latest version (14)
-> - Support Linux, (tested on Debian-based distros, Fedora)
+> - Support Linux (tested on Debian-based distros, Fedora)
 
 ## Usage
 - Download the official build from Releases.
-- Run `UXTU4Unix.command` (macOS) or run `UXTU4Unix.py` by using `python3` command ( `python3 /path/to/UXTU4Unix.py` )
+- Run `UXTU4Unix.command` (only for macOS) or run `UXTU4Unix.py` by using `python3` command ( `python3 /path/to/UXTU4Unix.py` )
 - Follow the instructions.
-- [Optional] Disable `Core Performance Boost` in BIOS using [Smokeless_UMAF](https://github.com/DavidS95/Smokeless_UMAF) to chieve better temperature but sacrifice a lot of CPU performance.
+- [Optional & macOS only] Disable `Core Performance Boost` in BIOS using [Smokeless_UMAF](https://github.com/DavidS95/Smokeless_UMAF) to achieve better temperature but sacrifice a lot of CPU performance.
 
 ## FAQ
 ### 1. Why do we have to disable SIP in macOS?
@@ -37,7 +37,7 @@
 | Adjust power management settings | ✅ | ✅ |
 | Premade presets | ✅ | ✅ |
 | Custom presets | ✅ | ❓ |
-| Adaptive mode tracking | ✅ | ✅ |
+| Adaptive mode tracking | ✅ | ❓ |
 | Game mode tracking | ✅ | ❓ |
 | Support for many hardware | ✅ | ❌ Only for some AMD Ryzen APU/CPU models, [see here](#supported-cpuapu) |
 
