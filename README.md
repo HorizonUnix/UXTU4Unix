@@ -53,6 +53,11 @@
 
 ### Extreme Preset
 ![Screenshot 2024-02-12 at 15 52 16](https://github.com/AppleOSX/UXTU4Mac/assets/98001973/19e1481a-07ae-4efb-9b50-fac0cf137e0a)
+
+> [!CAUTION]
+> - I think the members and owners of ChefKiss Inc. shouldn't use this tool. Why? Because Visual will say, 'Do not use this tool because it will break our NootedRed/AMDPlatformPlugin power management, etc...' So, is that true? We still don't know because I've been banned from both Telegram and GitHub by ChefKiss ( Visual )
+> - PR is welcome btw
+
 ### Special thanks to
 - [corpnewt](https://github.com/corpnewt) for command file
 - [NotchApple1703](https://github.com/NotchApple1703) for the GUI (starting from version `0.3.x` or `0.4.x`)
