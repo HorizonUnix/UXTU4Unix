@@ -3,20 +3,20 @@ import urllib.request, plistlib, base64, json, select, importlib.util
 from configparser import ConfigParser
 
 LOCAL_VERSION = "0.2.8"
-CONFIG_PATH = 'Assets/config.ini'
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Unix/releases/latest"
-cpu_codename = ["Raven Ridge", "Dali", "Picasso", "Massite", "Renoir", "Lucienne", "Van Gogh", "Mendocino", "Cezanne", "Barcelo", "Barcelo-R", "Rembrandt", "Rembrandt-R", "Dragon Range", "Phoenix", "Hawk Point"]
+cpu_codename = ["Raven", "Raven Ridge", "Picasso", "Massite", "Renoir", "Cezanne", "Dali", "Lucienne", "Van Gogh", "Rembrandt", "Mendocino", "Phoenix", "Phoenix Point", "Hawk", "Hawk Point", "Strix", "Strix Point"]
 os.makedirs('Logs', exist_ok=True)
 logging.basicConfig(filename='Logs/UXTU4Unixlog', filemode='w', encoding='utf-8',
                     level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
                     datefmt='%d/%m/%Y %H:%M:%S')
 logging.getLogger().addHandler(logging.StreamHandler())
-cfg = ConfigParser()
-cfg.read(CONFIG_PATH)
 current_dir = os.path.dirname(os.path.realpath(__file__))
 command_file = os.path.join(current_dir, 'UXTU4Unix.command')
 command_file_name = os.path.basename(command_file)
+CONFIG_PATH = f'{current_dir}/Assets/config.ini'
+cfg = ConfigParser()
+cfg.read(CONFIG_PATH)
 
 def clear():
     subprocess.call('clear', shell=True)
@@ -484,18 +484,19 @@ def edit_config(config_path):
         plistlib.dump(config, f)
 
 def install_menu():
-    clear()
-    logging.info("UXTU4Unix dependencies\n")
-    logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)\n2. Manual install (Specify your config.plist path)\n")
-    logging.info("B. Back")
-    choice = input("Option (default is 1): ").strip()
-    if choice == "1":
-        install_auto()
-    elif choice == "2":
-        install_manual()
-    elif choice.lower() == "b":
-        return
-    else:
+    while True:
+      clear()
+      logging.info("UXTU4Unix dependencies\n")
+      logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)\n2. Manual install (Specify your config.plist path)\n")
+      logging.info("B. Back")
+      choice = input("Option (default is 1): ").strip()
+      if choice == "1":
+          install_auto()
+      elif choice == "2":
+          install_manual()
+      elif choice.lower() == "b":
+          break
+      else:
         logging.info("Invalid option. Please try again.")
         input("Press Enter to continue...")
         
@@ -608,7 +609,7 @@ def check_updates():
         logging.info("certifi module/SSL cerf is not installed.")
         result = input("Do you want to install certifi? (y/n): ").lower().strip()
         if result == "y":
-            subprocess.check_call(["pip3", "install", "certifi"])
+            subprocess.check_call(["pip3", "install", "--upgrade", "certifi"])
         else:
             logging.info("Skipping certifi installation.")
     clear()
@@ -622,6 +623,9 @@ def check_updates():
                 logging.info(f"Failed to fetch latest version. Retrying {i+1}/{max_retries}...")
                 time.sleep(5)
             else:
+                clear()
+                logging.info("Failed to fetch latest version. Please check if your Python is installed with SSL cert or not?")
+                logging.info("To install SSL cert for Python please go to `Applications` folder than go to `Python x.xx` folder\n than run the `Install Certificates.command` to install SSL cert")
                 result = input("Do you want to skip the check for updates? (y/n): ").lower().strip()
                 if result == "y":
                     skip_update_check = True
