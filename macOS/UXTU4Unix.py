@@ -46,7 +46,7 @@ def get_hardware_info(command, use_sudo=False):
     return output.decode('utf-8').strip()
 
 def get_presets():
-    cpu_family = get_hardware_info("Assets/ryzenadj -i | grep 'CPU Family' | awk -F': ' '{print $2}'", use_sudo=True)
+    cpu_family = get_hardware_info(f"{current_dir}/Assets/ryzenadj -i | grep 'CPU Family' | awk -F\": \" '{{print $2}}'", use_sudo=True)
     cpu_model = get_hardware_info("sysctl -n machdep.cpu.brand_string")
     loca = None
     try:
@@ -695,10 +695,13 @@ def preset_menu():
                 selected_preset = list(PRESETS.keys())[preset_number - 1]
                 clear()
                 last_mode = cfg.get('Settings', 'DynamicMode', fallback='0')
+                last_apply = cfg.get('Settings', 'ReApply', fallback='0')
+                cfg.set('Settings', 'ReApply', '0')
                 cfg.set('Settings', 'DynamicMode', '0')
                 user_mode = selected_preset
                 apply_smu(PRESETS[user_mode], user_mode)
                 cfg.set('Settings', 'DynamicMode', last_mode)
+                cfg.set('Settings', 'ReApply', last_apply)
             else:
                 logging.info("Invalid option.")
                 input("Press Enter to continue...")
@@ -752,10 +755,10 @@ def apply_smu(args, user_mode):
         clear()
         if args == 'Custom':
             custom_args = cfg.get('User', 'CustomArgs', fallback='')
-            command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
+            command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + custom_args.split()
         else:
             args = PRESETS[user_mode]
-            command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
+            command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + args.split()
         logging.info(f"Using preset: {user_mode}")
         dm_enabled = cfg.get('Settings', 'DynamicMode', fallback='0') == '1'
         if dm_enabled:
@@ -781,10 +784,10 @@ def apply_smu(args, user_mode):
           clear()
           if args == 'Custom':
             custom_args = cfg.get('User', 'CustomArgs', fallback='')
-            command = ["sudo", "-S", "Assets/ryzenadj"] + custom_args.split()
+            command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + custom_args.split()
           else:
             args = PRESETS[user_mode]
-            command = ["sudo", "-S", "Assets/ryzenadj"] + args.split()
+            command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + args.split()
           logging.info(f"Using preset: {user_mode}")
           logging.info("--------------- RyzenAdj Log ---------------")
           result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
