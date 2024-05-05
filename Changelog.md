@@ -1,3 +1,18 @@
+## [0.2.9]
+
+### General
+- Fixed Phoenix support
+- Removed Mendocino support because it is not supported by RyzenAdj
+- Removed some old APU codenames and used RyzenAdj codenames instead
+- Fixed some annoying issues with Settings, Apply preset, Dynamic mode, Auto reapply
+
+## macOS
+- Forced to use Py3 instead of Py2
+- Removed SSL check due to some issues
+- Fixed and synced DIR logic with Linux
+
+## Linux
+- Removed `SIP` settings because it is only for macOS
 ## [0.2.8]
 
 ### General
