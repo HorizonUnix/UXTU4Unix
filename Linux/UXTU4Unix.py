@@ -2,10 +2,10 @@ import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
 import urllib.request, json, select
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.2.8"
+LOCAL_VERSION = "0.2.9"
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Unix/releases/latest"
-cpu_codename = ["Raven Ridge", "Dali", "Picasso", "Massite", "Renoir", "Lucienne", "Van Gogh", "Mendocino", "Cezanne", "Barcelo", "Barcelo-R", "Rembrandt", "Rembrandt-R", "Dragon Range", "Phoenix", "Hawk Point"]
+cpu_codename = ["Raven", "Picasso", "Massite", "Renoir", "Cezanne", "Dali", "Lucienne", "Van Gogh", "Rembrandt", "Phoenix Point", "Hawk Point", "Strix Point"]
 os.makedirs('Logs', exist_ok=True)
 logging.basicConfig(filename='Logs/UXTU4Unix.log', filemode='w', encoding='utf-8',
                     level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
@@ -48,14 +48,7 @@ def get_presets():
     cpu_model = get_hardware_info("cat /proc/cpuinfo | grep 'model name' | head -1 | awk -F': ' '{print $2}'")
     loca = None
     try:
-        if cpu_codename.index(cpu_family) == cpu_codename.index("Mendocino"):
-            if "U" in cpu_model:
-                loca = "Assets.Presets.AMDAPUMendocino_U"
-                from Assets.Presets.AMDAPUMendocino_U import PRESETS
-            else:
-                loca = "Assets.Presets.AMDCPU"
-                from Assets.Presets.AMDCPU import PRESETS
-        elif cpu_codename.index(cpu_family) < cpu_codename.index("Massite"):
+        if cpu_codename.index(cpu_family) < cpu_codename.index("Massite"):
             if "U" in cpu_model or "e" in cpu_model or "Ce" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPreMatisse_U_e_Ce"
                 from Assets.Presets.AMDAPUPreMatisse_U_e_Ce import PRESETS
@@ -132,7 +125,6 @@ def welcome_tutorial():
         cfg.set('Settings', 'ApplyOnStart', '1')
         cfg.set('Settings', 'DynamicMode', '0')
         cfg.set('Settings', 'Debug', '1')
-        cfg.set('Settings', 'SIP', '03080000')
     except ValueError:
         logging.info("Invalid option.")
         raise SystemExit
@@ -452,7 +444,7 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Unix")
-        logging.info("The Unix Update (2MACLOVELINUX)")
+        logging.info("The L2T Update (2FUTURE)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
