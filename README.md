@@ -10,12 +10,28 @@
 > - **Do not** use `UXTU4Unix` with [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor) as they may conflict with each other.
 > - This is not an **alternative solution** to [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor), [NootedRed](https://github.com/ChefKissInc/NootedRed) and [AMDPlatformPlugin](https://github.com/ChefKissInc/AMDPlatformPlugin/) for their CPU/APU power management itself.
 
-
 ## Supported APU & OS
+
 > [!NOTE]
-> - AMD Ryzen APUs processors that are supported [NootedRed](https://github.com/ChefKissInc/NootedRed) **or** [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) **Premade Preset** section (or just simply support RyzenAdj)
-> - Support from macOS 10.4 to the latest version (14)
-> - Support Linux (tested on Debian-based distros, Fedora)
+> - AMD Ryzen APUs processors that are supported by either [NootedRed](https://github.com/ChefKissInc/NootedRed) or the **Premade Preset** section in [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) (or simply supported by RyzenAdj) are detailed below.
+> - Support ranges from macOS 10.4 to the latest version (14).
+> - Linux is supported (tested on Debian-based distros, Fedora).
+
+| Supported APU Codenames |
+| :--: |
+| Raven |
+| Picasso |
+| Renoir |
+| Cezanne |
+| Dali |
+| Lucienne |
+| Van Gogh |
+| Rembrandt |
+| Phoenix Point |
+| Hawk Point |
+| Strix Point |
+
+- **If your APU doesn't appear on this chart or if it's a demo CPU/APU, then it may work with **only** Custom mode.**
 
 ## Usage
 - Download the official build from [Releases](https://github.com/AppleOSX/UXTU4Unix/releases)
@@ -47,7 +63,7 @@
 > - PR is welcome btw
 
 ### Special thanks to
-- [corpnewt](https://github.com/corpnewt) for command file
-- [NotchApple1703](https://github.com/NotchApple1703) for the GUI (starting from version `0.3.x` or `0.4.x`)
 - [b00t0x](https://github.com/b00t0x) for the guide to build ryzenAdj based on DirectHW and pciutils-osx
 - [JamesCJ60](https://github.com/JamesCJ60) for [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility)
+- [corpnewt](https://github.com/corpnewt) for command file
+- [NotchApple1703](https://github.com/NotchApple1703) for the GUI (starting from version `0.3.x` or `0.4.x`)
