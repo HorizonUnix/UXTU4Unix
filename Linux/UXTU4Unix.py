@@ -336,6 +336,10 @@ def preset_cfg():
             custom_args = input("Enter your custom arguments: ")
             cfg.set('User', 'Mode', 'Custom')
             cfg.set('User', 'CustomArgs', custom_args)
+            if cfg.get('Settings', 'DynamicMode', fallback='0') == '1':
+                cfg.set('Settings', 'DynamicMode', '0')
+            if cfg.get('Settings', 'ReApply', fallback='0') == '1':
+                cfg.set('Settings', 'ReApply', '0')
             logging.info("Set preset successfully!")
             input("Press Enter to continue...")
             with open(CONFIG_PATH, 'w') as config_file:
@@ -357,6 +361,10 @@ def preset_cfg():
                 preset_number = int(choice)
                 preset_name = list(PRESETS.keys())[preset_number - 1]
                 cfg.set('User', 'Mode', preset_name)
+                if cfg.get('Settings', 'DynamicMode', fallback='0') == '1':
+                    cfg.set('Settings', 'DynamicMode', '0')
+                if cfg.get('Settings', 'ReApply', fallback='0') == '1':
+                    cfg.set('Settings', 'ReApply', '0')
                 logging.info("Set preset successfully!")
                 input("Press Enter to continue...")
                 with open(CONFIG_PATH, 'w') as config_file:
@@ -395,25 +403,28 @@ def get_changelog():
     return data['body']
 
 def updater():
-    clear()
-    changelog = get_changelog()
-    logging.info("--------------- UXTU4Unix Software Update ---------------")
-    logging.info("A new update is available!")
-    logging.info(
-        f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}"
-    )
-    logging.info("Do you want to update? (y/n): ")
-    choice = input("Option: ").lower().strip()
-    if choice == "y":
-        subprocess.run(["python3", f"{current_dir}/Assets/SU.py"])
-        logging.info("Updating...")
-        logging.info("Update complete. Restarting the application, please close this window...")
-    elif choice == "n":
-        logging.info("Skipping update...")
-    else:
-        logging.info("Invalid option.")
+    while True:
+        clear()
+        changelog = get_changelog()
+        logging.info("--------------- UXTU4Unix Software Update ---------------")
+        logging.info("A new update is available!")
+        logging.info(
+           f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}"
+        )
+        logging.info("Do you want to update? (y/n): ")
+        choice = input("Option: ").lower().strip()
+        if choice == "y":
+           subprocess.run(["python3", f"{current_dir}/Assets/SU.py"])
+           logging.info("Updating...")
+           logging.info("Update complete. Restarting the application, please close this window...")
+           break
+        elif choice == "n":
+           logging.info("Skipping update...")
+           break
+        else:
+           logging.info("Invalid option.")
     raise SystemExit
-
+  
 def check_updates():
     clear()
     max_retries = 10
@@ -495,10 +506,13 @@ def preset_menu():
                 selected_preset = list(PRESETS.keys())[preset_number - 1]
                 clear()
                 last_mode = cfg.get('Settings', 'DynamicMode', fallback='0')
+                last_apply = cfg.get('Settings', 'ReApply', fallback='0')
+                cfg.set('Settings', 'ReApply', '0')
                 cfg.set('Settings', 'DynamicMode', '0')
                 user_mode = selected_preset
                 apply_smu(PRESETS[user_mode], user_mode)
                 cfg.set('Settings', 'DynamicMode', last_mode)
+                cfg.set('Settings', 'ReApply', last_apply)
             else:
                 logging.info("Invalid option.")
                 input("Press Enter to continue...")
@@ -520,10 +534,14 @@ def preset_menu():
 def apply_smu(args, user_mode):
     sleep_time = cfg.get('Settings', 'Time', fallback='30')
     password = cfg.get('User', 'Password', fallback='')
-    reapply = cfg.get('Settings', 'ReApply', fallback='0')
     dynamic = cfg.get('Settings', 'dynamicmode', fallback='0')
     prev_mode = None
     PRESETS = get_presets()
+    dm_enabled = cfg.get('Settings', 'DynamicMode', fallback='0') == '1'
+    if dm_enabled:    
+        if cfg.get('Settings', 'ReApply', fallback='0') == '0':
+            cfg.set('Settings', 'ReApply', '1')
+    reapply = cfg.get('Settings', 'ReApply', fallback='0')
     if reapply == '1':
       while True:
         if dynamic == '1':
@@ -552,11 +570,11 @@ def apply_smu(args, user_mode):
             args = PRESETS[user_mode]
             command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + args.split()
         logging.info(f"Using preset: {user_mode}")
-        dm_enabled = cfg.get('Settings', 'DynamicMode', fallback='0') == '1'
         if dm_enabled:
             logging.info("Dynamic mode: Enabled")
         else:
             logging.info("Dynamic mode: Disabled")
+        logging.info("Auto reapply: Enabled")
         logging.info(f"Script will check and auto reapply if need every {sleep_time} seconds")
         logging.info("Press B then Enter to go back to the main menu")
         logging.info("--------------- RyzenAdj Log ---------------")
@@ -581,6 +599,7 @@ def apply_smu(args, user_mode):
             args = PRESETS[user_mode]
             command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + args.split()
           logging.info(f"Using preset: {user_mode}")
+          logging.info("Auto reapply: Disabled")
           logging.info("--------------- RyzenAdj Log ---------------")
           result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
           logging.info(result.stdout.decode())
