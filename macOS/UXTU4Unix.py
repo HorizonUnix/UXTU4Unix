@@ -5,7 +5,6 @@ from configparser import ConfigParser
 LOCAL_VERSION = "0.3.0"
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Unix/releases/latest"
-cpu_codename = ["Raven", "Picasso", "Massite", "Renoir", "Cezanne", "Dali", "Lucienne", "Van Gogh", "Rembrandt", "Phoenix Point", "Hawk Point", "Strix Point"]
 os.makedirs('Logs', exist_ok=True)
 logging.basicConfig(filename='Logs/UXTU4Unixlog', filemode='w', encoding='utf-8',
                     level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
@@ -17,6 +16,36 @@ command_file_name = os.path.basename(command_file)
 CONFIG_PATH = f'{current_dir}/Assets/config.ini'
 cfg = ConfigParser()
 cfg.read(CONFIG_PATH)
+
+ryzen_family = [
+    "Unknown",
+    "SummitRidge",
+    "PinnacleRidge",
+    "RavenRidge",
+    "Dali",
+    "Pollock",
+    "Picasso",
+    "FireFlight",
+    "Matisse",
+    "Renoir",
+    "Lucienne",
+    "VanGogh",
+    "Mendocino",
+    "Vermeer",
+    "Cezanne_Barcelo",
+    "Rembrandt",
+    "Raphael",
+    "DragonRange",
+    "PhoenixPoint",
+    "PhoenixPoint2",
+    "HawkPoint",
+    "SonomaValley",
+    "GraniteRidge",
+    "FireRange",
+    "StrixPoint",
+    "StrixPoint2",
+    "Sarlak",
+]
 
 def clear():
     subprocess.call('clear', shell=True)
@@ -31,7 +60,7 @@ def clear():
     )
     if cfg.get('Settings', 'Debug', fallback='0') == '1':
         logging.info(f"  Loaded: {cfg.get('User', 'Preset',fallback = '')}")
-    logging.info(f"  Version: {LOCAL_VERSION} by GorouFlex and AppleOSX (macOS Edition) - Special Beta 1")
+    logging.info(f"  Version: {LOCAL_VERSION} by GorouFlex and AppleOSX (macOS Edition)")
     logging.info("")
     
 def get_hardware_info(command, use_sudo=False):
@@ -45,12 +74,89 @@ def get_hardware_info(command, use_sudo=False):
         output, error = process.communicate()
     return output.decode('utf-8').strip()
 
+def get_codename():
+    cpu = cfg.get('Info', 'CPU')
+    signature = cfg.get('Info', 'Signature')
+    words = signature.split(' ')
+    family_index = words.index("Family") + 1
+    model_index = words.index("Model") + 1
+    stepping_index = words.index("Stepping") + 1
+    cpu_family = int(words[family_index].rstrip(','))
+    cpu_model = int(words[model_index].rstrip(','))
+    cpu_stepping = int(words[stepping_index].rstrip(','))
+    if cpu == 'Intel':
+        cfg.set('Info', 'Type', 'Intel')
+    else:
+        if cpu_family == 23:
+           cfg.set('Info', 'Architecture', 'Zen 1 - Zen 2')
+           if cpu_model == 1:
+               cfg.set('Info', 'Family', 'SummitRidge')
+           elif cpu_model == 8:
+               cfg.set('Info', 'Family', 'PinnacleRidge')
+           elif cpu_model == 17 or cpu_model == 18:
+               cfg.set('Info', 'Family', 'RavenRidge')
+           elif cpu_model == 24:
+               cfg.set('Info', 'Family', 'Picasso')
+           elif cpu_model == 32 and '15e' in cpu or '15Ce' in cpu or '20e' in cpu:
+               cfg.set('Info', 'Family', 'Pollock')
+           elif cpu_model == 32:
+               cfg.set('Info', 'Family', 'Dali')
+           elif cpu_model == 80:
+               cfg.set('Info', 'Family', 'FireFlight')
+           elif cpu_model == 96:
+               cfg.set('Info', 'Family', 'Renoir')
+           elif cpu_model == 104:
+               cfg.set('Info', 'Family', 'Lucienne')
+           elif cpu_model == 113:
+               cfg.set('Info', 'Family', 'Matisse')
+           elif cpu_model == 144:
+               cfg.set('Info', 'Family', 'VanGogh')
+           elif cpu_model == 160:
+               cfg.set('Info', 'Family', 'Mendocino')
+        elif cpu_family == 25:
+            cfg.set('Info', 'Architecture', 'Zen 3 - Zen 4')
+            if cpu_model == 33:
+                cfg.set('Info', 'Family', 'Vermeer')
+            elif cpu_model == 63 or cpu_model == 68:
+                cfg.set('Info', 'Family', 'Rembrandt')
+            elif cpu_model == 80:
+                cfg.set('Info', 'Family', 'Cezanne_Barcelo')
+            elif cpu_model == 97 and 'HX' in cpu:
+                cfg.set('Info', 'Family', 'DragonRange')
+            elif cpu_model == 97:
+                cfg.set('Info', 'Family', 'Raphael')
+            elif cpu_model == 116:
+                cfg.set('Info', 'Family', 'PhoenixPoint')
+            elif cpu_model == 120:
+                cfg.set('Info', 'Family', 'PhoenixPoint2')
+            elif cpu_model == 117:
+                cfg.set('Info', 'Family', 'HawkPoint')
+        elif cpu_family == 26:
+            cfg.set('Info', 'Architecture', 'Zen 5 - Zen 6')
+            if cpu_model == 32:
+                cfg.set('Info', 'Family', 'StrixPoint')
+            else:
+                cfg.set('Info', 'Family', 'GraniteRidge')
+        else:
+            cfg.set('Info', 'Family', 'Unknown')
+    with open(CONFIG_PATH, 'w') as config_file:
+      cfg.write(config_file)
+    family = cfg.get('Info', 'Family')
+    if 'SummitRidge' in family or 'PinnacleRidge' in family or 'Matisse' in family or 'Vermeer' in family or 'Raphael' in family or 'GraniteRidge' in family:
+       cfg.set('Info', 'Type', 'Amd_Desktop_Cpu')
+    else:
+       cfg.set('Info', 'Type', 'Amd_Apu')
+    with open(CONFIG_PATH, 'w') as config_file:
+      cfg.write(config_file)
+               
 def get_presets():
-    cpu_family = get_hardware_info(f"{current_dir}/Assets/ryzenadj -i | grep 'CPU Family' | awk -F\": \" '{{print $2}}'", use_sudo=True)
-    cpu_model = get_hardware_info("sysctl -n machdep.cpu.brand_string")
+    cpu_family = cfg.get('Info', 'Family')
+    cpu_model = cfg.get('Info', 'CPU')
+    cpu_type = cfg.get('Info', 'Type')
+    cpu_model = cpu_model.replace("AMD", "").replace("with", "").replace("Mobile", "").replace("Ryzen", "").replace("Radeon", "").replace("Graphics", "").replace("Vega", "").replace("Gfx", "")
     loca = None
-    try:
-        if cpu_codename.index(cpu_family) < cpu_codename.index("Massite"):
+    if cpu_type == 'Amd_Apu':
+        if ryzen_family.index(cpu_family) < ryzen_family.index("Matisse"):
             if "U" in cpu_model or "e" in cpu_model or "Ce" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPreMatisse_U_e_Ce"
                 from Assets.Presets.AMDAPUPreMatisse_U_e_Ce import PRESETS
@@ -66,7 +172,7 @@ def get_presets():
             else:
                 loca = "Assets.Presets.AMDCPU"
                 from Assets.Presets.AMDCPU import PRESETS
-        elif cpu_codename.index(cpu_family) > cpu_codename.index("Massite"):
+        elif ryzen_family.index(cpu_family) > ryzen_family.index("Matisse"):
             if "U" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_U"
                 from Assets.Presets.AMDAPUPostMatisse_U import PRESETS
@@ -88,9 +194,6 @@ def get_presets():
             else:
                 loca = "Assets.Presets.AMDCPU"
                 from Assets.Presets.AMDCPU import PRESETS
-    except:  
-        loca = "Assets.Presets.AMDCPU"
-        from Assets.Presets.AMDCPU import PRESETS
     cfg.set('User', 'Preset', loca)
     with open(CONFIG_PATH, 'w') as config_file:
         cfg.write(config_file)
@@ -102,12 +205,14 @@ def hardware_info():
     logging.info(
         f' - Processor: {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
     )
-    cpu_family = get_hardware_info("Assets/ryzenadj -i | grep 'CPU Family'", use_sudo=True).strip()
+    cpu_family = cfg.get('Info', 'Family')
     smu_version = get_hardware_info("Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
     if cpu_family:
-        logging.info(f' - {cpu_family}')
+        logging.info(f' - Codename: {cpu_family}')
     if smu_version:
         logging.info(f' - {smu_version}')
+    logging.info(f' - Architecture: {cfg.get("Info", "Architecture")}')
+    logging.info(f' - Type: {cfg.get("Info", "Type")}')
     logging.info(f' - Cores: {get_hardware_info("sysctl -n hw.physicalcpu")}')
     logging.info(f' - Threads: {get_hardware_info("sysctl -n hw.logicalcpu")}')
     logging.info(
@@ -130,6 +235,8 @@ def welcome_tutorial():
         cfg.add_section('User')
     if not cfg.has_section('Settings'):
         cfg.add_section('Settings')
+    if not cfg.has_section('Info'):
+        cfg.add_section('Info')
     clear()
     logging.info("--------------- Welcome to UXTU4Unix ---------------")
     logging.info("Designed for AMD Zen-based processors on macOS/Linux")
@@ -164,6 +271,8 @@ def welcome_tutorial():
         cfg.set('Settings', 'DynamicMode', '0')
         cfg.set('Settings', 'Debug', '1')
         cfg.set('Settings', 'SIP', '03080000')
+        cfg.set('Info', 'CPU', get_hardware_info(f"{current_dir}/Assets/dmidecode -t processor | grep 'Version' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
+        cfg.set('Info', 'Signature', get_hardware_info(f"{current_dir}/Assets/dmidecode -t processor | grep 'Signature' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
     except ValueError:
         logging.info("Invalid option.")
         raise SystemExit
@@ -171,6 +280,7 @@ def welcome_tutorial():
         cfg.write(config_file)
     if not check_run():
        install_menu()
+    get_codename()
     preset_cfg()
     clear()
        
@@ -670,12 +780,11 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Unix")
-        logging.info("The Stepping Codename Update (3BL2TDREAM)")
+        logging.info("The L2T Update (2FUTURE)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
-        logging.info("dmidecode for macOS: Acidanthera")
-        logging.info("Command file for macOS: CorpNewt\nTester: nlqanh524")
+        logging.info("Command file: CorpNewt\nTester: nlqanh524")
         logging.info("----------------------------")
         try:
           logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
