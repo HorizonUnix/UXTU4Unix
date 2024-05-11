@@ -2,7 +2,7 @@ import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
 import urllib.request, plistlib, base64, json, select, signal
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.2.9"
+LOCAL_VERSION = "0.3.0"
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Unix/releases/latest"
 cpu_codename = ["Raven", "Picasso", "Massite", "Renoir", "Cezanne", "Dali", "Lucienne", "Van Gogh", "Rembrandt", "Phoenix Point", "Hawk Point", "Strix Point"]
@@ -31,7 +31,7 @@ def clear():
     )
     if cfg.get('Settings', 'Debug', fallback='0') == '1':
         logging.info(f"  Loaded: {cfg.get('User', 'Preset',fallback = '')}")
-    logging.info(f"  Version: {LOCAL_VERSION} by GorouFlex and AppleOSX (macOS Edition)")
+    logging.info(f"  Version: {LOCAL_VERSION} by GorouFlex and AppleOSX (macOS Edition) - Special Beta 1")
     logging.info("")
     
 def get_hardware_info(command, use_sudo=False):
@@ -670,11 +670,12 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Unix")
-        logging.info("The L2T Update (2FUTURE)")
+        logging.info("The Stepping Codename Update (3BL2TDREAM)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
-        logging.info("Command file: CorpNewt\nTester: nlqanh524")
+        logging.info("dmidecode for macOS: Acidanthera")
+        logging.info("Command file for macOS: CorpNewt\nTester: nlqanh524")
         logging.info("----------------------------")
         try:
           logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
