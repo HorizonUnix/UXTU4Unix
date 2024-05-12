@@ -18,6 +18,19 @@ applyonstart = 0
 dynamicmode = 0
 debug = 1
 sip = 03080000
+
+[Info]
+cpu = AMD Ryzen 5 4500U with Radeon Graphics
+signature = Family 23, Model 96, Stepping 1
+voltage = 1.2 V
+max speed = 4000 MHz
+current speed = 2375 MHz
+core count = 6
+core enabled = 6
+thread count = 6
+architecture = Zen 1 - Zen 2
+family = Renoir
+type = Amd_Apu
 ```
 
 Explain:
@@ -36,3 +49,5 @@ Explain:
 - `dynamicmode` (failsafe: 0) (0:Disabled, 1:Enabled): Which enable/disable Dynamic mode for preset
 - `debug` (failsafe: 1) (0:Disabled, 1:Enabled): To enable/disable DEBUG function
 - `sip` (failsafe: 03080000): Required SIP for ryzenAdj
+### `[Info]`
+- A work-around for demo CPU/APU to change the cpu name to matching with presets and support better
