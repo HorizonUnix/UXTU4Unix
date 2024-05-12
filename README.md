@@ -13,27 +13,12 @@
 ## Supported APU & OS
 
 > [!NOTE]
-> - AMD Ryzen APUs processors that are supported by either [NootedRed](https://github.com/ChefKissInc/NootedRed) or the **Premade Preset** section in [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) (or simply supported by RyzenAdj) are detailed below.
+> - AMD Ryzen APUs processors that are supported by either [NootedRed](https://github.com/ChefKissInc/NootedRed) or the **Premade Preset** section in [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) (or simply supported by RyzenAdj)
 > - Support ranges from macOS 10.4 to the latest version (14).
 > - Linux is supported (tested on Debian-based distros, Fedora).
 
-| Supported APU Codenames |
-| :--: |
-| Raven |
-| Picasso |
-| Renoir |
-| Cezanne |
-| Dali |
-| Lucienne |
-| Van Gogh |
-| Rembrandt |
-| Phoenix Point |
-| Hawk Point |
-| Strix Point |
-
-- **If your APU doesn't appear on this chart or if it's a demo CPU/APU, then it may work with **only** Custom mode.**
-
 ## Usage
+- Disable `Secure Boot`
 - Download the official build from [Releases](https://github.com/AppleOSX/UXTU4Unix/releases)
 - Run `UXTU4Unix.command` (only for macOS) or run `UXTU4Unix.py` by using `python3` command ( `python3 /path/to/UXTU4Unix.py` )
 - Follow the instructions.
