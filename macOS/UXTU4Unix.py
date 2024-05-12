@@ -87,6 +87,9 @@ def get_codename():
     cpu_stepping = int(words[stepping_index].rstrip(','))
     if cpu == 'Intel':
         cfg.set('Info', 'Type', 'Intel')
+        cfg.set('Info', 'Architecture', 'Intel')
+        cfg.set('Info', 'Family', 'Intel')
+        cfg.set('Info', 'Type', 'Intel')
     else:
         if cpu_family == 23:
            cfg.set('Info', 'Architecture', 'Zen 1 - Zen 2')
@@ -170,9 +173,6 @@ def get_presets():
             elif "G" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPreMatisse_G"
                 from Assets.Presets.AMDAPUPreMatisse_G import PRESETS
-            else:
-                loca = "Assets.Presets.AMDCPU"
-                from Assets.Presets.AMDCPU import PRESETS
         elif ryzen_family.index(cpu_family) > ryzen_family.index("Matisse"):
             if "U" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_U"
@@ -192,7 +192,34 @@ def get_presets():
             elif "GE" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_GE"
                 from Assets.Presets.AMDAPUPostMatisse_GE import PRESETS
+    elif cpu_type == 'Amd_Desktop_Cpu':
+        if ryzen_family.index(cpu_family) < ryzen_family.index("Raphael"):
+            if "E" in cpu_model:
+                loca = "Assets.Presets.AMDCPUPreRaphael_E"
+                from Assets.Presets.AMDCPUPreRaphael_E import PRESETS
+            elif "X3D" in cpu_model:
+                loca = "Assets.Presets.AMDCPUPreRaphael_X3D"
+                from Assets.Presets.AMDCPUPreRaphael_X3D import PRESETS
+            elif "X" in cpu_model and "9" in cpu_model:
+                loca = "Assets.Presets.AMDCPUPreRaphael_X9"
+                from Assets.Presets.AMDCPUPreRaphael_X9 import PRESETS
+            elif "X" in cpu_model:
+                loca = "Assets.Presets.AMDCPUPreRaphael_X"
+                from Assets.Presets.AMDCPUPreRaphael_X import PRESETS
             else:
+                loca = "Assets.Presets.AMDCPUPreRaphael"
+                from Assets.Presets.AMDCPUPreRaphael import PRESETS
+        else:
+            if "E" in cpu_model:
+                loca = "Assets.Presets.AMDCPU_E"
+                from Assets.Presets.AMDCPU_E import PRESETS
+            elif "X3D" in cpu_model:
+                loca = "Assets.Presets.AMDCPU_X3D"
+                from Assets.Presets.AMDCPU_X3D import PRESETS
+            elif "X" in cpu_model and "9" in cpu_model:
+                loca = "Assets.Presets.AMDCPU_X9"
+                from Assets.Presets.AMDCPU_X9 import PRESETS
+            elif "X" in cpu_model:
                 loca = "Assets.Presets.AMDCPU"
                 from Assets.Presets.AMDCPU import PRESETS
     cfg.set('User', 'Preset', loca)
@@ -674,9 +701,11 @@ def check_cfg_integrity() -> None:
         return
     required_keys_user = ['password', 'mode']
     required_keys_settings = ['time', 'dynamicmode', 'sip', 'reapply', 'applyonstart', 'softwareupdate', 'debug']
-    if not cfg.has_section('User') or not cfg.has_section('Settings') or \
+    required_keys_info = ['cpu', 'signature', 'voltage', 'max speed', 'current speed', 'core count', 'core enabled', 'thread count', 'architecture', 'family', 'type']
+    if not cfg.has_section('User') or not cfg.has_section('Settings') or not cfg.has_section('Info') or \
     any(key not in cfg['User'] for key in required_keys_user) or \
-    any(key not in cfg['Settings'] for key in required_keys_settings):
+    any(key not in cfg['Settings'] for key in required_keys_settings) or \
+    any(key not in cfg['Info'] for key in required_keys_info):
       reset()
 
 def get_latest_ver():
@@ -741,54 +770,36 @@ def check_updates():
                 else:
                     logging.info("Quitting...")
                     raise SystemExit
-    if not skip_update_check and LOCAL_VERSION < latest_version:
-        updater()
+    if not skip_update_check:
+        if LOCAL_VERSION < latest_version:
+            updater()
+        elif LOCAL_VERSION > latest_version:
+            clear()
+            logging.info("Welcome to the UXTU4Unix Beta Program")
+            logging.info("This beta build may not work as expected and is only for testing purposes!")
+            result = input("Do you want to continue (y/n): ").lower().strip()
+            if result == "y":
+                pass
+            else:
+                logging.info("Quitting...")
+                raise SystemExit
 
-def l2t():
-    while True:
-        clear()
-        oath = """
-----------------------------------------------------------
-       The Oath Before The Entrance Exam - By GFx
-----------------------------------------------------------
-In the name of Ly Tu Trong High School,
-I pledge to dedicate countless nights to the pursuit of knowledge.
-Despite the criticism and disparagement from those around me,
-I am prepared to fight relentlessly for a brighter future.
-The thought of succeeding,
-of feeling a sense of pride,
-and of demonstrating to others that I am far from useless,
-fuels my motivation to strive harder.
-With determination and courage,
-I will do my utmost!
-"""
-        logging.info(oath)
-        player = subprocess.Popen(["afplay", "-q", "1", f"{current_dir}/Assets/TickingAway.mp3"])
-        logging.info("B. Back")
-        choice = input("Option: ").strip().lower()
-        if choice == "b":
-            player.terminate()
-            break
-        else:
-            logging.info("Invalid option. Please try again.")
-            player.terminate()
-            break
-        
 def about():
     options = {
         "1": lambda: webbrowser.open("https://www.github.com/AppleOSX/UXTU4Unix"),
         "f": updater,
         "b": "break",
-        "l2t": l2t,
     }
     while True:
         clear()
         logging.info("About UXTU4Unix")
-        logging.info("The L2T Update (2FUTURE)")
+        logging.info("The Future Stepping Update (3MacL2TDream)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
-        logging.info("GUI: NotchApple1703\nAdvisor: NotchApple1703")
-        logging.info("Command file: CorpNewt\nTester: nlqanh524")
+        logging.info("GUI: NotchApple1703\nCore: NotchApple1703")
+        logging.info("Advisor: NotchApple1703")
+        logging.info("dmidecode for macOS: Acidanthera")
+        logging.info("Command file for macOS: CorpNewt\nTester: nlqanh524")
         logging.info("----------------------------")
         try:
           logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
@@ -864,6 +875,11 @@ def apply_smu(args, user_mode):
     if not check_run():
         clear()
         logging.info("Cannot run RyzenAdj because your computer is missing debug=0x144 or required SIP is not SET yet\nPlease run Install UXTU4Unix dependencies under Setting \nand restart after install.")
+        input("Press Enter to continue...")
+        return
+    if cfg.get('Info', 'Type') == "Intel":
+        clear()
+        logging.info("Sorry, we currently do not support Intel chipsets. Please consider using CPUFriendFriend by corpnewt.")
         input("Press Enter to continue...")
         return
     sleep_time = cfg.get('Settings', 'Time', fallback='30')
