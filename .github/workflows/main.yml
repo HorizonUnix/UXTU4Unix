@@ -19,6 +19,7 @@ jobs:
       - name: Make file executable
         run: |
             chmod +x macOS/Assets/ryzenadj
+            chmod +x macOS/Assets/dmidecode
             chmod +x macOS/UXTU4Unix.command
             chmod +x Linux/Assets/ryzenadj
 
