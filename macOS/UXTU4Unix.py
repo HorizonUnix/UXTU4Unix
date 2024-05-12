@@ -55,12 +55,13 @@ def clear():
   | |_| |>  <  | | | |_| |_  _| |_| | ' \| \ \ /
    \___//_/\_\ |_|  \___/  |_| \___/|_||_|_/_\_\ """)
     logging.info("")
-    logging.info(
-        f'  {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
-    )
+    cpu = cfg.get('Info', 'CPU', fallback='')
+    family = cfg.get('Info', 'Family', fallback='')
+    if cpu and family:
+       logging.info(f'  {cpu} ({family})')
     if cfg.get('Settings', 'Debug', fallback='0') == '1':
         logging.info(f"  Loaded: {cfg.get('User', 'Preset',fallback = '')}")
-    logging.info(f"  Version: {LOCAL_VERSION} by GorouFlex and AppleOSX (macOS Edition)")
+    logging.info(f"  Version: {LOCAL_VERSION} by AppleOSX (macOS Edition)")
     logging.info("")
     
 def get_hardware_info(command, use_sudo=False):
@@ -203,7 +204,7 @@ def hardware_info():
     clear()
     logging.info("Processor Information:")
     logging.info(
-        f' - Processor: {get_hardware_info("sysctl -n machdep.cpu.brand_string")}'
+        f' - Processor: {cfg.get("Info", "CPU")}'
     )
     cpu_family = cfg.get('Info', 'Family')
     smu_version = get_hardware_info("Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
@@ -213,20 +214,17 @@ def hardware_info():
         logging.info(f' - {smu_version}')
     logging.info(f' - Architecture: {cfg.get("Info", "Architecture")}')
     logging.info(f' - Type: {cfg.get("Info", "Type")}')
-    logging.info(f' - Cores: {get_hardware_info("sysctl -n hw.physicalcpu")}')
-    logging.info(f' - Threads: {get_hardware_info("sysctl -n hw.logicalcpu")}')
+    logging.info(f' - Cores: {cfg.get("Info", "Core Count")}')
+    logging.info(f' - Threads: {cfg.get("Info", "Thread Count")}')
     logging.info(
         f""" - {get_hardware_info("system_profiler SPHardwareDataType | grep 'L2'")}"""
     )
     logging.info(
         f""" - {get_hardware_info("system_profiler SPHardwareDataType | grep 'L3'")}"""
     )
-    base_clock = float(get_hardware_info("sysctl -n hw.cpufrequency_max")) / (10**9)
-    logging.info(" - Base clock: {:.2f} GHz".format(base_clock))
+    logging.info(f' - Max speed: {cfg.get("Info", "Max Speed")}')
+    logging.info(f' - Current speed: {cfg.get("Info", "Current Speed")}')
     logging.info(f' - Vendor: {get_hardware_info("sysctl -n machdep.cpu.vendor")}')
-    logging.info(
-        f' - Instruction: {get_hardware_info("sysctl -a | grep machdep.cpu.features").split(": ")[1]}'
-    )
     logging.info("")
     input("Press Enter to continue...")
 
@@ -273,6 +271,12 @@ def welcome_tutorial():
         cfg.set('Settings', 'SIP', '03080000')
         cfg.set('Info', 'CPU', get_hardware_info(f"{current_dir}/Assets/dmidecode -t processor | grep 'Version' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
         cfg.set('Info', 'Signature', get_hardware_info(f"{current_dir}/Assets/dmidecode -t processor | grep 'Signature' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
+        cfg.set('Info', 'Voltage', get_hardware_info(f"{current_dir}/Assets/dmidecode -t processor | grep 'Voltage' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
+        cfg.set('Info', 'Max Speed', get_hardware_info(f"{current_dir}/Assets/dmidecode -t processor | grep 'Max Speed' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
+        cfg.set('Info', 'Current Speed', get_hardware_info(f"{current_dir}/Assets/dmidecode -t processor | grep 'Current Speed' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
+        cfg.set('Info', 'Core Count', get_hardware_info(f"{current_dir}/Assets/dmidecode -t processor | grep 'Core Count' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
+        cfg.set('Info', 'Core Enabled', get_hardware_info(f"{current_dir}/Assets/dmidecode -t processor | grep 'Core Enabled' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
+        cfg.set('Info', 'Thread Count', get_hardware_info(f"{current_dir}/Assets/dmidecode -t processor | grep 'Thread Count' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
     except ValueError:
         logging.info("Invalid option.")
         raise SystemExit
