@@ -471,7 +471,7 @@ def sleep_cfg():
         logging.info("\n1. Change\n\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
-            set_time = input("Enter your auto reapply time (Default is 30s): ")
+            set_time = input("Enter your auto reapply time (Default is 30): ")
             cfg.set('Settings', 'Time', set_time)
             with open(CONFIG_PATH, 'w') as config_file:
                 cfg.write(config_file)
