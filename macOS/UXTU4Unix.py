@@ -173,6 +173,9 @@ def get_presets():
             elif "G" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPreMatisse_G"
                 from Assets.Presets.AMDAPUPreMatisse_G import PRESETS
+            else:
+                loca = "Assets.Presets.AMDCPU"
+                from Assets.Presets.AMDCPU import PRESETS
         elif ryzen_family.index(cpu_family) > ryzen_family.index("Matisse"):
             if "U" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_U"
@@ -192,6 +195,9 @@ def get_presets():
             elif "GE" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_GE"
                 from Assets.Presets.AMDAPUPostMatisse_GE import PRESETS
+            else:
+                loca = "Assets.Presets.AMDCPU"
+                from Assets.Presets.AMDCPU import PRESETS
     elif cpu_type == 'Amd_Desktop_Cpu':
         if ryzen_family.index(cpu_family) < ryzen_family.index("Raphael"):
             if "E" in cpu_model:
@@ -222,6 +228,12 @@ def get_presets():
             elif "X" in cpu_model:
                 loca = "Assets.Presets.AMDCPU"
                 from Assets.Presets.AMDCPU import PRESETS
+            else:
+                loca = "Assets.Presets.AMDCPU"
+                from Assets.Presets.AMDCPU import PRESETS
+    else:
+         loca = "Assets.Presets.AMDCPU"
+         from Assets.Presets.AMDCPU import PRESETS
     cfg.set('User', 'Preset', loca)
     with open(CONFIG_PATH, 'w') as config_file:
         cfg.write(config_file)
