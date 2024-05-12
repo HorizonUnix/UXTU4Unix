@@ -5,14 +5,14 @@ from configparser import ConfigParser
 LOCAL_VERSION = "0.3.0"
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Unix/releases/latest"
-os.makedirs('Logs', exist_ok=True)
-logging.basicConfig(filename='Logs/UXTU4Unixlog', filemode='w', encoding='utf-8',
-                    level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
-                    datefmt='%d/%m/%Y %H:%M:%S')
-logging.getLogger().addHandler(logging.StreamHandler())
 current_dir = os.path.dirname(os.path.realpath(__file__))
 command_file = os.path.join(current_dir, 'UXTU4Unix.command')
 command_file_name = os.path.basename(command_file)
+os.makedirs(f'{current_dir}/Logs', exist_ok=True)
+logging.basicConfig(filename=f'{current_dir}/Logs/UXTU4Unix.log', filemode='w', encoding='utf-8',
+                    level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
+                    datefmt='%d/%m/%Y %H:%M:%S')
+logging.getLogger().addHandler(logging.StreamHandler())
 CONFIG_PATH = f'{current_dir}/Assets/config.ini'
 cfg = ConfigParser()
 cfg.read(CONFIG_PATH)
