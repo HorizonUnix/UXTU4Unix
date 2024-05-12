@@ -1,3 +1,21 @@
+## [0.3.0]
+
+## General
+- Support CPU (Desktop CPU)
+- Use UXTU codename instead of RyzenAdj for future support
+- Improve logic to get presets
+- Fix DIR
+- Optimize code
+- Get Family, Model to translate CPU/APU codename
+- Use dmidecode to get CPU information
+- Only get information for the first time, after that, read info from the config file
+- Add a check for Intel chipset
+- Fix logging file
+### Linux
+- Support Hardware Information
+- Extend Terminal or Shell Window to 100x30
+### macOS
+- Use dmidecode from [Acidanthera](https://github.com/acidanthera/dmidecode)
 ## [0.2.9]
 
 ### General
