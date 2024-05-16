@@ -89,7 +89,6 @@ def get_codename():
         cfg.set('Info', 'Type', 'Intel')
         cfg.set('Info', 'Architecture', 'Intel')
         cfg.set('Info', 'Family', 'Intel')
-        cfg.set('Info', 'Type', 'Intel')
     else:
         if cpu_family == 23:
            cfg.set('Info', 'Architecture', 'Zen 1 - Zen 2')
@@ -143,11 +142,17 @@ def get_codename():
                 cfg.set('Info', 'Family', 'GraniteRidge')
         else:
             cfg.set('Info', 'Family', 'Unknown')
+            cfg.set('Info', 'Architecture', 'Unknown')
     with open(CONFIG_PATH, 'w') as config_file:
       cfg.write(config_file)
     family = cfg.get('Info', 'Family')
+    arch = cfg.get('Info', 'Architecture')
     if 'SummitRidge' in family or 'PinnacleRidge' in family or 'Matisse' in family or 'Vermeer' in family or 'Raphael' in family or 'GraniteRidge' in family:
        cfg.set('Info', 'Type', 'Amd_Desktop_Cpu')
+    elif 'Intel' in arch:
+       cfg.set('Info', 'Type', 'Intel')
+    elif 'Unknown' in arch:
+       cfg.set('Info', 'Type', 'Unknown')
     else:
        cfg.set('Info', 'Type', 'Amd_Apu')
     with open(CONFIG_PATH, 'w') as config_file:
@@ -189,12 +194,12 @@ def get_presets():
             elif "H" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_H"
                 from Assets.Presets.AMDAPUPostMatisse_H import PRESETS
-            elif "G" in cpu_model:
-                loca = "Assets.Presets.AMDAPUPostMatisse_G"
-                from Assets.Presets.AMDAPUPostMatisse_G import PRESETS
             elif "GE" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_GE"
                 from Assets.Presets.AMDAPUPostMatisse_GE import PRESETS
+            elif "G" in cpu_model:
+                loca = "Assets.Presets.AMDAPUPostMatisse_G"
+                from Assets.Presets.AMDAPUPostMatisse_G import PRESETS
             else:
                 loca = "Assets.Presets.AMDCPU"
                 from Assets.Presets.AMDCPU import PRESETS
