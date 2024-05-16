@@ -21,8 +21,10 @@ def update():
         shutil.rmtree(new_folder)
         command_file_path = os.path.join(current_dir, "UXTU4Unix", "UXTU4Unix.command")
         ryzenadj_path = os.path.join(current_dir, "UXTU4Unix", "Assets", "ryzenadj")
+        dmidecode_path = os.path.join(current_dir, "UXTU4Unix", "Assets", "dmidecode")
         subprocess.run(['chmod', '+x', command_file_path], check=True)
         subprocess.run(['chmod', '+x', ryzenadj_path], check=True)
+        subprocess.run(['chmod', '+x', dmidecode_path], check=True)
         if os.path.exists(backup_config):
             shutil.move(backup_config, config_file)
         if os.path.exists(zip_file_path):
