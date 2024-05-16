@@ -43,10 +43,6 @@
   <img src="/Img/settings.png">
 </p>
 
-> [!CAUTION]
-> - We **think** the members and owners of ChefKiss Inc shouldn't use this tool. Why? Because Visual **will** say `Do not use this tool because it will break our NootedRed/AMDPlatformPlugin power management, etc...`. So, is that true? We still don't know because I've been banned from both Telegram and GitHub by ChefKiss (Visual)
-> - PR is welcome btw
-
 ### Special thanks to
 - [b00t0x](https://github.com/b00t0x) for the guide to build ryzenAdj based on DirectHW and pciutils-osx
 - [JamesCJ60](https://github.com/JamesCJ60) for [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility)
