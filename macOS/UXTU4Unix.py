@@ -116,6 +116,9 @@ def get_codename():
                cfg.set('Info', 'Family', 'VanGogh')
            elif cpu_model == 160:
                cfg.set('Info', 'Family', 'Mendocino')
+           else:
+               cfg.set('Info', 'Family', 'Unknown')
+               cfg.set('Info', 'Architecture', 'Unknown')
         elif cpu_family == 25:
             cfg.set('Info', 'Architecture', 'Zen 3 - Zen 4')
             if cpu_model == 33:
@@ -134,6 +137,9 @@ def get_codename():
                 cfg.set('Info', 'Family', 'PhoenixPoint2')
             elif cpu_model == 117:
                 cfg.set('Info', 'Family', 'HawkPoint')
+            else:
+                cfg.set('Info', 'Family', 'Unknown')
+                cfg.set('Info', 'Architecture', 'Unknown')
         elif cpu_family == 26:
             cfg.set('Info', 'Architecture', 'Zen 5 - Zen 6')
             if cpu_model == 32:
@@ -230,9 +236,6 @@ def get_presets():
             elif "X" in cpu_model and "9" in cpu_model:
                 loca = "Assets.Presets.AMDCPU_X9"
                 from Assets.Presets.AMDCPU_X9 import PRESETS
-            elif "X" in cpu_model:
-                loca = "Assets.Presets.AMDCPU"
-                from Assets.Presets.AMDCPU import PRESETS
             else:
                 loca = "Assets.Presets.AMDCPU"
                 from Assets.Presets.AMDCPU import PRESETS
@@ -892,11 +895,6 @@ def apply_smu(args, user_mode):
     if not check_run():
         clear()
         logging.info("Cannot run RyzenAdj because your computer is missing debug=0x144 or required SIP is not SET yet\nPlease run Install UXTU4Unix dependencies under Setting \nand restart after install.")
-        input("Press Enter to continue...")
-        return
-    if cfg.get('Info', 'Type') == "Intel":
-        clear()
-        logging.info("Sorry, we currently do not support Intel chipsets. Please consider using CPUFriendFriend by corpnewt.")
         input("Press Enter to continue...")
         return
     sleep_time = cfg.get('Settings', 'Time', fallback='30')
