@@ -1,3 +1,7 @@
+## [0.3.01]
+
+## General
+- Fix `G` and `GE` detect order
 ## [0.3.0]
 
 ## General
