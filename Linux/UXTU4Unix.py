@@ -2,7 +2,7 @@ import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
 import urllib.request, json, select
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.3.0"
+LOCAL_VERSION = "0.3.01"
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Unix/releases/latest"
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -87,7 +87,6 @@ def get_codename():
         cfg.set('Info', 'Type', 'Intel')
         cfg.set('Info', 'Architecture', 'Intel')
         cfg.set('Info', 'Family', 'Intel')
-        cfg.set('Info', 'Type', 'Intel')
     else:
         if cpu_family == 23:
            cfg.set('Info', 'Architecture', 'Zen 1 - Zen 2')
@@ -115,6 +114,9 @@ def get_codename():
                cfg.set('Info', 'Family', 'VanGogh')
            elif cpu_model == 160:
                cfg.set('Info', 'Family', 'Mendocino')
+           else:
+               cfg.set('Info', 'Family', 'Unknown')
+               cfg.set('Info', 'Architecture', 'Unknown')
         elif cpu_family == 25:
             cfg.set('Info', 'Architecture', 'Zen 3 - Zen 4')
             if cpu_model == 33:
@@ -133,6 +135,9 @@ def get_codename():
                 cfg.set('Info', 'Family', 'PhoenixPoint2')
             elif cpu_model == 117:
                 cfg.set('Info', 'Family', 'HawkPoint')
+            else:
+                cfg.set('Info', 'Family', 'Unknown')
+                cfg.set('Info', 'Architecture', 'Unknown')
         elif cpu_family == 26:
             cfg.set('Info', 'Architecture', 'Zen 5 - Zen 6')
             if cpu_model == 32:
@@ -141,13 +146,17 @@ def get_codename():
                 cfg.set('Info', 'Family', 'GraniteRidge')
         else:
             cfg.set('Info', 'Family', 'Unknown')
+            cfg.set('Info', 'Architecture', 'Unknown')
     with open(CONFIG_PATH, 'w') as config_file:
       cfg.write(config_file)
     family = cfg.get('Info', 'Family')
+    arch = cfg.get('Info', 'Architecture')
     if 'SummitRidge' in family or 'PinnacleRidge' in family or 'Matisse' in family or 'Vermeer' in family or 'Raphael' in family or 'GraniteRidge' in family:
        cfg.set('Info', 'Type', 'Amd_Desktop_Cpu')
-    else:
-       cfg.set('Info', 'Type', 'Amd_Apu')
+    elif 'Intel' in arch:
+       cfg.set('Info', 'Type', 'Intel')
+    elif 'Unknown' in arch:
+       cfg.set('Info', 'Type', 'Unknown')
     with open(CONFIG_PATH, 'w') as config_file:
       cfg.write(config_file)
       
@@ -187,12 +196,12 @@ def get_presets():
             elif "H" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_H"
                 from Assets.Presets.AMDAPUPostMatisse_H import PRESETS
-            elif "G" in cpu_model:
-                loca = "Assets.Presets.AMDAPUPostMatisse_G"
-                from Assets.Presets.AMDAPUPostMatisse_G import PRESETS
             elif "GE" in cpu_model:
                 loca = "Assets.Presets.AMDAPUPostMatisse_GE"
                 from Assets.Presets.AMDAPUPostMatisse_GE import PRESETS
+            elif "G" in cpu_model:
+                loca = "Assets.Presets.AMDAPUPostMatisse_G"
+                from Assets.Presets.AMDAPUPostMatisse_G import PRESETS
             else:
                 loca = "Assets.Presets.AMDCPU"
                 from Assets.Presets.AMDCPU import PRESETS
@@ -223,9 +232,6 @@ def get_presets():
             elif "X" in cpu_model and "9" in cpu_model:
                 loca = "Assets.Presets.AMDCPU_X9"
                 from Assets.Presets.AMDCPU_X9 import PRESETS
-            elif "X" in cpu_model:
-                loca = "Assets.Presets.AMDCPU"
-                from Assets.Presets.AMDCPU import PRESETS
             else:
                 loca = "Assets.Presets.AMDCPU"
                 from Assets.Presets.AMDCPU import PRESETS
@@ -645,7 +651,7 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Unix")
-        logging.info("The Future Stepping Update (3LinuxL2TDream)")
+        logging.info("The Future Stepping Update (3LinuxL2TDreamNV1)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nCore: NotchApple1703")
