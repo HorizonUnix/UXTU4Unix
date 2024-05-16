@@ -2,7 +2,7 @@ import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
 import urllib.request, plistlib, base64, json, select, signal
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.3.0"
+LOCAL_VERSION = "0.3.01"
 LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Unix/releases/latest"
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -810,7 +810,7 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Unix")
-        logging.info("The Future Stepping Update (3MacL2TDream)")
+        logging.info("The Future Stepping Update (3MacL2TDreamNV1)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nCore: NotchApple1703")
