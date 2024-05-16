@@ -1,7 +1,9 @@
 ## [0.3.01]
 
 ## General
-- Fix `G` and `GE` detect order
+- Fix the detection order of `G` and `GE` APU.
+- Remove the Intel check; RyzenAdj checks itself.
+- Fix the issue with unsupported hardware
 ## [0.3.0]
 
 ## General
