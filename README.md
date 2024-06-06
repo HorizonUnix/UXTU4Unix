@@ -24,6 +24,13 @@
 - Follow the instructions.
 - [macOS only] Disable `Core Performance Boost` in BIOS using [Smokeless_UMAF](https://github.com/DavidS95/Smokeless_UMAF) to achieve better temperature and better control with `UXTU4Unix` but sacrifice a lot of CPU performance
 
+## Fix Python Certificates in macOS
+
+<p align="left">
+  <img src="/Img/cert1.png">
+  <img src="/Img/cert2.png">
+</p>
+
 ## FAQ
 ### 1. Why do we have to disable SIP in macOS?
 - Honestly, the binary file (ryzenAdj and DirectHW) is recognized in macOS as untrusted kexts. So, in order to get it working, we have to disable SIP including the flag `ALLOW_UNTRUSTED_KEXTS` (0x1).
