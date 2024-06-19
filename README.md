@@ -7,6 +7,7 @@
 ---
 
 > [!CAUTION]
+> **The development and updates of this repository will be temporarily suspended until after July 29**
 > - **Do not** use `UXTU4Unix` with [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor) as they may conflict with each other.
 > - This is not an **alternative solution** to [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor), [NootedRed](https://github.com/ChefKissInc/NootedRed) and [AMDPlatformPlugin](https://github.com/ChefKissInc/AMDPlatformPlugin/) for their CPU/APU power management itself.
 
