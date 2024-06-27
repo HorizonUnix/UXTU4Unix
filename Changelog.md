@@ -1,3 +1,6 @@
+## [0.3.02]
+
+- Moved from `AppleOSX` to @HorizonUnix
 ## [0.3.01]
 
 ## General

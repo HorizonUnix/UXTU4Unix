@@ -2,9 +2,9 @@ import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
 import urllib.request, plistlib, base64, json, select, signal
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.3.01"
-LATEST_VERSION_URL = "https://github.com/AppleOSX/UXTU4Unix/releases/latest"
-GITHUB_API_URL = "https://api.github.com/repos/AppleOSX/UXTU4Unix/releases/latest"
+LOCAL_VERSION = "0.3.02"
+LATEST_VERSION_URL = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest"
+GITHUB_API_URL = "https://api.github.com/repos/HorizonUnix/UXTU4Unix/releases/latest"
 current_dir = os.path.dirname(os.path.realpath(__file__))
 command_file = os.path.join(current_dir, 'UXTU4Unix.command')
 command_file_name = os.path.basename(command_file)
@@ -61,7 +61,7 @@ def clear():
        logging.info(f'  {cpu} ({family})')
     if cfg.get('Settings', 'Debug', fallback='0') == '1':
         logging.info(f"  Loaded: {cfg.get('User', 'Preset',fallback = '')}")
-    logging.info(f"  Version: {LOCAL_VERSION} by AppleOSX (macOS Edition)")
+    logging.info(f"  Version: {LOCAL_VERSION} by HorizonUnix (macOS Edition)")
     logging.info("")
     
 def get_hardware_info(command, use_sudo=False):
@@ -806,7 +806,7 @@ def check_updates():
 
 def about():
     options = {
-        "1": lambda: webbrowser.open("https://www.github.com/AppleOSX/UXTU4Unix"),
+        "1": lambda: webbrowser.open("https://www.github.com/HorizonUnix/UXTU4Unix"),
         "f": updater,
         "b": "break",
     }

@@ -1,7 +1,7 @@
 import os, urllib.request, zipfile, shutil, subprocess
 
 def update():
-    url = "https://github.com/AppleOSX/UXTU4Unix/releases/latest/download/Linux.zip"
+    url = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest/download/Linux.zip"
     script_dir = os.path.dirname(os.path.realpath(__file__))
     current_dir = os.path.dirname(os.path.dirname(script_dir))
     current_folder = os.path.join(current_dir, "UXTU4Unix")
