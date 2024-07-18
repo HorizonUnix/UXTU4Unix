@@ -2,7 +2,7 @@ import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
 import urllib.request, plistlib, base64, json, select, signal
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.3.02"
+LOCAL_VERSION = "0.3.03"
 LATEST_VERSION_URL = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/HorizonUnix/UXTU4Unix/releases/latest"
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -595,8 +595,6 @@ def preset_cfg():
             cfg.set('User', 'CustomArgs', custom_args)
             if cfg.get('Settings', 'DynamicMode', fallback='0') == '1':
                 cfg.set('Settings', 'DynamicMode', '0')
-            if cfg.get('Settings', 'ReApply', fallback='0') == '1':
-                cfg.set('Settings', 'ReApply', '0')
             logging.info("Set preset successfully!")
             input("Press Enter to continue...")
             with open(CONFIG_PATH, 'w') as config_file:
@@ -620,8 +618,6 @@ def preset_cfg():
                 cfg.set('User', 'Mode', preset_name)
                 if cfg.get('Settings', 'DynamicMode', fallback='0') == '1':
                    cfg.set('Settings', 'DynamicMode', '0')
-                if cfg.get('Settings', 'ReApply', fallback='0') == '1':
-                   cfg.set('Settings', 'ReApply', '0')
                 logging.info("Set preset successfully!")
                 input("Press Enter to continue...")
                 with open(CONFIG_PATH, 'w') as config_file:
@@ -866,13 +862,10 @@ def preset_menu():
                 selected_preset = list(PRESETS.keys())[preset_number - 1]
                 clear()
                 last_mode = cfg.get('Settings', 'DynamicMode', fallback='0')
-                last_apply = cfg.get('Settings', 'ReApply', fallback='0')
-                cfg.set('Settings', 'ReApply', '0')
                 cfg.set('Settings', 'DynamicMode', '0')
                 user_mode = selected_preset
                 apply_smu(PRESETS[user_mode], user_mode)
                 cfg.set('Settings', 'DynamicMode', last_mode)
-                cfg.set('Settings', 'ReApply', last_apply)
             else:
                 logging.info("Invalid option.")
                 input("Press Enter to continue...")
@@ -900,12 +893,12 @@ def apply_smu(args, user_mode):
     sleep_time = cfg.get('Settings', 'Time', fallback='30')
     password = cfg.get('User', 'Password', fallback='')
     dynamic = cfg.get('Settings', 'dynamicmode', fallback='0')
+    last_apply = cfg.get('Settings', 'ReApply', fallback='0')
     prev_mode = None
     PRESETS = get_presets()
     dm_enabled = cfg.get('Settings', 'DynamicMode', fallback='0') == '1'
-    if dm_enabled:    
-        if cfg.get('Settings', 'ReApply', fallback='0') == '0':
-            cfg.set('Settings', 'ReApply', '1')
+    if dm_enabled:
+        cfg.set('Settings', 'ReApply', '1')
     reapply = cfg.get('Settings', 'ReApply', fallback='0')
     if reapply == '1':
       while True:
@@ -917,16 +910,6 @@ def apply_smu(args, user_mode):
                     user_mode = 'Eco'
             else:
                 user_mode = 'Extreme'
-        if prev_mode == user_mode and dynamic == '1':
-            for _ in range(int(float(sleep_time))):
-                for _ in range(1):
-                    time.sleep(1)
-                    if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-                        line = sys.stdin.readline()
-                        if line.lower().strip() == 'b':
-                            return
-            continue
-        prev_mode = user_mode
         clear()
         if args == 'Custom':
             custom_args = cfg.get('User', 'CustomArgs', fallback='')
@@ -954,6 +937,7 @@ def apply_smu(args, user_mode):
                 if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                     line = sys.stdin.readline()
                     if line.lower().strip() == 'b':
+                        cfg.set('Settings', 'ReApply', last_apply)
                         return
     else:
           clear()
