@@ -216,7 +216,7 @@ def hardware_info():
     logging.info("Processor Information:")
     logging.info(f" - Processor: {cfg.get('Info', 'CPU')}")
     cpu_family = cfg.get('Info', 'Family')
-    smu_version = get_hardware_info(f"{current_dir}/Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
+    smu_version = get_hardware_info(f"{os.path.join(current_dir, 'Assets', 'ryzenadj')} -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
     if cpu_family:
         logging.info(f" - Codename: {cpu_family}")
     if smu_version:
