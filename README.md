@@ -1,13 +1,12 @@
-<picture><img align="left" src="/Img/Logo.png" width="20%"/></picture>
-<h1>UXTU4Unix (Work-in-Progress)</h1>
-<h3>Powered by RyzenAdj and Python</h3>
+
+<h2>UXTU4Unix (Work-in-Progress)</h2>
+<h4>Powered by RyzenAdj and Python</h4>
 
 ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/AppleOSX/UXTU4Mac/total)
 
 ---
 
 > [!CAUTION]
-> **Development and updates for this repository will be temporarily suspended until after July 29.**
 > - **Caution:** Avoid using `UXTU4Unix` in conjunction with [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor) due to potential conflicts.
 > - This project does not serve as an alternative to [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor), [NootedRed](https://github.com/ChefKissInc/NootedRed), or [AMDPlatformPlugin](https://github.com/ChefKissInc/AMDPlatformPlugin/) for CPU/APU power management.
 
