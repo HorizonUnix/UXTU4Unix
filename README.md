@@ -1,5 +1,5 @@
 
-<h2>UXTU4Unix (Work-in-Progress)</h2>
+<h1>UXTU4Unix (Work-in-Progress)</h1>
 <h4>Powered by RyzenAdj and Python</h4>
 
 ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/AppleOSX/UXTU4Mac/total)
