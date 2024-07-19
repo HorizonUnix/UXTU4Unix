@@ -10,13 +10,13 @@
 > - **Caution:** Avoid using `UXTU4Unix` in conjunction with [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor) due to potential conflicts.
 > - This project does not serve as an alternative to [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor), [NootedRed](https://github.com/ChefKissInc/NootedRed), or [AMDPlatformPlugin](https://github.com/ChefKissInc/AMDPlatformPlugin/) for CPU/APU power management.
 
-## Supported APU & Operating Systems
+### Supported APU & Operating Systems
 
 > [!NOTE]
 > - Compatible with AMD Ryzen APUs supported by either [NootedRed](https://github.com/ChefKissInc/NootedRed) or the **Premade Preset** section in [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) (or generally supported by RyzenAdj).
 > - Operating Systems: macOS 10.9 through 15, and Linux (tested on Debian-based distributions and Fedora).
 
-## Usage Instructions
+### Usage Instructions
 
 - Disable `Secure Boot` in the BIOS. (Unknown: Applying the Secure Boot certificate to UEFI may enable compatibility.)
 - Download the official build from the [Releases](https://github.com/AppleOSX/UXTU4Unix/releases).
@@ -24,7 +24,7 @@
 - Follow the on-screen instructions.
 - [macOS only] For enhanced temperature management and control with `UXTU4Unix`, disable `Core Performance Boost` in the BIOS using [Smokeless_UMAF](https://github.com/DavidS95/Smokeless_UMAF). Note that this may significantly reduce CPU performance, as the `Core Performance Boost` feature on macOS is not optimal.
 
-## Fixing Python Certificates on macOS
+### Fixing Python Certificates on macOS
 
 <p align="left">
   <img src="/Img/cert1.png">
@@ -45,7 +45,7 @@
 ## Advanced Users
 For more detailed configurations, please refer to [Custom.md](Custom.md).
 
-# Preview
+## Preview
 
 <p align="left">
   <img src="/Img/main_menu.png">
