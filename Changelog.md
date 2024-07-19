@@ -1,3 +1,8 @@
+## [0.3.03]
+
+## General
+
+- Fix `ReApply` settings logic
 ## [0.3.02]
 
 - Moved from `AppleOSX` to @HorizonUnix
