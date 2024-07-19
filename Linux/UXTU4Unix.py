@@ -1,48 +1,46 @@
-import os, time, subprocess, getpass, webbrowser, logging, sys, binascii
-import urllib.request, json, select
+import os
+import time
+import subprocess
+import getpass
+import webbrowser
+import logging
+import sys
+import binascii
+import urllib.request
+import json
+import select
 from configparser import ConfigParser
 
+# Constants
 LOCAL_VERSION = "0.3.03"
 LATEST_VERSION_URL = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/HorizonUnix/UXTU4Unix/releases/latest"
 current_dir = os.path.dirname(os.path.realpath(__file__))
-os.makedirs(f'{current_dir}/Logs', exist_ok=True)
-logging.basicConfig(filename=f'{current_dir}/Logs/UXTU4Unix.log', filemode='w', encoding='utf-8',
-                    level=logging.INFO, format='%(levelname)s %(asctime)s %(message)s',
-                    datefmt='%d/%m/%Y %H:%M:%S')
+CONFIG_PATH = os.path.join(current_dir, 'Assets', 'config.ini')
+
+# Setup Logging
+log_dir = os.path.join(current_dir, 'Logs')
+os.makedirs(log_dir, exist_ok=True)
+logging.basicConfig(
+    filename=os.path.join(log_dir, 'UXTU4Unix.log'),
+    filemode='w',
+    encoding='utf-8',
+    level=logging.INFO,
+    format='%(levelname)s %(asctime)s %(message)s',
+    datefmt='%d/%m/%Y %H:%M:%S'
+)
 logging.getLogger().addHandler(logging.StreamHandler())
-CONFIG_PATH = f'{current_dir}/Assets/config.ini'
+
+# Load Configurations
 cfg = ConfigParser()
 cfg.read(CONFIG_PATH)
 
 ryzen_family = [
-    "Unknown",
-    "SummitRidge",
-    "PinnacleRidge",
-    "RavenRidge",
-    "Dali",
-    "Pollock",
-    "Picasso",
-    "FireFlight",
-    "Matisse",
-    "Renoir",
-    "Lucienne",
-    "VanGogh",
-    "Mendocino",
-    "Vermeer",
-    "Cezanne_Barcelo",
-    "Rembrandt",
-    "Raphael",
-    "DragonRange",
-    "PhoenixPoint",
-    "PhoenixPoint2",
-    "HawkPoint",
-    "SonomaValley",
-    "GraniteRidge",
-    "FireRange",
-    "StrixPoint",
-    "StrixPoint2",
-    "Sarlak",
+    "Unknown", "SummitRidge", "PinnacleRidge", "RavenRidge", "Dali", "Pollock",
+    "Picasso", "FireFlight", "Matisse", "Renoir", "Lucienne", "VanGogh", "Mendocino",
+    "Vermeer", "Cezanne_Barcelo", "Rembrandt", "Raphael", "DragonRange", "PhoenixPoint",
+    "PhoenixPoint2", "HawkPoint", "SonomaValley", "GraniteRidge", "FireRange",
+    "StrixPoint", "StrixPoint2", "Sarlak"
 ]
 
 def clear():
@@ -61,16 +59,13 @@ def clear():
         logging.info(f"  Loaded: {cfg.get('User', 'Preset',fallback = '')}")
     logging.info(f"  Version: {LOCAL_VERSION} by HorizonUnix (Linux Edition)")
     logging.info("")
-    
+
 def get_hardware_info(command, use_sudo=False):
     password = cfg.get('User', 'Password', fallback='')
     if use_sudo:
-        command = f"sudo -S {command}"
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        output, error = process.communicate(input=password.encode())
-    else:
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-        output, error = process.communicate()
+        command = f"echo '{password}' | sudo -S {command}"
+    process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    output, error = process.communicate()
     return output.decode('utf-8').strip()
 
 def get_codename():
@@ -83,187 +78,158 @@ def get_codename():
     cpu_family = int(words[family_index].rstrip(','))
     cpu_model = int(words[model_index].rstrip(','))
     cpu_stepping = int(words[stepping_index].rstrip(','))
+
+    architecture = 'Unknown'
+    family = 'Unknown'
+
     if cpu == 'Intel':
-        cfg.set('Info', 'Type', 'Intel')
-        cfg.set('Info', 'Architecture', 'Intel')
-        cfg.set('Info', 'Family', 'Intel')
-    else:
-        if cpu_family == 23:
-           cfg.set('Info', 'Architecture', 'Zen 1 - Zen 2')
-           if cpu_model == 1:
-               cfg.set('Info', 'Family', 'SummitRidge')
-           elif cpu_model == 8:
-               cfg.set('Info', 'Family', 'PinnacleRidge')
-           elif cpu_model == 17 or cpu_model == 18:
-               cfg.set('Info', 'Family', 'RavenRidge')
-           elif cpu_model == 24:
-               cfg.set('Info', 'Family', 'Picasso')
-           elif cpu_model == 32 and '15e' in cpu or '15Ce' in cpu or '20e' in cpu:
-               cfg.set('Info', 'Family', 'Pollock')
-           elif cpu_model == 32:
-               cfg.set('Info', 'Family', 'Dali')
-           elif cpu_model == 80:
-               cfg.set('Info', 'Family', 'FireFlight')
-           elif cpu_model == 96:
-               cfg.set('Info', 'Family', 'Renoir')
-           elif cpu_model == 104:
-               cfg.set('Info', 'Family', 'Lucienne')
-           elif cpu_model == 113:
-               cfg.set('Info', 'Family', 'Matisse')
-           elif cpu_model == 144:
-               cfg.set('Info', 'Family', 'VanGogh')
-           elif cpu_model == 160:
-               cfg.set('Info', 'Family', 'Mendocino')
-           else:
-               cfg.set('Info', 'Family', 'Unknown')
-               cfg.set('Info', 'Architecture', 'Unknown')
-        elif cpu_family == 25:
-            cfg.set('Info', 'Architecture', 'Zen 3 - Zen 4')
-            if cpu_model == 33:
-                cfg.set('Info', 'Family', 'Vermeer')
-            elif cpu_model == 63 or cpu_model == 68:
-                cfg.set('Info', 'Family', 'Rembrandt')
-            elif cpu_model == 80:
-                cfg.set('Info', 'Family', 'Cezanne_Barcelo')
-            elif cpu_model == 97 and 'HX' in cpu:
-                cfg.set('Info', 'Family', 'DragonRange')
-            elif cpu_model == 97:
-                cfg.set('Info', 'Family', 'Raphael')
-            elif cpu_model == 116:
-                cfg.set('Info', 'Family', 'PhoenixPoint')
-            elif cpu_model == 120:
-                cfg.set('Info', 'Family', 'PhoenixPoint2')
-            elif cpu_model == 117:
-                cfg.set('Info', 'Family', 'HawkPoint')
-            else:
-                cfg.set('Info', 'Family', 'Unknown')
-                cfg.set('Info', 'Architecture', 'Unknown')
-        elif cpu_family == 26:
-            cfg.set('Info', 'Architecture', 'Zen 5 - Zen 6')
-            if cpu_model == 32:
-                cfg.set('Info', 'Family', 'StrixPoint')
-            else:
-                cfg.set('Info', 'Family', 'GraniteRidge')
+        architecture = 'Intel'
+        family = 'Intel'
+    elif cpu_family == 23:
+        architecture = 'Zen 1 - Zen 2'
+        if cpu_model == 1:
+            family = 'SummitRidge'
+        elif cpu_model == 8:
+            family = 'PinnacleRidge'
+        elif cpu_model in {17, 18}:
+            family = 'RavenRidge'
+        elif cpu_model == 24:
+            family = 'Picasso'
+        elif cpu_model == 32:
+            family = 'Pollock' if '15e' in cpu or '15Ce' in cpu or '20e' in cpu else 'Dali'
+        elif cpu_model == 80:
+            family = 'FireFlight'
+        elif cpu_model == 96:
+            family = 'Renoir'
+        elif cpu_model == 104:
+            family = 'Lucienne'
+        elif cpu_model == 113:
+            family = 'Matisse'
+        elif cpu_model == 144:
+            family = 'VanGogh'
+        elif cpu_model == 160:
+            family = 'Mendocino'
+    elif cpu_family == 25:
+        architecture = 'Zen 3 - Zen 4'
+        if cpu_model == 33:
+            family = 'Vermeer'
+        elif cpu_model in {63, 68}:
+            family = 'Rembrandt'
+        elif cpu_model == 80:
+            family = 'Cezanne_Barcelo'
+        elif cpu_model == 97:
+            family = 'DragonRange' if 'HX' in cpu else 'Raphael'
+        elif cpu_model == 116:
+            family = 'PhoenixPoint'
+        elif cpu_model == 120:
+            family = 'PhoenixPoint2'
+        elif cpu_model == 117:
+            family = 'HawkPoint'
+    elif cpu_family == 26:
+        architecture = 'Zen 5 - Zen 6'
+        if cpu_model == 32:
+            family = 'StrixPoint'
         else:
-            cfg.set('Info', 'Family', 'Unknown')
-            cfg.set('Info', 'Architecture', 'Unknown')
+            family = 'GraniteRidge'
+
+    cfg.set('Info', 'Architecture', architecture)
+    cfg.set('Info', 'Family', family)
+
     with open(CONFIG_PATH, 'w') as config_file:
-      cfg.write(config_file)
-    family = cfg.get('Info', 'Family')
-    arch = cfg.get('Info', 'Architecture')
-    if 'SummitRidge' in family or 'PinnacleRidge' in family or 'Matisse' in family or 'Vermeer' in family or 'Raphael' in family or 'GraniteRidge' in family:
-       cfg.set('Info', 'Type', 'Amd_Desktop_Cpu')
-    elif 'Intel' in arch:
-       cfg.set('Info', 'Type', 'Intel')
-    elif 'Unknown' in arch:
-       cfg.set('Info', 'Type', 'Unknown')
+        cfg.write(config_file)
+
+    if family in {'SummitRidge', 'PinnacleRidge', 'Matisse', 'Vermeer', 'Raphael', 'GraniteRidge'}:
+        cfg.set('Info', 'Type', 'Amd_Desktop_Cpu')
+    elif architecture == 'Intel':
+        cfg.set('Info', 'Type', 'Intel')
+    elif architecture == 'Unknown':
+        cfg.set('Info', 'Type', 'Unknown')
+
     with open(CONFIG_PATH, 'w') as config_file:
-      cfg.write(config_file)
-      
+        cfg.write(config_file)
+
 def get_presets():
     cpu_family = cfg.get('Info', 'Family')
-    cpu_model = cfg.get('Info', 'CPU')
+    cpu_model = cfg.get('Info', 'CPU').replace("AMD", "").replace("with", "").replace("Mobile", "").replace("Ryzen", "").replace("Radeon", "").replace("Graphics", "").replace("Vega", "").replace("Gfx", "")
     cpu_type = cfg.get('Info', 'Type')
-    cpu_model = cpu_model.replace("AMD", "").replace("with", "").replace("Mobile", "").replace("Ryzen", "").replace("Radeon", "").replace("Graphics", "").replace("Vega", "").replace("Gfx", "")
-    loca = None
+    presets_module = None
+
     if cpu_type == 'Amd_Apu':
         if ryzen_family.index(cpu_family) < ryzen_family.index("Matisse"):
-            if "U" in cpu_model or "e" in cpu_model or "Ce" in cpu_model:
-                loca = "Assets.Presets.AMDAPUPreMatisse_U_e_Ce"
-                from Assets.Presets.AMDAPUPreMatisse_U_e_Ce import PRESETS
+            if any(x in cpu_model for x in ["U", "e", "Ce"]):
+                presets_module = "AMDAPUPreMatisse_U_e_Ce"
             elif "H" in cpu_model:
-                loca = "Assets.Presets.AMDAPUPreMatisse_H"
-                from Assets.Presets.AMDAPUPreMatisse_H import PRESETS
+                presets_module = "AMDAPUPreMatisse_H"
             elif "GE" in cpu_model:
-                loca = "Assets.Presets.AMDAPUPreMatisse_GE"
-                from Assets.Presets.AMDAPUPreMatisse_GE import PRESETS
+                presets_module = "AMDAPUPreMatisse_GE"
             elif "G" in cpu_model:
-                loca = "Assets.Presets.AMDAPUPreMatisse_G"
-                from Assets.Presets.AMDAPUPreMatisse_G import PRESETS
+                presets_module = "AMDAPUPreMatisse_G"
             else:
-                loca = "Assets.Presets.AMDCPU"
-                from Assets.Presets.AMDCPU import PRESETS
+                presets_module = "AMDCPU"
         elif ryzen_family.index(cpu_family) > ryzen_family.index("Matisse"):
             if "U" in cpu_model:
-                loca = "Assets.Presets.AMDAPUPostMatisse_U"
-                from Assets.Presets.AMDAPUPostMatisse_U import PRESETS
+                presets_module = "AMDAPUPostMatisse_U"
             elif "HX" in cpu_model:
-                loca = "Assets.Presets.AMDAPUPostMatisse_HX"
-                from Assets.Presets.AMDAPUPostMatisse_HX import PRESETS
+                presets_module = "AMDAPUPostMatisse_HX"
             elif "HS" in cpu_model:
-                loca = "Assets.Presets.AMDAPUPostMatisse_HS"
-                from Assets.Presets.AMDAPUPostMatisse_HS import PRESETS
+                presets_module = "AMDAPUPostMatisse_HS"
             elif "H" in cpu_model:
-                loca = "Assets.Presets.AMDAPUPostMatisse_H"
-                from Assets.Presets.AMDAPUPostMatisse_H import PRESETS
+                presets_module = "AMDAPUPostMatisse_H"
             elif "GE" in cpu_model:
-                loca = "Assets.Presets.AMDAPUPostMatisse_GE"
-                from Assets.Presets.AMDAPUPostMatisse_GE import PRESETS
+                presets_module = "AMDAPUPostMatisse_GE"
             elif "G" in cpu_model:
-                loca = "Assets.Presets.AMDAPUPostMatisse_G"
-                from Assets.Presets.AMDAPUPostMatisse_G import PRESETS
+                presets_module = "AMDAPUPostMatisse_G"
             else:
-                loca = "Assets.Presets.AMDCPU"
-                from Assets.Presets.AMDCPU import PRESETS
+                presets_module = "AMDCPU"
     elif cpu_type == 'Amd_Desktop_Cpu':
         if ryzen_family.index(cpu_family) < ryzen_family.index("Raphael"):
             if "E" in cpu_model:
-                loca = "Assets.Presets.AMDCPUPreRaphael_E"
-                from Assets.Presets.AMDCPUPreRaphael_E import PRESETS
+                presets_module = "AMDCPUPreRaphael_E"
             elif "X3D" in cpu_model:
-                loca = "Assets.Presets.AMDCPUPreRaphael_X3D"
-                from Assets.Presets.AMDCPUPreRaphael_X3D import PRESETS
+                presets_module = "AMDCPUPreRaphael_X3D"
             elif "X" in cpu_model and "9" in cpu_model:
-                loca = "Assets.Presets.AMDCPUPreRaphael_X9"
-                from Assets.Presets.AMDCPUPreRaphael_X9 import PRESETS
+                presets_module = "AMDCPUPreRaphael_X9"
             elif "X" in cpu_model:
-                loca = "Assets.Presets.AMDCPUPreRaphael_X"
-                from Assets.Presets.AMDCPUPreRaphael_X import PRESETS
+                presets_module = "AMDCPUPreRaphael_X"
             else:
-                loca = "Assets.Presets.AMDCPUPreRaphael"
-                from Assets.Presets.AMDCPUPreRaphael import PRESETS
+                presets_module = "AMDCPUPreRaphael"
         else:
             if "E" in cpu_model:
-                loca = "Assets.Presets.AMDCPU_E"
-                from Assets.Presets.AMDCPU_E import PRESETS
+                presets_module = "AMDCPU_E"
             elif "X3D" in cpu_model:
-                loca = "Assets.Presets.AMDCPU_X3D"
-                from Assets.Presets.AMDCPU_X3D import PRESETS
+                presets_module = "AMDCPU_X3D"
             elif "X" in cpu_model and "9" in cpu_model:
-                loca = "Assets.Presets.AMDCPU_X9"
-                from Assets.Presets.AMDCPU_X9 import PRESETS
+                presets_module = "AMDCPU_X9"
             else:
-                loca = "Assets.Presets.AMDCPU"
-                from Assets.Presets.AMDCPU import PRESETS
+                presets_module = "AMDCPU"
     else:
-        loca = "Assets.Presets.AMDCPU"
-        from Assets.Presets.AMDCPU import PRESETS
-    cfg.set('User', 'Preset', loca)
+        presets_module = "AMDCPU"
+
+    module = __import__(f"Assets.Presets.{presets_module}", fromlist=['PRESETS'])
+    cfg.set('User', 'Preset', f"Assets.Presets.{presets_module}")
     with open(CONFIG_PATH, 'w') as config_file:
         cfg.write(config_file)
-    return PRESETS
+    return module.PRESETS
 
 def hardware_info():
     clear()
     logging.info("Processor Information:")
-    logging.info(
-        f' - Processor: {cfg.get("Info", "CPU")}'
-    )
+    logging.info(f" - Processor: {cfg.get('Info', 'CPU')}")
     cpu_family = cfg.get('Info', 'Family')
     smu_version = get_hardware_info(f"{current_dir}/Assets/ryzenadj -i | grep 'SMU BIOS Interface Version'", use_sudo=True).strip()
     if cpu_family:
-        logging.info(f' - Codename: {cpu_family}')
+        logging.info(f" - Codename: {cpu_family}")
     if smu_version:
-        logging.info(f' - {smu_version}')
-    logging.info(f' - Architecture: {cfg.get("Info", "Architecture")}')
-    logging.info(f' - Type: {cfg.get("Info", "Type")}')
-    logging.info(f' - Cores: {cfg.get("Info", "Core Count")}')
-    logging.info(f' - Threads: {cfg.get("Info", "Thread Count")}')
-    logging.info(f' - Max speed: {cfg.get("Info", "Max Speed")}')
-    logging.info(f' - Current speed: {cfg.get("Info", "Current Speed")}')
+        logging.info(f" - {smu_version}")
+    logging.info(f" - Architecture: {cfg.get('Info', 'Architecture')}")
+    logging.info(f" - Type: {cfg.get('Info', 'Type')}")
+    logging.info(f" - Cores: {cfg.get('Info', 'Core Count')}")
+    logging.info(f" - Threads: {cfg.get('Info', 'Thread Count')}")
+    logging.info(f" - Max speed: {cfg.get('Info', 'Max Speed')}")
+    logging.info(f" - Current speed: {cfg.get('Info', 'Current Speed')}")
     logging.info("")
     input("Press Enter to continue...")
-    
+
 def welcome_tutorial():
     if not cfg.has_section('User'):
         cfg.add_section('User')
@@ -287,33 +253,27 @@ def welcome_tutorial():
             break
         else:
             logging.info("Incorrect sudo password. Please try again.")
-        with open(CONFIG_PATH, 'w') as config_file:
-            cfg.write(config_file)
-    try:
-        cfg.set('User', 'Password', password)
-        cfg.set('Settings', 'Time', '30')
-        cfg.set('Settings', 'SoftwareUpdate', '1')
-        cfg.set('Settings', 'ReApply', '0')
-        cfg.set('Settings', 'ApplyOnStart', '1')
-        cfg.set('Settings', 'DynamicMode', '0')
-        cfg.set('Settings', 'Debug', '1')
-        cfg.set('Info', 'CPU', get_hardware_info(f"dmidecode -t processor | grep 'Version' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
-        cfg.set('Info', 'Signature', get_hardware_info(f"dmidecode -t processor | grep 'Signature' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
-        cfg.set('Info', 'Voltage', get_hardware_info(f"dmidecode -t processor | grep 'Voltage' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
-        cfg.set('Info', 'Max Speed', get_hardware_info(f"dmidecode -t processor | grep 'Max Speed' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
-        cfg.set('Info', 'Current Speed', get_hardware_info(f"dmidecode -t processor | grep 'Current Speed' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
-        cfg.set('Info', 'Core Count', get_hardware_info(f"dmidecode -t processor | grep 'Core Count' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
-        cfg.set('Info', 'Core Enabled', get_hardware_info(f"dmidecode -t processor | grep 'Core Enabled' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
-        cfg.set('Info', 'Thread Count', get_hardware_info(f"dmidecode -t processor | grep 'Thread Count' | awk -F': ' '{{print $2}}'", use_sudo=True).strip())
-    except ValueError:
-        logging.info("Invalid option.")
-        raise SystemExit
+    cfg.set('User', 'Password', password)
+    cfg.set('Settings', 'Time', '30')
+    cfg.set('Settings', 'SoftwareUpdate', '1')
+    cfg.set('Settings', 'ReApply', '0')
+    cfg.set('Settings', 'ApplyOnStart', '1')
+    cfg.set('Settings', 'DynamicMode', '0')
+    cfg.set('Settings', 'Debug', '1')
+    cfg.set('Info', 'CPU', get_hardware_info("dmidecode -t processor | grep 'Version' | awk -F': ' '{print $2}'", use_sudo=True).strip())
+    cfg.set('Info', 'Signature', get_hardware_info("dmidecode -t processor | grep 'Signature' | awk -F': ' '{print $2}'", use_sudo=True).strip())
+    cfg.set('Info', 'Voltage', get_hardware_info("dmidecode -t processor | grep 'Voltage' | awk -F': ' '{print $2}'", use_sudo=True).strip())
+    cfg.set('Info', 'Max Speed', get_hardware_info("dmidecode -t processor | grep 'Max Speed' | awk -F': ' '{print $2}'", use_sudo=True).strip())
+    cfg.set('Info', 'Current Speed', get_hardware_info("dmidecode -t processor | grep 'Current Speed' | awk -F': ' '{print $2}'", use_sudo=True).strip())
+    cfg.set('Info', 'Core Count', get_hardware_info("dmidecode -t processor | grep 'Core Count' | awk -F': ' '{print $2}'", use_sudo=True).strip())
+    cfg.set('Info', 'Core Enabled', get_hardware_info("dmidecode -t processor | grep 'Core Enabled' | awk -F': ' '{print $2}'", use_sudo=True).strip())
+    cfg.set('Info', 'Thread Count', get_hardware_info("dmidecode -t processor | grep 'Thread Count' | awk -F': ' '{print $2}'", use_sudo=True).strip())
     with open(CONFIG_PATH, 'w') as config_file:
         cfg.write(config_file)
     get_codename()
     preset_cfg()
     clear()
-       
+
 def settings():
     options = {
         "1": preset_cfg,
@@ -355,8 +315,7 @@ def applystart_cfg():
         logging.info("(Apply preset when start)")
         start_enabled = cfg.get('Settings', 'ApplyOnStart', fallback='1') == '1'
         logging.info("Status: Enabled" if start_enabled else "Status: Disabled")
-        logging.info("\n1. Enable Apply on start\n2. Disable Apply on start")
-        logging.info("\nB. Back")
+        logging.info("\n1. Enable Apply on start\n2. Disable Apply on start\n\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
             cfg.set('Settings', 'ApplyOnStart', '1')
@@ -369,7 +328,7 @@ def applystart_cfg():
             input("Press Enter to continue...")
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
-            
+
 def debug_cfg():
     while True:
         clear()
@@ -377,8 +336,7 @@ def debug_cfg():
         logging.info("(Display some process information)")
         debug_enabled = cfg.get('Settings', 'Debug', fallback='1') == '1'
         logging.info("Status: Enabled" if debug_enabled else "Status: Disabled")
-        logging.info("\n1. Enable Debug\n2. Disable Debug")
-        logging.info("\nB. Back")
+        logging.info("\n1. Enable Debug\n2. Disable Debug\n\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
             cfg.set('Settings', 'Debug', '1')
@@ -391,7 +349,7 @@ def debug_cfg():
             input("Press Enter to continue...")
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
-            
+
 def reapply_cfg():
     while True:
         clear()
@@ -399,8 +357,7 @@ def reapply_cfg():
         logging.info("(Automatic reapply preset)")
         reapply_enabled = cfg.get('Settings', 'ReApply', fallback='0') == '1'
         logging.info("Status: Enabled" if reapply_enabled else "Status: Disabled")
-        logging.info("\n1. Enable Auto reapply\n2. Disable Auto reapply")
-        logging.info("\nB. Back")
+        logging.info("\n1. Enable Auto reapply\n2. Disable Auto reapply\n\nB. Back")
         choice = input("Option: ").strip()
         if choice == "1":
             cfg.set('Settings', 'ReApply', '1')
@@ -413,7 +370,7 @@ def reapply_cfg():
             input("Press Enter to continue...")
         with open(CONFIG_PATH, 'w') as config_file:
             cfg.write(config_file)
-                        
+
 def dynamic_cfg():
     while True:
         clear()
@@ -508,9 +465,7 @@ def preset_cfg():
         logging.info("--------------- Preset ---------------")
         for i, (preset_name, preset_value) in enumerate(PRESETS.items(), start=1):
             logging.info(f"{i}. {preset_name}")
-        logging.info("\nD. Dynamic Mode")
-        logging.info("C. Custom (Beta)")
-        logging.info("B. Back")
+        logging.info("\nD. Dynamic Mode\nC. Custom (Beta)\nB. Back")
         logging.info("We recommend using the Dynamic Mode for normal tasks and better power management")
         choice = input("Option: ").lower().strip()
         if choice == 'c':
@@ -554,7 +509,7 @@ def preset_cfg():
 def reset():
     os.remove(CONFIG_PATH)
     welcome_tutorial()
-    
+
 def read_cfg() -> str:
     return cfg.get('User', 'Mode', fallback='')
 
@@ -569,7 +524,7 @@ def check_cfg_integrity() -> None:
     any(key not in cfg['User'] for key in required_keys_user) or \
     any(key not in cfg['Settings'] for key in required_keys_settings) or \
     any(key not in cfg['Info'] for key in required_keys_info):
-      reset()
+        reset()
 
 def get_latest_ver():
     latest_version = urllib.request.urlopen(LATEST_VERSION_URL).geturl()
@@ -587,23 +542,21 @@ def updater():
         changelog = get_changelog()
         logging.info("--------------- UXTU4Unix Software Update ---------------")
         logging.info("A new update is available!")
-        logging.info(
-           f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}"
-        )
+        logging.info(f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}")
         logging.info("Do you want to update? (y/n): ")
         choice = input("Option: ").lower().strip()
         if choice == "y":
-           subprocess.run(["python3", f"{current_dir}/Assets/SU.py"])
-           logging.info("Updating...")
-           logging.info("Update complete. Restarting the application, please close this window...")
-           break
+            subprocess.run(["python3", os.path.join(current_dir, 'Assets', 'SU.py')])
+            logging.info("Updating...")
+            logging.info("Update complete. Restarting the application, please close this window...")
+            break
         elif choice == "n":
-           logging.info("Skipping update...")
-           break
+            logging.info("Skipping update...")
+            break
         else:
-           logging.info("Invalid option.")
+            logging.info("Invalid option.")
     raise SystemExit
-  
+
 def check_updates():
     clear()
     max_retries = 10
@@ -611,9 +564,9 @@ def check_updates():
     for i in range(max_retries):
         try:
             latest_version = get_latest_ver()
-        except:
+        except Exception as e:
             if i < max_retries - 1:
-                logging.info(f"Failed to fetch latest version. Retrying {i+1}/{max_retries}...")
+                logging.info(f"Failed to fetch latest version. Retrying {i+1}/{max_retries}... {str(e)}")
                 time.sleep(5)
             else:
                 clear()
@@ -637,7 +590,7 @@ def check_updates():
             else:
                 logging.info("Quitting...")
                 raise SystemExit
-                
+
 def about():
     options = {
         "1": lambda: webbrowser.open("https://www.github.com/HorizonUnix/UXTU4Unix"),
@@ -656,9 +609,9 @@ def about():
         logging.info("Command file for macOS: CorpNewt\nTester: nlqanh524")
         logging.info("----------------------------")
         try:
-          logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
+            logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
         except:
-           pass
+            pass
         logging.info("\nB. Back")
         choice = input("Option: ").lower().strip()
         action = options.get(choice, None)
@@ -674,15 +627,12 @@ def preset_menu():
     PRESETS = get_presets()
     clear()
     logging.info("Apply power management settings:")
-    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n\nD. Dynamic Mode")
-    logging.info("B. Back")
+    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n\nD. Dynamic Mode\nB. Back")
     preset_choice = input("Option: ").strip()
     if preset_choice == "1":
-        if user_mode := read_cfg():
-            if user_mode in PRESETS:
-                apply_smu(PRESETS[user_mode], user_mode)
-            else:
-                apply_smu(user_mode, user_mode)
+        user_mode = read_cfg()
+        if user_mode in PRESETS:
+            apply_smu(PRESETS[user_mode], user_mode)
         else:
             logging.info("Config file is missing or invalid")
             logging.info("Reset config file..")
@@ -710,18 +660,18 @@ def preset_menu():
         except ValueError:
             logging.info("Invalid input. Please enter a number.")
     elif preset_choice.lower() == "d":
-         last_mode = cfg.get('Settings', 'DynamicMode', fallback='0')
-         last_apply = cfg.get('Settings', 'ReApply', fallback='0')
-         cfg.set('Settings', 'DynamicMode', '1')
-         cfg.set('Settings', 'ReApply', '1')
-         apply_smu(PRESETS['Balance'], 'Balance')
-         cfg.set('Settings', 'DynamicMode', last_mode)
-         cfg.set('Settings', 'ReApply', last_apply)
+        last_mode = cfg.get('Settings', 'DynamicMode', fallback='0')
+        last_apply = cfg.get('Settings', 'ReApply', fallback='0')
+        cfg.set('Settings', 'DynamicMode', '1')
+        cfg.set('Settings', 'ReApply', '1')
+        apply_smu(PRESETS['Balance'], 'Balance')
+        cfg.set('Settings', 'DynamicMode', last_mode)
+        cfg.set('Settings', 'ReApply', last_apply)
     elif preset_choice.lower() == "b":
         return
     else:
         logging.info("Invalid option.")
-        
+
 def apply_smu(args, user_mode):
     if cfg.get('Info', 'Type') == "Intel":
         clear()
@@ -730,47 +680,47 @@ def apply_smu(args, user_mode):
         return
     sleep_time = cfg.get('Settings', 'Time', fallback='30')
     password = cfg.get('User', 'Password', fallback='')
-    dynamic = cfg.get('Settings', 'dynamicmode', fallback='0')
+    dynamic = cfg.get('Settings', 'DynamicMode', fallback='0')
     last_apply = cfg.get('Settings', 'ReApply', fallback='0')
-    prev_mode = None
     PRESETS = get_presets()
     dm_enabled = cfg.get('Settings', 'DynamicMode', fallback='0') == '1'
+
     if dm_enabled:
-         cfg.set('Settings', 'ReApply', '1')
+        cfg.set('Settings', 'ReApply', '1')
+
     reapply = cfg.get('Settings', 'ReApply', fallback='0')
     if reapply == '1':
-      while True:
-        if dynamic == '1':
-            battery_status = subprocess.check_output(["upower", "-i", "/org/freedesktop/UPower/devices/battery_BAT0"]).decode("utf-8")
-            if 'state:               charging' in battery_status:
-                user_mode = 'Extreme'
-            elif 'state:               discharging' in battery_status:
+        while True:
+            if dynamic == '1':
+                battery_status = subprocess.check_output(["upower", "-i", "/org/freedesktop/UPower/devices/battery_BAT0"]).decode("utf-8")
+                if 'state:               charging' in battery_status:
+                    user_mode = 'Extreme'
+                elif 'state:               discharging' in battery_status:
                     user_mode = 'Eco'
+                else:
+                    user_mode = 'Extreme'
+            clear()
+            if args == 'Custom':
+                custom_args = cfg.get('User', 'CustomArgs', fallback='')
+                command = ["sudo", "-S", os.path.join(current_dir, 'Assets', 'ryzenadj')] + custom_args.split()
             else:
-                user_mode = 'Extreme'
-        clear()
-        if args == 'Custom':
-            custom_args = cfg.get('User', 'CustomArgs', fallback='')
-            command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + custom_args.split()
-        else:
-            args = PRESETS[user_mode]
-            command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + args.split()
-        logging.info(f"Using preset: {user_mode}")
-        if dm_enabled:
-            logging.info("Dynamic mode: Enabled")
-        else:
-            logging.info("Dynamic mode: Disabled")
-        logging.info("Auto reapply: Enabled")
-        logging.info(f"Script will check and auto reapply if need every {sleep_time} seconds")
-        logging.info("Press B then Enter to go back to the main menu")
-        logging.info("--------------- RyzenAdj Log ---------------")
-        result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        logging.info(result.stdout.decode())
-        if cfg.get('Settings', 'Debug', fallback='1') == '1':
-             if result.stderr:
-                logging.info(f"{result.stderr.decode()}")
-        for _ in range(int(float(sleep_time))):
-            for _ in range(1):
+                args = PRESETS[user_mode]
+                command = ["sudo", "-S", os.path.join(current_dir, 'Assets', 'ryzenadj')] + args.split()
+            logging.info(f"Using preset: {user_mode}")
+            if dm_enabled:
+                logging.info("Dynamic mode: Enabled")
+            else:
+                logging.info("Dynamic mode: Disabled")
+            logging.info("Auto reapply: Enabled")
+            logging.info(f"Script will check and auto reapply if need every {sleep_time} seconds")
+            logging.info("Press B then Enter to go back to the main menu")
+            logging.info("--------------- RyzenAdj Log ---------------")
+            result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            logging.info(result.stdout.decode())
+            if cfg.get('Settings', 'Debug', fallback='1') == '1':
+                if result.stderr:
+                    logging.info(f"{result.stderr.decode()}")
+            for _ in range(int(float(sleep_time))):
                 time.sleep(1)
                 if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                     line = sys.stdin.readline()
@@ -778,22 +728,22 @@ def apply_smu(args, user_mode):
                         cfg.set('Settings', 'ReApply', last_apply)
                         return
     else:
-          clear()
-          if args == 'Custom':
+        clear()
+        if args == 'Custom':
             custom_args = cfg.get('User', 'CustomArgs', fallback='')
-            command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + custom_args.split()
-          else:
+            command = ["sudo", "-S", os.path.join(current_dir, 'Assets', 'ryzenadj')] + custom_args.split()
+        else:
             args = PRESETS[user_mode]
-            command = ["sudo", "-S", f"{current_dir}/Assets/ryzenadj"] + args.split()
-          logging.info(f"Using preset: {user_mode}")
-          logging.info("Auto reapply: Disabled")
-          logging.info("--------------- RyzenAdj Log ---------------")
-          result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-          logging.info(result.stdout.decode())
-          if cfg.get('Settings', 'Debug', fallback='1') == '1':
-             if result.stderr:
+            command = ["sudo", "-S", os.path.join(current_dir, 'Assets', 'ryzenadj')] + args.split()
+        logging.info(f"Using preset: {user_mode}")
+        logging.info("Auto reapply: Disabled")
+        logging.info("--------------- RyzenAdj Log ---------------")
+        result = subprocess.run(command, input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logging.info(result.stdout.decode())
+        if cfg.get('Settings', 'Debug', fallback='1') == '1':
+            if result.stderr:
                 logging.info(f"{result.stderr.decode()}")
-          input("Press Enter to continue...")
+        input("Press Enter to continue...")
 
 def main():
     subprocess.run("printf '\\e[8;30;100t'", shell=True)
@@ -801,12 +751,12 @@ def main():
     PRESETS = get_presets()
     if cfg.get('Settings', 'SoftwareUpdate', fallback='0') == '1':
         check_updates()
-    if cfg.get('Settings', 'ApplyOnStart', fallback='1') == '1':  
-       if user_mode := read_cfg():
-          if user_mode in PRESETS:
-             apply_smu(PRESETS[user_mode], user_mode)
-          else:
-             apply_smu(user_mode, user_mode)
+    if cfg.get('Settings', 'ApplyOnStart', fallback='1') == '1':
+        user_mode = read_cfg()
+        if user_mode in PRESETS:
+            apply_smu(PRESETS[user_mode], user_mode)
+        else:
+            apply_smu(user_mode, user_mode)
     while True:
         clear()
         options = {
@@ -827,6 +777,6 @@ def main():
         else:
             logging.info("Invalid option.")
             input("Press Enter to continue...")
-                
+
 if __name__ == "__main__":
     main()
