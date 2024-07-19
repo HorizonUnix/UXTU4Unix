@@ -26,7 +26,7 @@ logging.basicConfig(
     filemode='w',
     encoding='utf-8',
     level=logging.INFO,
-    format='%(levelname)s %(asctime)s %(message)s',
+    format='%(levelname)s %(message)s',
     datefmt='%d/%m/%Y %H:%M:%S'
 )
 logging.getLogger().addHandler(logging.StreamHandler())
@@ -56,7 +56,7 @@ def clear():
     if cpu and family:
        logging.info(f'  {cpu} ({family})')
     if cfg.get('Settings', 'Debug', fallback='0') == '1':
-        logging.info(f"  Loaded: {cfg.get('User', 'Preset',fallback = '')}")
+        logging.info(f"  Loaded: {cfg.get('User', 'Preset', fallback = '')}")
     logging.info(f"  Version: {LOCAL_VERSION} by HorizonUnix (Linux Edition)")
     logging.info("")
 
@@ -627,11 +627,14 @@ def preset_menu():
     PRESETS = get_presets()
     clear()
     logging.info("Apply power management settings:")
-    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n\nD. Dynamic Mode\nB. Back")
+    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n\nD. Dynamic Mode\nC. Custom\nB. Back")
     preset_choice = input("Option: ").strip()
     if preset_choice == "1":
         user_mode = read_cfg()
-        if user_mode in PRESETS:
+        if user_mode == 'Custom':
+            custom_args = cfg.get('User', 'CustomArgs', fallback='')
+            apply_smu('Custom', custom_args)
+        elif user_mode in PRESETS:
             apply_smu(PRESETS[user_mode], user_mode)
         else:
             logging.info("Config file is missing or invalid")
@@ -667,12 +670,16 @@ def preset_menu():
         apply_smu(PRESETS['Balance'], 'Balance')
         cfg.set('Settings', 'DynamicMode', last_mode)
         cfg.set('Settings', 'ReApply', last_apply)
+    elif preset_choice.lower() == "c":
+        custom_args = input("Enter your custom arguments: ")
+        apply_smu('Custom', custom_args, save_to_config=False)
     elif preset_choice.lower() == "b":
         return
     else:
         logging.info("Invalid option.")
+        input("Press Enter to continue...")
 
-def apply_smu(args, user_mode):
+def apply_smu(args, user_mode, save_to_config=True):
     if cfg.get('Info', 'Type') == "Intel":
         clear()
         logging.info("Sorry, we currently do not support Intel chipsets")
@@ -688,6 +695,12 @@ def apply_smu(args, user_mode):
     if dm_enabled:
         cfg.set('Settings', 'ReApply', '1')
 
+    if save_to_config and user_mode == 'Custom':
+        cfg.set('User', 'Mode', 'Custom')
+        cfg.set('User', 'CustomArgs', args)
+        with open(CONFIG_PATH, 'w') as config_file:
+            cfg.write(config_file)
+
     reapply = cfg.get('Settings', 'ReApply', fallback='0')
     if reapply == '1':
         while True:
@@ -701,10 +714,8 @@ def apply_smu(args, user_mode):
                     user_mode = 'Extreme'
             clear()
             if args == 'Custom':
-                custom_args = cfg.get('User', 'CustomArgs', fallback='')
-                command = ["sudo", "-S", os.path.join(current_dir, 'Assets', 'ryzenadj')] + custom_args.split()
+                command = ["sudo", "-S", os.path.join(current_dir, 'Assets', 'ryzenadj')] + user_mode.split()
             else:
-                args = PRESETS[user_mode]
                 command = ["sudo", "-S", os.path.join(current_dir, 'Assets', 'ryzenadj')] + args.split()
             logging.info(f"Using preset: {user_mode}")
             if dm_enabled:
@@ -730,10 +741,8 @@ def apply_smu(args, user_mode):
     else:
         clear()
         if args == 'Custom':
-            custom_args = cfg.get('User', 'CustomArgs', fallback='')
-            command = ["sudo", "-S", os.path.join(current_dir, 'Assets', 'ryzenadj')] + custom_args.split()
+            command = ["sudo", "-S", os.path.join(current_dir, 'Assets', 'ryzenadj')] + user_mode.split()
         else:
-            args = PRESETS[user_mode]
             command = ["sudo", "-S", os.path.join(current_dir, 'Assets', 'ryzenadj')] + args.split()
         logging.info(f"Using preset: {user_mode}")
         logging.info("Auto reapply: Disabled")
@@ -753,10 +762,16 @@ def main():
         check_updates()
     if cfg.get('Settings', 'ApplyOnStart', fallback='1') == '1':
         user_mode = read_cfg()
-        if user_mode in PRESETS:
+        if user_mode == 'Custom':
+            custom_args = cfg.get('User', 'CustomArgs', fallback='')
+            apply_smu('Custom', custom_args)
+        elif user_mode in PRESETS:
             apply_smu(PRESETS[user_mode], user_mode)
         else:
-            apply_smu(user_mode, user_mode)
+            logging.info("Config file is missing or invalid")
+            logging.info("Reset config file..")
+            input("Press Enter to continue...")
+            welcome_tutorial()
     while True:
         clear()
         options = {
