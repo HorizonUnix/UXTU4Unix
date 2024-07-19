@@ -809,7 +809,7 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Unix")
-        logging.info("The Future Stepping Update (3MacL2TDreamNV1)")
+        logging.info("The New Future Vision Update (3MacOSX290724)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nCore: NotchApple1703")
