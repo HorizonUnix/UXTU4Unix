@@ -285,6 +285,8 @@ def welcome_tutorial():
         cfg.write(config_file)
     get_codename()
     preset_cfg()
+    if not check_run():
+        install_menu()
     clear()
 
 def settings():
