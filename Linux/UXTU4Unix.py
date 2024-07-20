@@ -144,7 +144,8 @@ def get_codename():
         cfg.set('Info', 'Type', 'Intel')
     elif architecture == 'Unknown':
         cfg.set('Info', 'Type', 'Unknown')
-
+    else:
+        cfg.set('Info', 'Type', 'Amd_Apu')
     with open(CONFIG_PATH, 'w') as config_file:
         cfg.write(config_file)
 
