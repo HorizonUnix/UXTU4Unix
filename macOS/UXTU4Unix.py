@@ -825,8 +825,11 @@ def preset_menu():
         cfg.set('Settings', 'DynamicMode', last_mode)
         cfg.set('Settings', 'ReApply', last_apply)
     elif preset_choice.lower() == "c":
+        last_mode = cfg.get('Settings', 'DynamicMode', fallback='0')
+        cfg.set('Settings', 'DynamicMode', '0')
         custom_args = input("Enter your custom arguments: ")
         apply_smu('Custom', custom_args, save_to_config=False)
+        cfg.set('Settings', 'DynamicMode', last_mode)
     elif preset_choice.lower() == "b":
         return
     else:
@@ -834,11 +837,6 @@ def preset_menu():
         input("Press Enter to continue...")
 
 def apply_smu(args, user_mode, save_to_config=True):
-    if cfg.get('Info', 'Type') == "Intel":
-        clear()
-        logging.info("Sorry, we currently do not support Intel chipsets")
-        input("Press Enter to continue...")
-        return
     if not check_run():
         clear()
         logging.info("Cannot run RyzenAdj because your computer is missing debug=0x144 or required SIP is not SET yet\nPlease run Install UXTU4Unix dependencies under Setting \nand restart after install.")
