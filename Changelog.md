@@ -2,9 +2,14 @@
 
 ## General
 
-- Refactor code for `Linux` and `macOS` Edition
-- Fix DIR logic on `Linux`
+- Refactor code
+- Fix DIR logic
+- Fix `Custom` mode
+- Fix some bugs
 
+## macOS
+
+- Extend Terminal window when called by `python3` command instead of `.command` file
 ## [0.3.03]
 
 ## General
