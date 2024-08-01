@@ -1,3 +1,10 @@
+## [0.3.1]
+
+## General
+
+- Refactor code for `Linux` and `macOS` Edition
+- Fix DIR logic on `Linux`
+
 ## [0.3.03]
 
 ## General
