@@ -312,7 +312,7 @@ def settings():
         logging.info("9. Debug\n")
         logging.info("I. Install UXTU4Unix dependencies")
         logging.info("R. Reset all saved settings")
-        logging.info("B. Back")
+        logging.info("B. Back\n")
         settings_choice = input("Option: ").lower().strip()
         action = options.get(settings_choice, None)
         if action is None:
@@ -330,7 +330,7 @@ def applystart_cfg():
         logging.info("(Apply preset when start)")
         start_enabled = cfg.get('Settings', 'ApplyOnStart', fallback='1') == '1'
         logging.info("Status: Enabled" if start_enabled else "Status: Disabled")
-        logging.info("\n1. Enable Apply on start\n2. Disable Apply on start\n\nB. Back")
+        logging.info("\n1. Enable Apply on start\n2. Disable Apply on start\n\nB. Back\n")
         choice = input("Option: ").strip()
         if choice == "1":
             cfg.set('Settings', 'ApplyOnStart', '1')
@@ -351,7 +351,7 @@ def debug_cfg():
         logging.info("(Display some process information)")
         debug_enabled = cfg.get('Settings', 'Debug', fallback='1') == '1'
         logging.info("Status: Enabled" if debug_enabled else "Status: Disabled")
-        logging.info("\n1. Enable Debug\n2. Disable Debug\n\nB. Back")
+        logging.info("\n1. Enable Debug\n2. Disable Debug\n\nB. Back\n")
         choice = input("Option: ").strip()
         if choice == "1":
             cfg.set('Settings', 'Debug', '1')
@@ -372,7 +372,7 @@ def reapply_cfg():
         logging.info("(Automatic reapply preset)")
         reapply_enabled = cfg.get('Settings', 'ReApply', fallback='0') == '1'
         logging.info("Status: Enabled" if reapply_enabled else "Status: Disabled")
-        logging.info("\n1. Enable Auto reapply\n2. Disable Auto reapply\n\nB. Back")
+        logging.info("\n1. Enable Auto reapply\n2. Disable Auto reapply\n\nB. Back\n")
         choice = input("Option: ").strip()
         if choice == "1":
             cfg.set('Settings', 'ReApply', '1')
@@ -394,7 +394,7 @@ def sip_cfg():
         SIP = cfg.get('Settings', 'SIP', fallback='03080000')
         logging.info(f"Current required SIP: {SIP}")
         logging.info("\n1. Change SIP flags")
-        logging.info("\nB. Back")
+        logging.info("\nB. Back\n")
         choice = input("Option: ").strip()
         if choice == "1":
             logging.info("Caution: Must have at least ALLOW_UNTRUSTED_KEXTS (0x1)")
@@ -414,7 +414,7 @@ def sleep_cfg():
         time = cfg.get('Settings', 'Time', fallback='30')
         logging.info("--------------- Sleep time ---------------")
         logging.info(f"Auto reapply every: {time} seconds")
-        logging.info("\n1. Change\n\nB. Back")
+        logging.info("\n1. Change\n\nB. Back\n")
         choice = input("Option: ").strip()
         if choice == "1":
             set_time = input("Enter your auto reapply time (Default is 30): ")
@@ -433,7 +433,7 @@ def pass_cfg():
         pswd = cfg.get('User', 'Password', fallback='')
         logging.info("--------------- Sudo password ---------------")
         logging.info(f"Current sudo (login) password: {pswd}")
-        logging.info("\n1. Change password\n\nB. Back")
+        logging.info("\n1. Change password\n\nB. Back\n")
         choice = input("Option: ").strip()
         if choice == "1":
             while True:
@@ -462,7 +462,7 @@ def login_cfg():
         
         logging.info("--------------- Run on startup ---------------")
         logging.info(f"Status: {'Enable' if login_enabled else 'Disable'}")
-        logging.info("\n1. Enable Run on Startup\n2. Disable Run on Startup\n\nB. Back")
+        logging.info("\n1. Enable Run on Startup\n2. Disable Run on Startup\n\nB. Back\n")
         choice = input("Option: ").strip()
 
         if choice == "1":
@@ -491,7 +491,7 @@ def cfu_cfg():
         cfu_enabled = cfg.get('Settings', 'SoftwareUpdate', fallback='1') == '1'
         logging.info("--------------- Software update ---------------")
         logging.info(f"Status: {'Enabled' if cfu_enabled else 'Disabled'}")
-        logging.info("\n1. Enable Software update\n2. Disable Software update\n\nB. Back")
+        logging.info("\n1. Enable Software update\n2. Disable Software update\n\nB. Back\n")
         choice = input("Option: ").strip()
         if choice == "1":
             cfg.set('Settings', 'SoftwareUpdate', '1')
@@ -513,7 +513,7 @@ def preset_cfg():
         for i, (preset_name, preset_value) in enumerate(PRESETS.items(), start=1):
             logging.info(f"{i}. {preset_name}")
         logging.info("\nD. Dynamic Mode\nC. Custom (Beta)\nB. Back")
-        logging.info("We recommend using the Dynamic Mode for normal tasks and better power management")
+        logging.info("We recommend using the Dynamic Mode for normal tasks and better power management\n")
         choice = input("Option: ").lower().strip()
         if choice == 'c':
             custom_args = input("Enter your custom arguments: ")
@@ -576,7 +576,7 @@ def install_menu():
         clear()
         logging.info("UXTU4Unix dependencies\n")
         logging.info("1. Auto install (Default path: /Volumes/EFI/EFI/OC)\n2. Manual install (Specify your config.plist path)\n")
-        logging.info("B. Back")
+        logging.info("B. Back\n")
         choice = input("Option (default is 1): ").strip()
         if choice == "1":
             install_auto()
@@ -690,7 +690,7 @@ def updater():
         logging.info("--------------- UXTU4Unix Software Update ---------------")
         logging.info("A new update is available!")
         logging.info(f"Changelog for the latest version ({get_latest_ver()}):\n{changelog}")
-        logging.info("Do you want to update? (y/n): ")
+        logging.info("Do you want to update? (y/n): \n")
         
         choice = input("Option: ").lower().strip()
         
@@ -766,7 +766,7 @@ def about():
             logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
         except:
             pass
-        logging.info("\nB. Back")
+        logging.info("\nB. Back\n")
         choice = input("Option: ").lower().strip()
         action = options.get(choice, None)
         if action is None:
@@ -781,7 +781,7 @@ def preset_menu():
     PRESETS = get_presets()
     clear()
     logging.info("Apply power management settings:")
-    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n\nD. Dynamic Mode\nC. Custom\nB. Back")
+    logging.info("1. Load saved settings from config file\n2. Load from available premade preset\n\nD. Dynamic Mode\nC. Custom\nB. Back\n")
     preset_choice = input("Option: ").strip()
     if preset_choice == "1":
         user_mode = read_cfg()
@@ -800,7 +800,7 @@ def preset_menu():
         logging.info("Select a premade preset:")
         for i, mode in enumerate(PRESETS, start=1):
             logging.info(f"{i}. {mode}")
-        preset_number = input("Option: ").strip()
+        preset_number = input("\nOption: ").strip()
         try:
             preset_number = int(preset_number)
             if 1 <= preset_number <= len(PRESETS):
@@ -942,7 +942,7 @@ def main():
         logging.info("")
         logging.info("H. Hardware Information")
         logging.info("A. About UXTU4Unix")
-        logging.info("Q. Quit")
+        logging.info("Q. Quit\n")
         choice = input("Option: ").lower().strip()
         if action := options.get(choice):
             action()
