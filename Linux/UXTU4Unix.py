@@ -124,7 +124,7 @@ def get_codename():
             family = 'HawkPoint'
     elif cpu_family == 26:
         architecture = 'Zen 5 - Zen 6'
-        if cpu_model == 32:
+        if cpu_model in {32, 36}:
             family = 'StrixPoint'
         else:
             family = 'GraniteRidge'
