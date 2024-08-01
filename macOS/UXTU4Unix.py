@@ -12,8 +12,7 @@ import select
 import plistlib
 from configparser import ConfigParser
 
-# Constants
-LOCAL_VERSION = "0.3.03"
+LOCAL_VERSION = "0.3.04"
 LATEST_VERSION_URL = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/HorizonUnix/UXTU4Unix/releases/latest"
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -21,7 +20,6 @@ command_file = os.path.join(current_dir, 'UXTU4Unix.command')
 command_file_name = os.path.basename(command_file)
 CONFIG_PATH = os.path.join(current_dir, 'Assets', 'config.ini')
 
-# Setup Logging
 log_dir = os.path.join(current_dir, 'Logs')
 os.makedirs(log_dir, exist_ok=True)
 logging.basicConfig(
@@ -34,7 +32,6 @@ logging.basicConfig(
 )
 logging.getLogger().addHandler(logging.StreamHandler())
 
-# Load Configurations
 cfg = ConfigParser()
 cfg.read(CONFIG_PATH)
 
@@ -757,13 +754,13 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Unix")
-        logging.info("The New Future Vision Update (3MacOSX290724)")
+        logging.info("The New Vision Update (3MacOSX040824)")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nCore: NotchApple1703")
         logging.info("Advisor: NotchApple1703")
         logging.info("dmidecode for macOS: Acidanthera")
-        logging.info("Command file for macOS: CorpNewt\nTester: nlqanh524")
+        logging.info("Command file for macOS: CorpNewt")
         logging.info("----------------------------")
         try:
             logging.info(f"F. Force update to the latest version ({get_latest_ver()})")
