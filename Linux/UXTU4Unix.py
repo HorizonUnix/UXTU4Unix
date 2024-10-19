@@ -11,7 +11,7 @@ import json
 import select
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.3.1"
+LOCAL_VERSION = "0.3.2"
 LATEST_VERSION_URL = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/HorizonUnix/UXTU4Unix/releases/latest"
 current_dir = os.path.dirname(os.path.realpath(__file__))

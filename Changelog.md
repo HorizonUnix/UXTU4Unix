@@ -1,3 +1,9 @@
+## [0.3.2]
+
+## General
+- Support ryzenAdj v0.16.0
+- Support macOS Sequoia
+
 ## [0.3.1]
 
 ## General
