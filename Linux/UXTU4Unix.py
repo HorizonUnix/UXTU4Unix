@@ -11,7 +11,9 @@ import json
 import select
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.3.2"
+LOCAL_VERSION = "0.3.3"
+LOCAL_BUILD = "3Linux051425"
+VERSION_DESCRIPTION = "The New Vision Update"
 LATEST_VERSION_URL = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/HorizonUnix/UXTU4Unix/releases/latest"
 current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -36,8 +38,8 @@ ryzen_family = [
     "Unknown", "SummitRidge", "PinnacleRidge", "RavenRidge", "Dali", "Pollock",
     "Picasso", "FireFlight", "Matisse", "Renoir", "Lucienne", "VanGogh", "Mendocino",
     "Vermeer", "Cezanne_Barcelo", "Rembrandt", "Raphael", "DragonRange", "PhoenixPoint",
-    "PhoenixPoint2", "HawkPoint", "SonomaValley", "GraniteRidge", "FireRange",
-    "StrixPoint", "StrixPoint2", "Sarlak"
+    "PhoenixPoint2", "HawkPoint", "SonomaValley", "GraniteRidge", "FireRange", 
+    "StrixHalo", "StrixPoint", "StrixPoint2"
 ]
 
 def clear():
@@ -54,6 +56,7 @@ def clear():
        logging.info(f'  {cpu} ({family})')
     if cfg.get('Settings', 'Debug', fallback='0') == '1':
         logging.info(f"  Loaded: {cfg.get('User', 'Preset', fallback = '')}")
+        logging.info(f"  Build: {LOCAL_BUILD}")
     logging.info(f"  Version: {LOCAL_VERSION} by HorizonUnix (Linux Edition)")
     logging.info("")
 
@@ -102,7 +105,7 @@ def get_codename():
             family = 'Lucienne'
         elif cpu_model == 113:
             family = 'Matisse'
-        elif cpu_model == 144:
+        elif cpu_model in {144, 145}:
             family = 'VanGogh'
         elif cpu_model == 160:
             family = 'Mendocino'
@@ -124,10 +127,14 @@ def get_codename():
             family = 'HawkPoint'
     elif cpu_family == 26:
         architecture = 'Zen 5 - Zen 6'
-        if cpu_model in {32, 36}:
+        if cpu_model == 68:
+            family = 'FireRange' if 'HX' in cpu else 'GraniteRidge'
+        elif cpu_model in {32, 36}:
             family = 'StrixPoint'
+        elif cpu_model == 112:
+            family = 'StrixHalo'
         else:
-            family = 'GraniteRidge'
+            family = 'StrixPoint2'
 
     cfg.set('Info', 'Architecture', architecture)
     cfg.set('Info', 'Family', family)
@@ -576,13 +583,11 @@ def about():
     while True:
         clear()
         logging.info("About UXTU4Unix")
-        logging.info("The New Vision Update (3Linux040824)")
+        logging.info(f"{VERSION_DESCRIPTION} ({LOCAL_BUILD})")
         logging.info("----------------------------")
         logging.info("Maintainer: GorouFlex\nCLI: GorouFlex")
         logging.info("GUI: NotchApple1703\nCore: NotchApple1703")
         logging.info("Advisor: NotchApple1703")
-        logging.info("dmidecode for macOS: Acidanthera")
-        logging.info("Command file for macOS: CorpNewt")
         logging.info("----------------------------")
         try:
             logging.info(f"F. Force update to the latest version ({get_latest_ver()})")

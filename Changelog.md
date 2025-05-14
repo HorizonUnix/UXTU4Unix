@@ -1,3 +1,13 @@
+## [0.3.3]
+
+## General
+
+- Updated CPU stepping code detection (based on https://github.com/JamesCJ60/Universal-x86-Tuning-Utility/blob/master/Universal%20x86%20Tuning%20Utility/Scripts/Family.cs)
+- Updated CPU Presets (based on https://github.com/JamesCJ60/Universal-x86-Tuning-Utility/commit/3a4a5d5e9f16eb3d9f0db2c2ec1e77f37a1bb91a and https://github.com/JamesCJ60/Universal-x86-Tuning-Utility/commit/f58c6371954f6ff1945be4d3bcc84b4efd3641be)
+- Updated RyzenAdj to latest commit https://github.com/FlyGoat/RyzenAdj/commit/8b0b7b915bf39a68d9f6be59c35a5ccd26b525cb
+
+## Note
+`UXTU4Unix` has entered the slow-development stage as `UXTU` is now planning to support the Linux platform. Since Hackintosh is also approaching end-of-life, this project will be deprecated once `UXTU` officially supports Linux.
 ## [0.3.2]
 
 ## General
