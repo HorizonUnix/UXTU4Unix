@@ -7,6 +7,7 @@
 ---
 > [!WARNING]
 > - With the end of Hackintosh support in macOS 26 Tahoe, UXTU4Unix `v0.3.4` will be the last version to support macOS. After that, we will shift our focus solely to Linux until `UXTU` officially supports Linux.
+
 > [!CAUTION]
 > - **Caution:** Avoid using `UXTU4Unix` in conjunction with [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor) due to potential conflicts.
 > - This project does not serve as an alternative to [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor), [NootedRed](https://github.com/ChefKissInc/NootedRed), or [AMDPlatformPlugin](https://github.com/ChefKissInc/AMDPlatformPlugin/) for CPU/APU power management.
