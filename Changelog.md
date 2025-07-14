@@ -1,3 +1,20 @@
+## [0.4.0]
+
+### Starting from `v0.4.0`, UXTU4Unix has been completely rewritten.
+
+## What's New?
+- Merged `Linux` and `macOS` branches into a single main branch that supports both operating systems in the same file.
+- Removed `logging`.
+
+## Linux
+- Added support for RyzenAdj version `0.17.0`.
+
+## Note
+- The `v0.4.x` series will be the last version to support macOS.
+- Future development will focus on extending Linux support.
+- Existed config file from `v0.3.x` will be reset due to incompatibility.
+- Don't use Updater from `v0.3.x` because it may cause incompatibility issues between `v0.3.x` and `v0.4.x` so please access download the latest version from GitHub.
+
 ## [0.3.3]
 
 ## General
