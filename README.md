@@ -15,7 +15,7 @@
 
 > [!NOTE]
 > - Compatible with AMD Ryzen APUs supported by either [NootedRed](https://github.com/ChefKissInc/NootedRed) or the **Premade Preset** section in [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) (or generally supported by RyzenAdj).
-> - Operating Systems: macOS 10.9 through 15, and Linux (tested on Debian-based distributions, Fedora, AlmaLinux, Alpine, Arch, CentOS, Mint, openSUSE, Pop!_OS, RHEL, Rocky, Stream, SUSE).
+> - Operating Systems: macOS 10.9 through 26, and Linux (with `upower` and `libpci` installed).
 
 ### Usage Instructions
 
