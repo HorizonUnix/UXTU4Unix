@@ -1,4 +1,4 @@
-<picture><img align="left" src="Img/logo.png"/></picture>
+<picture><img align="left" src="/Img/Logo.png"/></picture>
 <h4>Powered by RyzenAdj and Python</h4>
 
 ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/HorizonUnix/UXTU4Unix/total)
