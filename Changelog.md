@@ -15,6 +15,8 @@
 - Existed config file from `v0.3.x` will be reset due to incompatibility.
 - Don't use Updater from `v0.3.x` because it may cause incompatibility issues between `v0.3.x` and `v0.4.x` so please access download the latest version from GitHub.
 
+<img width="837" height="637" alt="Screenshot 2025-07-14 at 23 24 30" src="https://github.com/user-attachments/assets/3da9b765-2c4d-45cb-b4d8-10a20e321c12" />
+
 ## [0.3.3]
 
 ## General
