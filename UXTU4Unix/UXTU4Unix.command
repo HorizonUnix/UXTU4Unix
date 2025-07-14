@@ -3,7 +3,7 @@
 # Thanks CorpNewt for this source code
 # Get the curent directory, the script name
 # and the script name with "py" substituted for the extension.
-printf '\e[8;30;100t'
+printf '\e[8;35;100t'
 args=( "$@" )
 dir="$(cd -- "$(dirname "$0")" >/dev/null 2>&1; pwd -P)"
 script="${0##*/}"
