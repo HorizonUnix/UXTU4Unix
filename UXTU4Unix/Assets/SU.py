@@ -35,8 +35,6 @@ def update():
         if os.path.exists(zip_file_path):
             os.remove(zip_file_path)
         subprocess.Popen(['open', command_file_path])
-        if kernel == "Darwin":
-            subprocess.Popen(['open', command_file_path])
     except Exception as e:
         print(f"An error occurred: {e}")
 
