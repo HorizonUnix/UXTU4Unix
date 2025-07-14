@@ -1,12 +1,11 @@
-
-<h1>UXTU4Unix (Work-in-Progress)</h1>
+<picture><img align="left" src="Img/logo.png"/></picture>
 <h4>Powered by RyzenAdj and Python</h4>
 
-![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/AppleOSX/UXTU4Mac/total)
+![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/HorizonUnix/UXTU4Unix/total)
 
 ---
 > [!WARNING]
-> - With the end of Hackintosh support in macOS 26 Tahoe, UXTU4Unix `v0.3.4` will be the last version to support macOS. After that, we will shift our focus solely to Linux until `UXTU` officially supports Linux.
+> - With the end of Hackintosh support in macOS 26 Tahoe, UXTU4Unix `v0.4.x` series will be the last version to support macOS. After that, we will shift our focus solely to Linux until `UXTU` officially supports Linux.
 
 > [!CAUTION]
 > - **Caution:** Avoid using `UXTU4Unix` in conjunction with [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor) due to potential conflicts.
@@ -41,9 +40,6 @@
 ### 2. Why does `UXTU4Unix` lack comprehensive CPU support?
 - During the transition of AMD APU presets from `UXTU` to `UXTU4Unix`, some commands were incompatible with ryzenAdj. `UXTU` employs various methods to modify CPU/APU settings beyond those supported by ryzenAdj, particularly concerning CPU presets. Consequently, only select commands were retained as workarounds.
 
-### 3. What is the timeline for the GUI?
-- The release of the GUI is forthcoming, as communicated by NotchApple1703.
-
 ## Advanced Users
 For more detailed configurations, please refer to [Custom.md](Custom.md).
 
@@ -61,4 +57,4 @@ For more detailed configurations, please refer to [Custom.md](Custom.md).
 - Special thanks to [b00t0x](https://github.com/b00t0x) for guidance on building ryzenAdj based on DirectHW and pciutils-osx.
 - [JamesCJ60](https://github.com/JamesCJ60) for contributions to [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility).
 - [corpnewt](https://github.com/corpnewt) for the command file on macOS.
-- [NotchApple1703](https://github.com/NotchApple1703) for the GUI (starting from `0.4.x`).
+- [NotchApple1703](https://github.com/NotchApple1703) for the GUI.
