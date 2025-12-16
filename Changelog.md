@@ -1,3 +1,7 @@
+## [0.4.1]
+
+- Update `UXTU4Unix.command` for macOS
+
 ## [0.4.0]
 
 ### Starting from `v0.4.0`, UXTU4Unix has been completely rewritten.

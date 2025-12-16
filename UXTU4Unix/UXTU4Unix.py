@@ -12,7 +12,7 @@ import select
 import plistlib
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.4.0"
+LOCAL_VERSION = "0.4.1"
 LOCAL_BUILD = "4Universal140725"
 VERSION_DESCRIPTION = "The Universal CLI Update"
 LATEST_VERSION_URL = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest"
