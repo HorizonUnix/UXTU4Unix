@@ -288,7 +288,8 @@ def welcome_tutorial():
         else:
             print("Incorrect sudo password. Please try again.")
     if kernel == "Darwin":
-        check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
+        safe_command_file_name = shlex.quote(command_file_name)
+        check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {safe_command_file_name}"
         login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
         if not login_enabled:
             start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower().strip()
