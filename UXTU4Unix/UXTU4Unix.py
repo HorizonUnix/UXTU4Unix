@@ -86,8 +86,10 @@ def get_codename():
     words = signature.split(' ')
     family_index = words.index("Family") + 1
     model_index = words.index("Model") + 1
+    stepping_index = words.index("Stepping") + 1
     cpu_family = int(words[family_index].rstrip(','))
     cpu_model = int(words[model_index].rstrip(','))
+    cpu_stepping = int(words[stepping_index].rstrip(','))
 
     architecture = 'Unknown'
     family = 'Unknown'
