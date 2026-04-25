@@ -3,6 +3,7 @@ import time
 import subprocess
 import getpass
 import webbrowser
+import logging
 import sys
 import binascii
 import urllib.request
@@ -11,8 +12,8 @@ import select
 import plistlib
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.4.2"
-LOCAL_BUILD = "4Universal250426"
+LOCAL_VERSION = "0.4.1"
+LOCAL_BUILD = "4Universal140725"
 VERSION_DESCRIPTION = "The Universal CLI Update"
 LATEST_VERSION_URL = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest"
 GITHUB_API_URL = "https://api.github.com/repos/HorizonUnix/UXTU4Unix/releases/latest"
@@ -33,8 +34,8 @@ ryzen_family = [
     "Unknown", "SummitRidge", "PinnacleRidge", "RavenRidge", "Dali", "Pollock",
     "Picasso", "FireFlight", "Matisse", "Renoir", "Lucienne", "VanGogh", "Mendocino", 
     "Vermeer", "Cezanne_Barcelo", "Rembrandt", "Raphael", "DragonRange", "PhoenixPoint",
-    "PhoenixPoint2", "HawkPoint", "HawkPoint2", "SonomaValley", "GraniteRidge", "FireRange", "StrixHalo",
-    "StrixPoint", "KrackanPoint", "KrackanPoint2"
+    "PhoenixPoint2", "HawkPoint", "SonomaValley", "GraniteRidge", "FireRange", "StrixHalo",
+    "StrixPoint", "StrixPoint2"
 ]
 
 def clear():
@@ -121,20 +122,16 @@ def get_codename():
             family = 'PhoenixPoint2'
         elif cpu_model == 117:
             family = 'HawkPoint'
-        elif cpu_model == 124:
-            family = 'HawkPoint2'
     elif cpu_family == 26:
         architecture = 'Zen 5 - Zen 6'
         if cpu_model == 68:
             family = 'FireRange' if 'HX' in cpu else 'GraniteRidge'
-        elif cpu_model == 96:
-            family = 'KrackanPoint'
-        elif cpu_model == 104:
-            family = 'KrackanPoint2'
         elif cpu_model in {32, 36}:
             family = 'StrixPoint'
         elif cpu_model == 112:
             family = 'StrixHalo'
+        else:
+            family = 'StrixPoint2'
 
     cfg.set('Info', 'Architecture', architecture)
     cfg.set('Info', 'Family', family)
@@ -150,17 +147,14 @@ def get_codename():
         cfg.set('Info', 'Type', 'Unknown')
     else:
         cfg.set('Info', 'Type', 'Amd_Apu')
-    
     with open(CONFIG_PATH, 'w') as config_file:
         cfg.write(config_file)
 
 def get_presets():
-    raw_cpu = cfg.get('Info', 'CPU')
     cpu_family = cfg.get('Info', 'Family')
-    cpu_model = raw_cpu.replace("AMD", "").replace("with", "").replace("Mobile", "").replace("Ryzen", "").replace("Radeon", "").replace("Graphics", "").replace("Vega", "").replace("Gfx", "")
+    cpu_model = cfg.get('Info', 'CPU').replace("AMD", "").replace("with", "").replace("Mobile", "").replace("Ryzen", "").replace("Radeon", "").replace("Graphics", "").replace("Vega", "").replace("Gfx", "")
     cpu_type = cfg.get('Info', 'Type')
     presets_module = None
-    is_ryzen_9 = "Ryzen 9" in raw_cpu
 
     if cpu_type == 'Amd_Apu':
         if ryzen_family.index(cpu_family) < ryzen_family.index("Matisse"):
@@ -175,13 +169,7 @@ def get_presets():
             else:
                 presets_module = "AMDCPU"
         elif ryzen_family.index(cpu_family) > ryzen_family.index("Matisse"):
-            if cpu_family in ["DragonRange", "FireRange"]:
-                presets_module = "AMDAPUDragonFireRange"
-            elif cpu_family == "StrixHalo":
-                presets_module = "AMDAPUStrixHalo"
-            elif cpu_family == "Mendocino" and "U" in cpu_model:
-                presets_module = "AMDAPUPreMatisse_U_e_Ce"
-            elif "U" in cpu_model or ("AI" in cpu_model and "HX" not in cpu_model):
+            if "U" in cpu_model:
                 presets_module = "AMDAPUPostMatisse_U"
             elif "HX" in cpu_model:
                 presets_module = "AMDAPUPostMatisse_HX"
@@ -201,7 +189,7 @@ def get_presets():
                 presets_module = "AMDCPUPreRaphael_E"
             elif "X3D" in cpu_model:
                 presets_module = "AMDCPUPreRaphael_X3D"
-            elif "X" in cpu_model and is_ryzen_9:
+            elif "X" in cpu_model and "9" in cpu_model:
                 presets_module = "AMDCPUPreRaphael_X9"
             elif "X" in cpu_model:
                 presets_module = "AMDCPUPreRaphael_X"
@@ -212,7 +200,7 @@ def get_presets():
                 presets_module = "AMDCPU_E"
             elif "X3D" in cpu_model:
                 presets_module = "AMDCPU_X3D"
-            elif "X" in cpu_model and is_ryzen_9:
+            elif "X" in cpu_model and "9" in cpu_model:
                 presets_module = "AMDCPU_X9"
             else:
                 presets_module = "AMDCPU"
@@ -915,6 +903,7 @@ def apply_smu(args, user_mode, save_to_config=True):
     password = cfg.get('User', 'Password', fallback='')
     dynamic = cfg.get('Settings', 'DynamicMode', fallback='0')
     last_apply = cfg.get('Settings', 'ReApply', fallback='0')
+    PRESETS = get_presets()
     dm_enabled = cfg.get('Settings', 'DynamicMode', fallback='0') == '1'
 
     if dm_enabled:
@@ -939,6 +928,7 @@ def apply_smu(args, user_mode, save_to_config=True):
                     else:
                        user_mode = 'Extreme'
                 elif kernel == "Linux":
+<<<<<<< HEAD
                     user_mode = 'Extreme'
                     try:
                         ac_online = False
@@ -974,6 +964,14 @@ def apply_smu(args, user_mode, save_to_config=True):
                             user_mode = 'Extreme'
 
                     except Exception:
+=======
+                    battery_status = subprocess.check_output(["upower", "-i", "/org/freedesktop/UPower/devices/battery_BAT0"]).decode("utf-8")
+                    if 'state:               charging' in battery_status:
+                        user_mode = 'Extreme'
+                    elif 'state:               discharging' in battery_status:
+                        user_mode = 'Eco'
+                    else:
+>>>>>>> parent of 20d3dab (v0.4.2 Beta 1)
                         user_mode = 'Extreme'
                 else:
                     user_mode = 'Extreme'
