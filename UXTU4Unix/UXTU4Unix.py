@@ -1021,7 +1021,8 @@ def apply_smu(args, user_mode, save_to_config=True):
         input("Press Enter to continue...")
 
 def main():
-    subprocess.run("printf '\\e[8;35;100t'", shell=True)
+    sys.stdout.write("\x1b[8;35;100t")
+    sys.stdout.flush()
     check_cfg_integrity()
     PRESETS = get_presets()
     if cfg.get('Settings', 'SoftwareUpdate', fallback='0') == '1':
