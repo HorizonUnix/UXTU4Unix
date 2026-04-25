@@ -491,10 +491,14 @@ def pass_cfg():
         choice = input("Option: ").strip()
         if choice == "1":
             while True:
-                subprocess.run("sudo -k", shell=True)
+                subprocess.run(["sudo", "-k"])
                 password = getpass.getpass("Enter your sudo (login) password: ")
-                sudo_check_command = f"echo '{password}' | sudo -S ls /"
-                sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                sudo_check_process = subprocess.run(
+                    ["sudo", "-S", "-k", "ls", "/"],
+                    input=(password + "\n").encode(),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
                 if sudo_check_process.returncode == 0:
                     cfg.set('User', 'Password', password)
                     with open(CONFIG_PATH, 'w') as config_file:
