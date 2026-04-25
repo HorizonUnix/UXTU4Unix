@@ -9,7 +9,6 @@ import urllib.request
 import json
 import select
 import plistlib
-import shlex
 from configparser import ConfigParser
 
 LOCAL_VERSION = "0.4.2"
@@ -39,7 +38,7 @@ ryzen_family = [
 ]
 
 def clear():
-    subprocess.run(['clear'], check=False)
+    subprocess.call('clear', shell=True)
     print(r"""
 +----------------------------------------------------+
 |  _   ___  _______ _   _ _  _   _   _       _       |
@@ -61,24 +60,10 @@ def clear():
 
 def get_hardware_info(command, use_sudo=False):
     password = cfg.get('User', 'Password', fallback='')
-    if isinstance(command, (list, tuple)):
-        command_args = list(command)
-    else:
-        command_args = shlex.split(command)
-
     if use_sudo:
-        full_command = ['sudo', '-S'] + command_args
-    else:
-        full_command = command_args
-
-    process = subprocess.Popen(
-        full_command,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-
-    output, error = process.communicate(input=(password + '\n').encode('utf-8'))
+        command = f"echo '{password}' | sudo -S {command}"
+    process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    output, error = process.communicate()
     return output.decode('utf-8').strip()
 
 def get_codename():
@@ -278,7 +263,7 @@ def welcome_tutorial():
     input("Press Enter to continue...")
     clear()
     while True:
-        subprocess.run(["sudo", "-k"])
+        subprocess.run("sudo -k", shell=True)
         password = getpass.getpass("Enter your sudo (login) password: ")
         sudo_check_command = f"echo '{password}' | sudo -S ls /"
         sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -287,14 +272,12 @@ def welcome_tutorial():
         else:
             print("Incorrect sudo password. Please try again.")
     if kernel == "Darwin":
-        safe_command_file_name = shlex.quote(command_file_name)
-        check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {safe_command_file_name}"
+        check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
         login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
         if not login_enabled:
             start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower().strip()
             if start_with_macos == 'y':
-                safe_command_file = shlex.quote(command_file)
-                command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{safe_command_file}\", hidden:false}}'"
+                command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
                 subprocess.call(command, shell=True)
     cfg.set('User', 'Password', password)
     cfg.set('Settings', 'Time', '30')
@@ -528,8 +511,7 @@ def pass_cfg():
 def login_cfg():
     while True:
         clear()
-        safe_command_file_name = shlex.quote(command_file_name)
-        check_command = f'osascript -e \'tell application "System Events" to get the name of every login item\' | grep {safe_command_file_name}'
+        check_command = f'osascript -e \'tell application "System Events" to get the name of every login item\' | grep {command_file_name}'
         login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
         
         print("--------------- Run on startup ---------------")
@@ -539,16 +521,14 @@ def login_cfg():
 
         if choice == "1":
             if not login_enabled:
-                safe_command_file = shlex.quote(command_file)
-                command = f'osascript -e \'tell application "System Events" to make login item at end with properties {{path:"{safe_command_file}", hidden:false}}\''
+                command = f'osascript -e \'tell application "System Events" to make login item at end with properties {{path:"{command_file}", hidden:false}}\''
                 subprocess.call(command, shell=True)
             else:
                 print("You already added this script to Login Items.")
                 input("Press Enter to continue.")
         elif choice == "2":
             if login_enabled:
-                safe_command_file_name = shlex.quote(command_file_name)
-                command = f'osascript -e \'tell application "System Events" to delete login item "{safe_command_file_name}"\''
+                command = f'osascript -e \'tell application "System Events" to delete login item "{command_file_name}"\''
                 subprocess.call(command, shell=True)
             else:
                 print("Cannot remove this script because it does not exist in Login Items.")
@@ -832,9 +812,6 @@ def about():
         "f": updater,
         "b": "break",
     }
-    
-    latest_ver = get_latest_ver()
-    
     while True:
         clear()
         print("About UXTU4Unix")
@@ -847,9 +824,10 @@ def about():
             print("dmidecode for macOS: Acidanthera")
             print("Command file for macOS: CorpNewt")
         print("----------------------------")
-        if latest_ver:
-            print(f"F. Force update to the latest version ({latest_ver})")
-
+        try:
+            print(f"F. Force update to the latest version ({get_latest_ver()})")
+        except:
+            pass
         print("\nB. Back\n")
         choice = input("Option: ").lower().strip()
         action = options.get(choice, None)
@@ -1018,8 +996,7 @@ def apply_smu(args, user_mode, save_to_config=True):
         input("Press Enter to continue...")
 
 def main():
-    sys.stdout.write("\x1b[8;35;100t")
-    sys.stdout.flush()
+    subprocess.run("printf '\\e[8;35;100t'", shell=True)
     check_cfg_integrity()
     PRESETS = get_presets()
     if cfg.get('Settings', 'SoftwareUpdate', fallback='0') == '1':
