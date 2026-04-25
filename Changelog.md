@@ -1,3 +1,10 @@
+## [0.4.2]
+
+## What's New?
+- Rework how dynamic mode works on Linux
+- Update detection for new CPU models and presets from UXTU
+- Resize the window to 80x35
+
 ## [0.4.1]
 
 - Update `UXTU4Unix.command` for macOS
