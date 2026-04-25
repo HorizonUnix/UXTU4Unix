@@ -293,7 +293,8 @@ def welcome_tutorial():
         if not login_enabled:
             start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower().strip()
             if start_with_macos == 'y':
-                command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+                safe_command_file = shlex.quote(command_file)
+                command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{safe_command_file}\", hidden:false}}'"
                 subprocess.call(command, shell=True)
     cfg.set('User', 'Password', password)
     cfg.set('Settings', 'Time', '30')
