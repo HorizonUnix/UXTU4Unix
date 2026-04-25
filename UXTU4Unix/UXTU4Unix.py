@@ -910,6 +910,7 @@ def apply_smu(args, user_mode, save_to_config=True):
             print("Cannot run RyzenAdj because your computer is missing debug=0x144 or required SIP is not SET yet\nPlease run Install UXTU4Unix dependencies under Setting \nand restart after install.")
             input("Press Enter to continue...")
             return
+            
     sleep_time = cfg.get('Settings', 'Time', fallback='30')
     password = cfg.get('User', 'Password', fallback='')
     dynamic = cfg.get('Settings', 'DynamicMode', fallback='0')
@@ -940,15 +941,38 @@ def apply_smu(args, user_mode, save_to_config=True):
                 elif kernel == "Linux":
                     user_mode = 'Extreme'
                     try:
+                        ac_online = False
+                        battery_discharging = False
                         for entry in os.listdir('/sys/class/power_supply/'):
-                            if entry.startswith('BAT'):
-                                with open(f'/sys/class/power_supply/{entry}/status', 'r') as f:
-                                    state = f.read().strip().lower()
-                                    if state == 'charging' or state == 'full':
-                                        user_mode = 'Extreme'
-                                    elif state == 'discharging':
-                                        user_mode = 'Eco'
-                                break
+                            sys_path = f'/sys/class/power_supply/{entry}'
+                            try:
+                                with open(f'{sys_path}/type', 'r') as f:
+                                    ps_type = f.read().strip()
+                            except IOError:
+                                continue
+                            if ps_type == 'Mains':
+                                try:
+                                    with open(f'{sys_path}/online', 'r') as f:
+                                        if f.read().strip() == '1':
+                                            ac_online = True
+                                except IOError:
+                                    pass
+                            elif ps_type == 'Battery':
+                                try:
+                                    with open(f'{sys_path}/status', 'r') as f:
+                                        state = f.read().strip().lower()
+                                        if state == 'discharging':
+                                            battery_discharging = True
+                                except IOError:
+                                    pass
+
+                        if ac_online:
+                            user_mode = 'Extreme'
+                        elif battery_discharging:
+                            user_mode = 'Eco'
+                        else:
+                            user_mode = 'Extreme'
+
                     except Exception:
                         user_mode = 'Extreme'
                 else:
