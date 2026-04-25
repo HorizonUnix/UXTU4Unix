@@ -686,7 +686,7 @@ def install_manual():
     prompt_restart()
 
 def prompt_restart():
-    choice = input("Do you want to restart your computer to take effects? (y/n)").lower()
+    choice = input("Do you want to restart your computer to take effect? (y/n)").lower()
     if choice == "y":
         input("Save your current work before restarting. Press Enter to continue")
         restart_command = '''osascript -e 'tell app "System Events" to restart' '''
