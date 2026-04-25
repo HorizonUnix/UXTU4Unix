@@ -9,6 +9,7 @@ import urllib.request
 import json
 import select
 import plistlib
+import shlex
 from configparser import ConfigParser
 
 LOCAL_VERSION = "0.4.2"
@@ -60,10 +61,23 @@ def clear():
 
 def get_hardware_info(command, use_sudo=False):
     password = cfg.get('User', 'Password', fallback='')
+    command_args = shlex.split(command)
     if use_sudo:
-        command = f"echo '{password}' | sudo -S {command}"
-    process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    output, error = process.communicate()
+        process = subprocess.Popen(
+            ['sudo', '-S'] + command_args,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        output, error = process.communicate(input=(password + '\n').encode('utf-8'))
+    else:
+        process = subprocess.Popen(
+            command_args,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        output, error = process.communicate()
     return output.decode('utf-8').strip()
 
 def get_codename():
