@@ -75,7 +75,6 @@ def get_codename():
     stepping_index = words.index("Stepping") + 1
     cpu_family = int(words[family_index].rstrip(','))
     cpu_model = int(words[model_index].rstrip(','))
-    cpu_stepping = int(words[stepping_index].rstrip(','))
 
     architecture = 'Unknown'
     family = 'Unknown'
@@ -814,6 +813,9 @@ def about():
         "f": updater,
         "b": "break",
     }
+    
+    latest_ver = get_latest_ver()
+    
     while True:
         clear()
         print("About UXTU4Unix")
@@ -826,11 +828,9 @@ def about():
             print("dmidecode for macOS: Acidanthera")
             print("Command file for macOS: CorpNewt")
         print("----------------------------")
-        try:
-            print(f"F. Force update to the latest version ({get_latest_ver()})")
-        except:
-            print("")
-            pass
+        if latest_ver:
+            print(f"F. Force update to the latest version ({latest_ver})")
+
         print("\nB. Back\n")
         choice = input("Option: ").lower().strip()
         action = options.get(choice, None)
