@@ -265,8 +265,13 @@ def welcome_tutorial():
     while True:
         subprocess.run("sudo -k", shell=True)
         password = getpass.getpass("Enter your sudo (login) password: ")
-        sudo_check_command = f"echo '{password}' | sudo -S ls /"
-        sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        sudo_check_process = subprocess.run(
+            ["sudo", "-S", "ls", "/"],
+            input=password + "\n",
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
         if sudo_check_process.returncode == 0:
             break
         else:
