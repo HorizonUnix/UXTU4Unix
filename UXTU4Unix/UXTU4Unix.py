@@ -61,19 +61,23 @@ def clear():
 
 def get_hardware_info(command, use_sudo=False):
     password = cfg.get('User', 'Password', fallback='')
-    if use_sudo:
-        full_command = f"sudo -S {command}"
+    if isinstance(command, (list, tuple)):
+        command_args = list(command)
     else:
-        full_command = command
-        
+        command_args = shlex.split(command)
+
+    if use_sudo:
+        full_command = ['sudo', '-S'] + command_args
+    else:
+        full_command = command_args
+
     process = subprocess.Popen(
         full_command,
-        shell=True,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
-    
+
     output, error = process.communicate(input=(password + '\n').encode('utf-8'))
     return output.decode('utf-8').strip()
 
