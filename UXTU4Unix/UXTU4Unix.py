@@ -61,23 +61,20 @@ def clear():
 
 def get_hardware_info(command, use_sudo=False):
     password = cfg.get('User', 'Password', fallback='')
-    command_args = shlex.split(command)
     if use_sudo:
-        process = subprocess.Popen(
-            ['sudo', '-S'] + command_args,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        output, error = process.communicate(input=(password + '\n').encode('utf-8'))
+        full_command = f"sudo -S {command}"
     else:
-        process = subprocess.Popen(
-            command_args,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        output, error = process.communicate()
+        full_command = command
+        
+    process = subprocess.Popen(
+        full_command,
+        shell=True,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    
+    output, error = process.communicate(input=(password + '\n').encode('utf-8'))
     return output.decode('utf-8').strip()
 
 def get_codename():
@@ -86,10 +83,8 @@ def get_codename():
     words = signature.split(' ')
     family_index = words.index("Family") + 1
     model_index = words.index("Model") + 1
-    stepping_index = words.index("Stepping") + 1
     cpu_family = int(words[family_index].rstrip(','))
     cpu_model = int(words[model_index].rstrip(','))
-    cpu_stepping = int(words[stepping_index].rstrip(','))
 
     architecture = 'Unknown'
     family = 'Unknown'
