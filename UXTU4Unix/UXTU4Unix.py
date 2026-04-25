@@ -39,7 +39,7 @@ ryzen_family = [
 ]
 
 def clear():
-    subprocess.call('clear', shell=True)
+    subprocess.run(['clear'], check=False)
     print(r"""
 +----------------------------------------------------+
 |  _   ___  _______ _   _ _  _   _   _       _       |
