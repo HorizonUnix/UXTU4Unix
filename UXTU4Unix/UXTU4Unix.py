@@ -61,19 +61,23 @@ def clear():
 
 def get_hardware_info(command, use_sudo=False):
     password = cfg.get('User', 'Password', fallback='')
-    if use_sudo:
-        full_command = f"sudo -S {command}"
+    if isinstance(command, (list, tuple)):
+        command_args = list(command)
     else:
-        full_command = command
-        
+        command_args = shlex.split(command)
+
+    if use_sudo:
+        full_command = ['sudo', '-S'] + command_args
+    else:
+        full_command = command_args
+
     process = subprocess.Popen(
         full_command,
-        shell=True,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
-    
+
     output, error = process.communicate(input=(password + '\n').encode('utf-8'))
     return output.decode('utf-8').strip()
 
@@ -288,12 +292,14 @@ def welcome_tutorial():
         else:
             print("Incorrect sudo password. Please try again.")
     if kernel == "Darwin":
-        check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {command_file_name}"
+        safe_command_file_name = shlex.quote(command_file_name)
+        check_command = f"osascript -e 'tell application \"System Events\" to get the name of every login item' | grep {safe_command_file_name}"
         login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
         if not login_enabled:
             start_with_macos = input("Do you want this script to start with macOS? (Login Items) (y/n): ").lower().strip()
             if start_with_macos == 'y':
-                command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{command_file}\", hidden:false}}'"
+                safe_command_file = shlex.quote(command_file)
+                command = f"osascript -e 'tell application \"System Events\" to make login item at end with properties {{path:\"{safe_command_file}\", hidden:false}}'"
                 subprocess.call(command, shell=True)
     cfg.set('User', 'Password', password)
     cfg.set('Settings', 'Time', '30')
@@ -531,7 +537,8 @@ def pass_cfg():
 def login_cfg():
     while True:
         clear()
-        check_command = f'osascript -e \'tell application "System Events" to get the name of every login item\' | grep {command_file_name}'
+        safe_command_file_name = shlex.quote(command_file_name)
+        check_command = f'osascript -e \'tell application "System Events" to get the name of every login item\' | grep {safe_command_file_name}'
         login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
         
         print("--------------- Run on startup ---------------")
@@ -541,14 +548,16 @@ def login_cfg():
 
         if choice == "1":
             if not login_enabled:
-                command = f'osascript -e \'tell application "System Events" to make login item at end with properties {{path:"{command_file}", hidden:false}}\''
+                safe_command_file = shlex.quote(command_file)
+                command = f'osascript -e \'tell application "System Events" to make login item at end with properties {{path:"{safe_command_file}", hidden:false}}\''
                 subprocess.call(command, shell=True)
             else:
                 print("You already added this script to Login Items.")
                 input("Press Enter to continue.")
         elif choice == "2":
             if login_enabled:
-                command = f'osascript -e \'tell application "System Events" to delete login item "{command_file_name}"\''
+                safe_command_file_name = shlex.quote(command_file_name)
+                command = f'osascript -e \'tell application "System Events" to delete login item "{safe_command_file_name}"\''
                 subprocess.call(command, shell=True)
             else:
                 print("Cannot remove this script because it does not exist in Login Items.")
