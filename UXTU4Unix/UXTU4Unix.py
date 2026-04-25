@@ -72,7 +72,6 @@ def get_codename():
     words = signature.split(' ')
     family_index = words.index("Family") + 1
     model_index = words.index("Model") + 1
-    stepping_index = words.index("Stepping") + 1
     cpu_family = int(words[family_index].rstrip(','))
     cpu_model = int(words[model_index].rstrip(','))
 
@@ -952,7 +951,7 @@ def apply_smu(args, user_mode, save_to_config=True):
                                     elif state == 'discharging':
                                         user_mode = 'Eco'
                                 break
-                    except:
+                    except Exception:
                         user_mode = 'Extreme'
                 else:
                     user_mode = 'Extreme'
