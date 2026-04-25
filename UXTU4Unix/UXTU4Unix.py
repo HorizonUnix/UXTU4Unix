@@ -9,6 +9,7 @@ import urllib.request
 import json
 import select
 import plistlib
+import shlex
 from configparser import ConfigParser
 
 LOCAL_VERSION = "0.4.2"
@@ -60,10 +61,23 @@ def clear():
 
 def get_hardware_info(command, use_sudo=False):
     password = cfg.get('User', 'Password', fallback='')
+    command_args = shlex.split(command)
     if use_sudo:
-        command = f"echo '{password}' | sudo -S {command}"
-    process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    output, error = process.communicate()
+        process = subprocess.Popen(
+            ['sudo', '-S'] + command_args,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        output, error = process.communicate(input=(password + '\n').encode('utf-8'))
+    else:
+        process = subprocess.Popen(
+            command_args,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        output, error = process.communicate()
     return output.decode('utf-8').strip()
 
 def get_codename():
@@ -265,8 +279,13 @@ def welcome_tutorial():
     while True:
         subprocess.run("sudo -k", shell=True)
         password = getpass.getpass("Enter your sudo (login) password: ")
-        sudo_check_command = f"echo '{password}' | sudo -S ls /"
-        sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        sudo_check_process = subprocess.run(
+            ["sudo", "-S", "ls", "/"],
+            input=password + "\n",
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
         if sudo_check_process.returncode == 0:
             break
         else:
@@ -491,10 +510,14 @@ def pass_cfg():
         choice = input("Option: ").strip()
         if choice == "1":
             while True:
-                subprocess.run("sudo -k", shell=True)
+                subprocess.run(["sudo", "-k"])
                 password = getpass.getpass("Enter your sudo (login) password: ")
-                sudo_check_command = f"echo '{password}' | sudo -S ls /"
-                sudo_check_process = subprocess.run(sudo_check_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                sudo_check_process = subprocess.run(
+                    ["sudo", "-S", "-k", "ls", "/"],
+                    input=(password + "\n").encode(),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
                 if sudo_check_process.returncode == 0:
                     cfg.set('User', 'Password', password)
                     with open(CONFIG_PATH, 'w') as config_file:
@@ -686,7 +709,7 @@ def install_manual():
     prompt_restart()
 
 def prompt_restart():
-    choice = input("Do you want to restart your computer to take effects? (y/n)").lower()
+    choice = input("Do you want to restart your computer to take effect? (y/n)").lower()
     if choice == "y":
         input("Save your current work before restarting. Press Enter to continue")
         restart_command = '''osascript -e 'tell app "System Events" to restart' '''
