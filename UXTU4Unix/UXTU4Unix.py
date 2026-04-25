@@ -277,7 +277,7 @@ def welcome_tutorial():
     input("Press Enter to continue...")
     clear()
     while True:
-        subprocess.run("sudo -k", shell=True)
+        subprocess.run(["sudo", "-k"])
         password = getpass.getpass("Enter your sudo (login) password: ")
         sudo_check_process = subprocess.run(
             ["sudo", "-S", "ls", "/"],
