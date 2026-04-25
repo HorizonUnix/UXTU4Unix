@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Get the current directory, the script name
+# Get the curent directory, the script name
 # and the script name with "py" substituted for the extension.
 args=( "$@" )
 dir="$(cd -- "$(dirname "$0")" >/dev/null 2>&1; pwd -P)"
