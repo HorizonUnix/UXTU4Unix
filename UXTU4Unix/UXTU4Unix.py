@@ -531,7 +531,8 @@ def pass_cfg():
 def login_cfg():
     while True:
         clear()
-        check_command = f'osascript -e \'tell application "System Events" to get the name of every login item\' | grep {command_file_name}'
+        safe_command_file_name = shlex.quote(command_file_name)
+        check_command = f'osascript -e \'tell application "System Events" to get the name of every login item\' | grep {safe_command_file_name}'
         login_enabled = subprocess.call(check_command, shell=True, stdout=subprocess.DEVNULL) == 0
         
         print("--------------- Run on startup ---------------")
@@ -541,14 +542,16 @@ def login_cfg():
 
         if choice == "1":
             if not login_enabled:
-                command = f'osascript -e \'tell application "System Events" to make login item at end with properties {{path:"{command_file}", hidden:false}}\''
+                safe_command_file = shlex.quote(command_file)
+                command = f'osascript -e \'tell application "System Events" to make login item at end with properties {{path:"{safe_command_file}", hidden:false}}\''
                 subprocess.call(command, shell=True)
             else:
                 print("You already added this script to Login Items.")
                 input("Press Enter to continue.")
         elif choice == "2":
             if login_enabled:
-                command = f'osascript -e \'tell application "System Events" to delete login item "{command_file_name}"\''
+                safe_command_file_name = shlex.quote(command_file_name)
+                command = f'osascript -e \'tell application "System Events" to delete login item "{safe_command_file_name}"\''
                 subprocess.call(command, shell=True)
             else:
                 print("Cannot remove this script because it does not exist in Login Items.")
