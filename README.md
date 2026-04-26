@@ -5,13 +5,14 @@
 
 ---
 > [!WARNING]
-> - With the end of Hackintosh support in macOS 26 Tahoe, UXTU4Unix `v0.4.x` series will be the last version to support macOS. After that, we will shift our focus solely to Linux until `UXTU` officially supports Linux.
+> - With the end of Hackintosh support in macOS 26 Tahoe, UXTU4Unix `v0.5.x` series will be the last version to support macOS. After that, we will shift our focus solely to Linux until `UXTU` officially supports Linux.
 > - **Warning (macOS):** Avoid using `UXTU4Unix` in conjunction with [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor) due to potential conflicts.
 
 ### Supported APU & Operating Systems
 
  - Compatible with AMD Ryzen APUs supported by either [NootedRed](https://github.com/ChefKissInc/NootedRed) or the **Premade Preset** section in [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) (or generally supported by RyzenAdj).
- - Operating Systems: macOS 11 through 26, and Linux (with the Python `keyring` library and Linux `libpci` installed).
+ - Operating Systems: macOS 11 through 26, and Linux (with the Python `keyring` library and Linux `libpci`, `dmidecode` installed).
+ - Python >= 3.10
 
 ### Usage Instructions
 
