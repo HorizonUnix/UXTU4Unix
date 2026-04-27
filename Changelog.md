@@ -1,3 +1,48 @@
+## [0.5.0]
+
+# What's New?
+
+### Architecture
+
+The entire codebase has been rewritten from a single monolithic script into a proper Python package. `UXTU4Unix.py` is now a thin entry point; all logic lives in focused modules under `Assets/Modules/`.
+
+```
+UXTU4Unix/
+├── UXTU4Unix.py
+└── Assets/
+    ├── SoftwareUpdate.py
+    ├── Darwin/   ryzenadj, dmidecode
+    ├── Linux/    ryzenadj
+    ├── Presets/
+    └── Modules/
+        ├── config.py           central constants, paths, config singleton
+        ├── hardware.py         CPU detection, codename, NVRAM check
+        ├── power.py            preset loading, ryzenadj, dynamic mode
+        ├── settings.py         all settings sub-menus
+        ├── setup.py            first-run wizard, integrity check
+        ├── ui.py               banner, clear, prompts
+        ├── updater.py          version check, self-update
+        ├── installer.py        macOS EFI/plist dependency installer
+        ├── about.py            about screen
+        └── secure_password.py  keyring wrapper
+```
+
+### New features
+
+- **Dynamic Mode AC detection (Linux)** now correctly reads all AC adapter types (`Mains`, `USB`, `USB_C`, `USB_PD`, `USB_PD_DRP`, `USB_C_DRP`) and falls back gracefully on desktops with no battery - previously always returned `Extreme` on Linux.
+- **Login Item path validation (macOS)** - stale Login Item entries (wrong path, moved app, leftover from Trash) are detected and removed automatically before re-registering the correct path.
+
+### Bug fixes
+
+- **Dynamic Mode preset args** - in reapply loop, Dynamic Mode now correctly fetches the actual preset arguments for `Extreme`/`Eco` from the preset table instead of passing the mode name string as ryzenadj args.
+
+### Code quality
+
+- Replaced long `if/elif` chains in codename detection with `match/case` (Python 3.10+).
+- `_toggle_menu()` helper in `settings.py` eliminates six copy-pasted enable/disable sub-menus.
+- Config access centralized, `config.py` owns all paths, constants, and the `ConfigParser` singleton; no module holds its own `cfg` object.
+- `SoftwareUpdate.py` is now standalone (callable directly) and also used internally by `updater.py`, eliminating duplicated zip/swap logic.
+  
 ## [0.4.2]
 
 ## What's New?

@@ -79,36 +79,14 @@ For more detailed configurations, please refer to [Custom.md](Custom.md).
 
 ## Preview
 
-<table align="center">
-    <tr>
-        <td align="center">
-            <img src="/Img/main_menu.png" alt="Main Menu" width="274"><br>
-            <em>Main Menu</em>
-        </td>
-        <td align="center">
-            <img src="/Img/hardware_info.png" alt="Main Menu" width="274"><br>
-            <em>Hardware Info</em>
-        </td>
-        <td align="center">
-            <img src="/Img/apply_preset.png" alt="Apply Preset" width="274"><br>
-            <em>Apply Preset</em>
-        </td>
-        <td align="center">
-            <img src="/Img/preset.png" alt="Preset" width="274"><br>
-            <em>Preset</em>
-        </td>
-    </tr>
-    <tr>
-        <td align="center">
-            <img src="/Img/preset_setting.png" alt="Preset Setting" width="274"><br>
-            <em>Preset Setting</em>
-        </td>
-        <td align="center">
-            <img src="/Img/settings.png" alt="Settings" width="274"><br>
-            <em>Settings</em>
-        </td>
-    </tr>
-</table>
+<p align="left">
+  <img src="/Img/main_menu.png">
+  <img src="/Img/apply_preset.png">
+  <img src="/Img/preset.png">
+  <img src="/Img/preset_setting.png">
+  <img src="/Img/hardware_info.png">
+  <img src="/Img/settings.png">
+</p>
 
 ### Acknowledgments
 - Special thanks to [b00t0x](https://github.com/b00t0x) for guidance on building ryzenAdj based on DirectHW and pciutils-osx.

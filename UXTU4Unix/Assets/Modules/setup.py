@@ -12,6 +12,31 @@ from .secure_password import (
 )
 from .ui import clear, pause
 
+
+# Binary permissions
+
+def _ensure_binaries_executable() -> None:
+    """
+    chmod +x ryzenadj (and dmidecode on macOS) before first use.
+    Skips silently if the bit is already set.
+    Warns but never aborts if a binary is missing or chmod fails.
+    """
+    targets = [cfg.RYZENADJ]
+    if cfg.KERNEL == "Darwin":
+        targets.append(cfg.DMIDECODE)
+
+    for path in targets:
+        if not path or not os.path.isfile(path):
+            print(f"Warning: binary not found, skipping chmod: {path}")
+            continue
+        if not os.access(path, os.X_OK):
+            try:
+                subprocess.run(["chmod", "+x", path], check=True)
+                print(f"  chmod +x: {os.path.basename(path)}")
+            except subprocess.CalledProcessError as exc:
+                print(f"Warning: could not chmod +x {path}: {exc}")
+
+
 # Sudo password prompt
 
 def _prompt_sudo_password() -> None:
@@ -44,7 +69,6 @@ def _get_login_item_paths() -> list[str]:
     raw = result.stdout.decode().strip()
     if not raw:
         return []
-    # AppleScript returns a comma-separated list: "/path/a, /path/b"
     return [p.strip() for p in raw.split(",") if p.strip()]
 
 
@@ -73,13 +97,12 @@ def _login_item_status(cmd_file: str) -> bool:
     """
     Return True only when a login item exists and points at *cmd_file* exactly.
 
-    If a stale entry with the right name but a wrong path is found (e.g. the
-    item was moved or ended up in the Trash), it is removed automatically so
-    the caller can re-register it at the correct location.
+    Stale entries (wrong path, moved app) are removed automatically so the
+    caller can re-register at the correct location.
     """
-    cmd_name  = os.path.basename(cmd_file)
-    paths     = _get_login_item_paths()
-    correct   = os.path.realpath(cmd_file)
+    cmd_name = os.path.basename(cmd_file)
+    paths    = _get_login_item_paths()
+    correct  = os.path.realpath(cmd_file)
 
     has_correct_entry = False
     has_stale_entry   = False
@@ -92,9 +115,8 @@ def _login_item_status(cmd_file: str) -> bool:
                 has_stale_entry = True
 
     if has_stale_entry:
-        # Remove every entry with this name (stale paths, duplicates, etc.)
         _remove_login_item_by_name(cmd_name)
-        has_correct_entry = False   # will need to be re-added
+        has_correct_entry = False
 
     return has_correct_entry
 
@@ -141,6 +163,11 @@ def run_welcome() -> None:
     pause()
 
     clear()
+    print("Preparing binaries...")
+    _ensure_binaries_executable()
+    pause()
+
+    clear()
     _prompt_sudo_password()
     _apply_defaults()
     cfg.save()
@@ -153,7 +180,6 @@ def run_welcome() -> None:
     # macOS extras
     if cfg.KERNEL == "Darwin":
         _add_login_item()
-        # Offer dependency install if NVRAM isn't configured yet
         from .hardware import check_nvram
         if not check_nvram():
             from .installer import install_menu
@@ -195,7 +221,6 @@ def check_integrity() -> None:
         return
 
     if not has_password():
-        # Try to recover silently; warn if still missing
         if not get_password():
             print("Warning: sudo password not found in keyring.")
             print("Go to Settings -> Sudo password to set it.")
@@ -207,6 +232,5 @@ def reset_all() -> None:
     if os.path.isfile(cfg.CONFIG_PATH):
         os.remove(cfg.CONFIG_PATH)
     delete_password()
-    # Reload empty config
     cfg.load()
     run_welcome()
