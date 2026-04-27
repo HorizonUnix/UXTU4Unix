@@ -5,7 +5,6 @@
 
 ```
 [User]
-password = 1234
 preset = Assets.Presets.AMDAPUPostMatisse_U
 mode = Balance
 customargs = --enable-oc
@@ -35,7 +34,6 @@ type = Amd_Apu
 
 ### `[User]`
 
-- `password`: This is the sudo password (or login password) required for 70% of UXTU4Mac operations, especially ryzenAdj
 - `preset`: Path of preset config for various APUs and CPUs
 - `mode` (string type): This parameter specifies which preset to run when the config file is loaded.
 - `customargs` for custom args load

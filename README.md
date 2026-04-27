@@ -11,15 +11,53 @@
 ### Supported APU & Operating Systems
 
  - Compatible with AMD Ryzen APUs supported by either [NootedRed](https://github.com/ChefKissInc/NootedRed) or the **Premade Preset** section in [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) (or generally supported by RyzenAdj).
- - Operating Systems: macOS 10.9 through 26, and Linux (with `upower` and `libpci` installed).
+ - Operating Systems: macOS 11 through 26, and Linux (with the Python `keyring` library and Linux `libpci` installed).
 
 ### Usage Instructions
 
-- Disable `Secure Boot` in the BIOS. (Unknown: Applying the Secure Boot certificate to UEFI may enable compatibility.)
+**General:**
 - Download the official build from the [Releases](https://github.com/AppleOSX/UXTU4Unix/releases).
-- Run `UXTU4Unix.command` (macOS only) or run `UXTU4Unix.py` using the command: `python3 /path/to/UXTU4Unix.py` or `python /path/to/UXTU4Unix.py`.
-- Follow the on-screen instructions.
-- [macOS] For enhanced temperature management and control with `UXTU4Unix`, disable `Core Performance Boost` in the BIOS using [Smokeless_UMAF](https://github.com/DavidS95/Smokeless_UMAF). Note that this may significantly reduce CPU performance, as the `Core Performance Boost` feature on macOS is not optimal.
+- Navigate to the downloaded directory in your terminal and install the required dependencies using:
+  ```bash
+  pip3 install -r requirements.txt
+  ```
+
+#### For macOS
+1. Disable **Secure Boot** in the BIOS. *(Unknown: Applying the Secure Boot certificate to UEFI may enable compatibility.)*
+2. Run `UXTU4Unix.command`, or run the Python script using the terminal: 
+   ```bash
+   python3 /path/to/UXTU4Unix.py
+   ```
+3. **Optional (Temperature Management):** For enhanced temperature management and control with `UXTU4Unix`, disable **Core Performance Boost** in the BIOS using [Smokeless_UMAF](https://github.com/DavidS95/Smokeless_UMAF). *Note that this may significantly reduce CPU performance, as the `Core Performance Boost` feature on macOS is not optimal.*
+
+#### For Linux
+1. Run the Python script using the terminal:
+   ```bash
+   python3 /path/to/UXTU4Unix.py
+   ```
+2. **Secure Boot:** You must either **disable Secure Boot** in your BIOS, OR install the `ryzen_smu` kernel module from RyzenAdj to allow it to function with Secure Boot enabled.
+
+**Adding the `ryzen_smu` kernel module (If keeping Secure Boot enabled):**
+To let RyzenAdj use the `ryzen_smu` module, you have to install it first, as it is not part of the standard Linux kernel.
+
+1. **Install Prerequisites** (Fedora example):
+   ```bash
+   sudo dnf install cmake gcc gcc-c++ dkms openssl
+   ```
+2. **Clone and Install `ryzen_smu`:**
+   ```bash
+   git clone [https://github.com/amkillam/ryzen_smu](https://github.com/amkillam/ryzen_smu) # Active fork of the original module
+   cd ryzen_smu/ 
+   sudo make dkms-install
+   ```
+3. **Enroll UEFI Keys:** Because you are using Secure Boot, you have to enroll the UEFI keys that `dkms` generated on its first run. These must be added to your machine's UEFI key database. 
+   ```bash
+   sudo mokutil --import /var/lib/dkms/mok.pub
+   ```
+   *Note: This command will ask you to set a password. This password is only needed one single time later in the MOK manager.*
+4. **Restart and Configure MOK:**
+   Restart your system. This will boot into the MOK manager. Choose **Enroll MOK**, enter your password from the previous step, and then reboot. 
+5. **Verify:** The module is now loaded and visible via `dmesg`. It will show a message about the kernel being tainted, but this just means it loaded a (potentially proprietary) binary blob.
 
 ### Fixing Python Certificates on macOS
 
@@ -41,16 +79,39 @@ For more detailed configurations, please refer to [Custom.md](Custom.md).
 
 ## Preview
 
-<p align="left">
-  <img src="/Img/main_menu.png">
-  <img src="/Img/apply_preset.png">
-  <img src="/Img/preset.png">
-  <img src="/Img/preset_setting.png">
-  <img src="/Img/settings.png">
-</p>
+<table align="center">
+    <tr>
+        <td align="center">
+            <img src="/Img/main_menu.png" alt="Main Menu" width="274"><br>
+            <em>Main Menu</em>
+        </td>
+        <td align="center">
+            <img src="/Img/hardware_info.png" alt="Main Menu" width="274"><br>
+            <em>Hardware Info</em>
+        </td>
+        <td align="center">
+            <img src="/Img/apply_preset.png" alt="Apply Preset" width="274"><br>
+            <em>Apply Preset</em>
+        </td>
+        <td align="center">
+            <img src="/Img/preset.png" alt="Preset" width="274"><br>
+            <em>Preset</em>
+        </td>
+    </tr>
+    <tr>
+        <td align="center">
+            <img src="/Img/preset_setting.png" alt="Preset Setting" width="274"><br>
+            <em>Preset Setting</em>
+        </td>
+        <td align="center">
+            <img src="/Img/settings.png" alt="Settings" width="274"><br>
+            <em>Settings</em>
+        </td>
+    </tr>
+</table>
 
 ### Acknowledgments
 - Special thanks to [b00t0x](https://github.com/b00t0x) for guidance on building ryzenAdj based on DirectHW and pciutils-osx.
+- [FlyGoat](https://github.com/FlyGoat/) for [RyzenAdj](https://github.com/FlyGoat/RyzenAdj)
 - [JamesCJ60](https://github.com/JamesCJ60) for contributions to [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility).
 - [corpnewt](https://github.com/corpnewt) for the command file on macOS.
-- [NotchApple1703](https://github.com/NotchApple1703) for the GUI.
