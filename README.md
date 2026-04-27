@@ -20,11 +20,11 @@
 - Download the official build from the [Releases](https://github.com/AppleOSX/UXTU4Unix/releases).
 - Navigate to the downloaded directory in your terminal and install the required dependencies using:
   ```bash
-  pip3 install -r requirements.txt
+  pip3 install -r /path/to/requirements.txt
   ```
 
 #### For macOS
-1. Disable **Secure Boot** in the BIOS. *(Unknown: Applying the Secure Boot certificate to UEFI may enable compatibility.)*
+1. Disable **Secure Boot** in the BIOS.
 2. Run `UXTU4Unix.command`, or run the Python script using the terminal: 
    ```bash
    python3 /path/to/UXTU4Unix.py
