@@ -14,7 +14,6 @@ from .hardware import RYZEN_FAMILY, check_nvram, run_cmd
 from .secure_password import get_password
 from .ui import clear, pause
 
-# Preset
 
 def _strip_cpu_name(raw: str) -> str:
     """Remove common marketing words from a CPU name string."""
@@ -93,8 +92,7 @@ def get_presets() -> dict[str, str]:
     full_mod = f"Assets.Presets.{mod_name}"
 
     module = importlib.import_module(full_mod)
-    cfg.set("User", "Preset", full_mod)
-    cfg.save()
+    cfg.set_loaded_preset(full_mod)  
     return module.PRESETS   # type: ignore[attr-defined]
 
 

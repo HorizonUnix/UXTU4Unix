@@ -1,7 +1,6 @@
 """
 settings.py - All settings sub-menus (preset, sleep, reapply, SIP, etc.).
 """
-
 import getpass
 import subprocess
 
@@ -211,48 +210,99 @@ def sip_cfg() -> None:
 
 
 def login_cfg() -> None:
-    """macOS only - add/remove UXTU4Unix from Login Items."""
-    from . import config as cfg_mod
-    from .setup import (
-        _add_login_item_path,
-        _login_item_status,
-        _remove_login_item_by_name,
-    )
+    """Add/remove UXTU4Unix from startup - Login Items on macOS, XDG autostart on Linux."""
     import os
+    from . import config as cfg_mod
 
-    cmd_file = cfg_mod.CMD_FILE
-    cmd_name = os.path.basename(cmd_file)
+    if cfg_mod.KERNEL == "Darwin":
+        from .setup import (
+            _add_login_item_path,
+            _login_item_status,
+            _remove_login_item_by_name,
+        )
+        cmd_file = cfg_mod.CMD_FILE
+        cmd_name = os.path.basename(cmd_file)
 
-    while True:
-        clear()
-        enabled = _login_item_status(cmd_file)
-
-        print("-" * 15 + " Run on startup " + "-" * 15)
-        print(f"Status: {'Enabled' if enabled else 'Disabled'}")
-        print("\n  1. Enable\n  2. Disable\n  B. Back\n")
-        c = input("Option: ").strip().lower()
-
-        if c == "1":
-            if not enabled:
-                _add_login_item_path(cmd_file)
+        while True:
+            clear()
+            enabled = _login_item_status(cmd_file)
+            print("-" * 15 + " Run on startup " + "-" * 15)
+            print("(macOS Login Items)")
+            print(f"\nStatus: {'Enabled' if enabled else 'Disabled'}")
+            print("\n  1. Enable\n  2. Disable\n  B. Back\n")
+            c = input("Option: ").strip().lower()
+            if c == "1":
+                if not enabled:
+                    _add_login_item_path(cmd_file)
+                    print("Added to Login Items.")
+                    pause()
+                else:
+                    print("Already registered at the correct path.")
+                    pause()
+            elif c == "2":
+                if enabled:
+                    _remove_login_item_by_name(cmd_name)
+                    print("Removed from Login Items.")
+                    pause()
+                else:
+                    print("Not in Login Items.")
+                    pause()
+            elif c == "b":
+                break
             else:
-                print("Already registered at the correct path.")
+                print("Invalid option.")
                 pause()
-        elif c == "2":
-            if enabled:
-                _remove_login_item_by_name(cmd_name)
+
+    elif cfg_mod.KERNEL == "Linux":
+        from .setup import (
+            linux_autostart_enabled,
+            linux_autostart_enable,
+            linux_autostart_disable,
+        )
+
+        while True:
+            clear()
+            enabled = linux_autostart_enabled()
+            print("-" * 15 + " Run on startup " + "-" * 15)
+            print("(XDG autostart - works on GNOME, KDE, XFCE and most DEs)")
+            print(f"\nStatus: {'Enabled' if enabled else 'Disabled'}")
+            print("\n  1. Enable\n  2. Disable\n  B. Back\n")
+            c = input("Option: ").strip().lower()
+            if c == "1":
+                if not enabled:
+                    linux_autostart_enable()
+                    print("Autostart enabled.")
+                    pause()
+                else:
+                    print("Already enabled.")
+                    pause()
+            elif c == "2":
+                if enabled:
+                    linux_autostart_disable()
+                    print("Autostart disabled.")
+                    pause()
+                else:
+                    print("Autostart is not enabled.")
+                    pause()
+            elif c == "b":
+                break
             else:
-                print("Not in Login Items.")
+                print("Invalid option.")
                 pause()
-        elif c == "b":
-            break
-        else:
-            print("Invalid option.")
-            pause()
+
 
 # Top-level Settings menu
+
 def settings_menu() -> None:
     from . import config as cfg_mod
+
+    def _open_installer() -> None:
+        from .installer import install_menu
+        install_menu()
+
+    def _reset_all() -> None:
+        from .setup import reset_all
+        reset_all()
 
     while True:
         clear()
@@ -270,9 +320,10 @@ def settings_menu() -> None:
             print("  9. Debug")
             print("\n  I. Install UXTU4Unix dependencies")
         else:
-            print("  5. Software update")
-            print("  6. Sudo password")
-            print("  7. Debug")
+            print("  5. Run on startup")
+            print("  6. Software update")
+            print("  7. Sudo password")
+            print("  8. Debug")
 
         print("\n  R. Reset all settings")
         print("  B. Back\n")
@@ -290,12 +341,8 @@ def settings_menu() -> None:
                 "7": pass_cfg,
                 "8": sip_cfg,
                 "9": debug_cfg,
-                "i": lambda: __import__(
-                    "Assets.Modules.installer", fromlist=["install_menu"]
-                ).install_menu(),
-                "r": lambda: __import__(
-                    "Assets.Modules.setup", fromlist=["reset_all"]
-                ).reset_all(),
+                "i": _open_installer,
+                "r": _reset_all,
                 "b": None,
             }
             action = darwin_map.get(c)
@@ -305,12 +352,11 @@ def settings_menu() -> None:
                 "2": sleep_cfg,
                 "3": reapply_cfg,
                 "4": applystart_cfg,
-                "5": cfu_cfg,
-                "6": pass_cfg,
-                "7": debug_cfg,
-                "r": lambda: __import__(
-                    "Assets.Modules.setup", fromlist=["reset_all"]
-                ).reset_all(),
+                "5": login_cfg,
+                "6": cfu_cfg,
+                "7": pass_cfg,
+                "8": debug_cfg,
+                "r": _reset_all,
                 "b": None,
             }
             action = linux_map.get(c)

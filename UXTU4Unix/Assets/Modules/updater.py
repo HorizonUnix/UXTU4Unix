@@ -93,7 +93,7 @@ def _do_update() -> None:
         if cfg.KERNEL == "Darwin":
             subprocess.Popen(["open", launch])
         else:
-            subprocess.Popen(["python3", launch])
+            os.execv(sys.executable, [sys.executable, launch])
 
     except Exception as exc:
         print(f"Update failed: {exc}")

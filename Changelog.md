@@ -1,3 +1,24 @@
+## [0.5.1]
+
+# What's New?
+
+## General
+- Removed unused `SoftwareUpdate.py` standalone updater from the `Assets` folder
+- Removed unused fields from `config.toml`: `Assets`, `voltage`, `max speed`,
+  `current speed`, `core count`, `core enabled`, and `thread count`
+- Implemented a new method for handling sudo and non-sudo command execution
+- Implemented binary validation for `ryzenadj` and `dmidecode` at startup
+- Implemented a new method to retrieve and display detailed hardware information
+
+## Linux
+- Added run-on-startup support via XDG Autostart with automatic DE detection
+  and config path registration
+- Fixed an issue where `updater.py` could fail to relaunch the script after
+  an update
+
+## macOS
+- Implemented a new method to re-register Login Items on startup
+
 ## [0.5.0]
 
 # What's New?

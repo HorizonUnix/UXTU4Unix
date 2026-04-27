@@ -28,7 +28,9 @@ def clear() -> None:
         print(f"  {cpu} ({family})")
 
     if cfg.is_debug():
-        print(f"  Loaded : {cfg.get('User', 'Preset')}")
+        loaded = cfg.get_loaded_preset()
+        if loaded:
+            print(f"  Loaded : {loaded}")
         print(f"  Build  : {cfg.LOCAL_BUILD}")          # type: ignore[attr-defined]
 
     print(f"  Version: {cfg.LOCAL_VERSION} by HorizonUnix")   # type: ignore[attr-defined]

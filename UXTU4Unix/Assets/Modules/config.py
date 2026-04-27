@@ -4,34 +4,46 @@ Handles constants, file paths, and config read/write operations.
 """
 
 import os
+import sys
 from configparser import ConfigParser
 
 # Version info
-LOCAL_VERSION     = "0.5.0"
-LOCAL_BUILD       = "5Universal270426"
-VERSION_DESC      = "The Refractor Update"
-GITHUB_API_URL    = "https://api.github.com/repos/HorizonUnix/UXTU4Unix/releases/latest"
-LATEST_VER_URL    = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest"
+LOCAL_VERSION  = "0.5.1"
+LOCAL_BUILD    = "5Universal270426Rev1"
+VERSION_DESC   = "The Refractor Update"
+GITHUB_API_URL = "https://api.github.com/repos/HorizonUnix/UXTU4Unix/releases/latest"
+LATEST_VER_URL = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest"
 
-# Paths
-_ROOT         = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-ASSETS_DIR    = os.path.join(_ROOT, "Assets")
-CONFIG_PATH   = os.path.join(ASSETS_DIR, "config.toml")
-MODULES_DIR   = os.path.join(ASSETS_DIR, "Modules")
-PRESETS_DIR   = os.path.join(ASSETS_DIR, "Presets")
+# config.py lives at  Assets/Modules/config.py
+# _ROOT is the project root (two levels up from Modules/)
+_ROOT      = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+ASSETS_DIR = os.path.join(_ROOT, "Assets")
+CONFIG_PATH = os.path.join(ASSETS_DIR, "config.toml")
+MODULES_DIR = os.path.join(ASSETS_DIR, "Modules")
+PRESETS_DIR = os.path.join(ASSETS_DIR, "Presets")
 
-KERNEL = os.uname().sysname
+KERNEL = os.uname().sysname   # "Darwin" | "Linux"
 
 if KERNEL == "Darwin":
     RYZENADJ  = os.path.join(ASSETS_DIR, "Darwin", "ryzenadj")
     DMIDECODE = os.path.join(ASSETS_DIR, "Darwin", "dmidecode")
+    # macOS is launched via a .command shell-script wrapper whose name is fixed
     CMD_FILE  = os.path.join(_ROOT, "UXTU4Unix.command")
 else:
     RYZENADJ  = os.path.join(ASSETS_DIR, "Linux", "ryzenadj")
     DMIDECODE = "dmidecode"
-    CMD_FILE  = os.path.join(_ROOT, "UXTU4Unix.py")
+    CMD_FILE  = os.path.realpath(sys.argv[0])
 
 _cfg = ConfigParser()
+
+_loaded_preset: str = ""
+
+def set_loaded_preset(name: str) -> None:
+    global _loaded_preset
+    _loaded_preset = name
+
+def get_loaded_preset() -> str:
+    return _loaded_preset
 
 def load() -> ConfigParser:
     """Read config from disk and return the singleton."""
@@ -70,13 +82,11 @@ def instance() -> ConfigParser:
 
 
 # Required config keys for integrity check
-REQUIRED: dict[str, list[str]] = {
+REQUIRED = {
     "User":     ["mode"],
     "Settings": ["time", "dynamicmode", "reapply", "applyonstart",
                  "softwareupdate", "debug"],
-    "Info":     ["cpu", "signature", "voltage", "max speed", "current speed",
-                 "core count", "core enabled", "thread count",
-                 "architecture", "family", "type"],
+    "Info":     ["cpu", "signature", "architecture", "family", "type"],
 }
 if KERNEL == "Darwin":
     REQUIRED["Settings"].append("sip")

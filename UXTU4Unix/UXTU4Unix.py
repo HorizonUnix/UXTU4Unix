@@ -18,7 +18,7 @@ cfg.load()
 
 # Module imports
 from Assets.Modules.about    import about_menu
-from Assets.Modules.hardware import show_info as hardware_info
+from Assets.Modules.hardware import check_binaries, show_info as hardware_info
 from Assets.Modules.power    import get_presets, apply_smu, preset_menu
 from Assets.Modules.settings import settings_menu
 from Assets.Modules.setup    import check_integrity
@@ -34,7 +34,8 @@ def main() -> None:
 
     # Verify config; run first-run setup if needed
     check_integrity()
-
+    # Verify binaries is available before anything else runs
+    check_binaries()
     # Software update check
     if cfg.get("Settings", "SoftwareUpdate", "0") == "1":
         check_updates()
