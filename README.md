@@ -56,7 +56,7 @@ Key features:
 
 | Platform | Version |
 |----------|---------|
-| macOS    | 11 Big Sur -> 26 Tahoe |
+| macOS    | 11 Big Sur -> 26 Tahoe with Python 3.10+ |
 | Linux    | Any distribution with Python 3.10+ |
 
 ---
@@ -276,9 +276,5 @@ Dynamic Mode is designed for laptops - it switches between presets based on whet
 | [FlyGoat](https://github.com/FlyGoat) | [RyzenAdj](https://github.com/FlyGoat/RyzenAdj) — the core power management backend |
 | [JamesCJ60](https://github.com/JamesCJ60) | [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) — original preset design and inspiration |
 | [corpnewt](https://github.com/corpnewt) | macOS `.command` launcher template |
+| [NotchApple1703](https://github.com/NotchApple1703) | Advisor |
 
----
-
-<p align="center">
-  <sub>UXTU4Unix is an independent project and is not affiliated with AMD, Apple, or any hardware manufacturer.</sub>
-</p>

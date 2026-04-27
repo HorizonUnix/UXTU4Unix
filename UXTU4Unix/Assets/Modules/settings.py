@@ -65,7 +65,7 @@ def preset_cfg() -> None:
         print("-" * 15 + " Preset " + "-" * 15)
         for i, name in enumerate(PRESETS, 1):
             print(f"  {i}. {name}")
-        print("\n  D. Dynamic Mode\n  C. Custom (Beta)\n  B. Back")
+        print("\n  D. Dynamic Mode\n  C. Custom \n  B. Back")
         print("\n  Tip: Dynamic Mode is recommended for normal use.\n")
         c = input("Option: ").strip().lower()
 

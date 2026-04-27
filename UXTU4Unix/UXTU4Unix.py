@@ -25,7 +25,6 @@ from Assets.Modules.setup    import check_integrity
 from Assets.Modules.updater  import check_updates
 from Assets.Modules.ui       import clear, pause, quit_app
 
-
 # Main loop
 
 def main() -> None:

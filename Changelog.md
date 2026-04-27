@@ -11,8 +11,7 @@
 - Implemented a new method to retrieve and display detailed hardware information
 
 ## Linux
-- Added run-on-startup support via XDG Autostart with automatic DE detection
-  and config path registration
+- Added run-on-startup support via XDG Autostart with automatic config path registration
 - Fixed an issue where `updater.py` could fail to relaunch the script after
   an update
 
