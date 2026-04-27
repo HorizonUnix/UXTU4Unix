@@ -14,6 +14,7 @@ from .ui import clear, pause, confirm
 
 def _toggle_menu(
     title: str,
+    description: str,
     section: str,
     key: str,
     *,
@@ -28,6 +29,8 @@ def _toggle_menu(
         print(f"({description})")
         status = cfg.get(section, key, default) == "1"
         print(f"\nStatus: {'Enabled' if status else 'Disabled'}")
+        print(f"\n  1. {enable_label}")
+        print(f"  2. {disable_label}")
         print("\n  B. Back\n")
         c = input("Option: ").strip().lower()
         if c == "1":
