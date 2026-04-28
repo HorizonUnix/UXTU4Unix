@@ -1,24 +1,19 @@
 """
-secure_password.py - Keyring-backed sudo password storage.
-Falls back to an in-memory cache when no suitable keyring backend is found.
+secure_password.py - Keyring-backed sudo password storage with in-memory fallback.
 """
-
 import keyring
+SERVICE = "UXTU4Unix"
+ACCOUNT = "sudo"
+_cache = None
 
-SERVICE  = "UXTU4Unix"
-ACCOUNT  = "sudo"
-_cache: str | None = None
-
-
-def _backend_ok() -> bool:
+def _backend_ok():
     try:
         name = type(keyring.get_keyring()).__name__.lower()
         return name not in {"failkeyring", "nullkeyring", "plaintextkeyring"}
     except Exception:
         return False
 
-
-def get_password() -> str | None:
+def get_password():
     global _cache
     if _cache:
         return _cache
@@ -32,8 +27,7 @@ def get_password() -> str | None:
             pass
     return None
 
-
-def save_password(password: str) -> None:
+def save_password(password):
     global _cache
     _cache = password
     if _backend_ok():
@@ -42,8 +36,7 @@ def save_password(password: str) -> None:
         except Exception:
             pass
 
-
-def delete_password() -> None:
+def delete_password():
     global _cache
     _cache = None
     if _backend_ok():
@@ -52,8 +45,7 @@ def delete_password() -> None:
         except Exception:
             pass
 
-
-def has_password() -> bool:
+def has_password():
     if _cache:
         return True
     if _backend_ok():

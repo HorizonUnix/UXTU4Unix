@@ -71,7 +71,7 @@ def _check_macos_binaries() -> None:
     names = " and ".join(os.path.basename(b) for b in missing)
     print(
         f"\nError: {names} not found.\n"
-        "The bundled binaries are missing — the installation may be incomplete.\n"
+        "The bundled binaries are missing - the installation may be incomplete.\n"
     )
     ans = input("Re-download the latest release now? (y/n): ").strip().lower()
     if ans == "y":
@@ -83,8 +83,8 @@ def _check_macos_binaries() -> None:
 def _check_linux_binaries() -> None:
     """
     Linux only - check dmidecode and ryzenadj separately and in order.
-    dmidecode missing → install guide.
-    ryzenadj missing  → prompt to re-download the release.
+    dmidecode missing -> install guide.
+    ryzenadj missing  -> prompt to re-download the release.
     """
     import os
 
@@ -101,7 +101,7 @@ def _check_linux_binaries() -> None:
     if not os.path.isfile(cfg.RYZENADJ):
         print(
             "\nError: 'ryzenadj' not found.\n"
-            "The binary is missing — the installation may be incomplete.\n"
+            "The binary is missing - the installation may be incomplete.\n"
         )
         ans = input("Re-download the latest release now? (y/n): ").strip().lower()
         if ans == "y":
@@ -112,7 +112,7 @@ def _check_linux_binaries() -> None:
 
 def check_binaries() -> None:
     """
-    Entry-point binary check — call once at program start.
+    Entry-point binary check - call once at program start.
     Dispatches to the platform-specific checker.
     """
     if cfg.KERNEL == "Darwin":

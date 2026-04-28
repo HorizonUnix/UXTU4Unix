@@ -1,3 +1,8 @@
+## [0.5.2]
+
+# What's New?
+- Cleaned up and refined most of the codebase after the huge refactor from `v0.5.0`
+
 ## [0.5.1]
 
 # What's New?

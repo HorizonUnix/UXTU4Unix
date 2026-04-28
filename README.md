@@ -9,7 +9,7 @@
 <br/>
 
 > [!WARNING]
-> **macOS Support Notice:** With the end of Hackintosh support in macOS 26 Tahoe, the `v0.5.x` series will be the **last** to support macOS. Development will shift solely to Linux afterwards — until UXTU officially supports Linux.
+> **macOS Support Notice:** With the end of Hackintosh support in macOS 26 Tahoe, the `v0.5.x` series will be the **last** to support macOS. Development will shift solely to Linux afterwards until UXTU officially supports Linux.
 
 > [!CAUTION]
 > **macOS Users:** Do **not** use UXTU4Unix alongside [SMCAMDProcessor](https://github.com/trulyspinach/SMCAMDProcessor). They conflict with each other and may cause instability.
@@ -34,11 +34,11 @@
 
 ## Overview
 
-UXTU4Unix is a power management tool for **AMD Ryzen APUs and CPUs** on macOS and Linux. It wraps [RyzenAdj](https://github.com/FlyGoat/RyzenAdj) with an interactive terminal UI, allowing you to apply, schedule, and automatically switch between power presets based on your workload and power source — without touching the BIOS.
+UXTU4Unix is a power management tool for **AMD Ryzen APUs and CPUs** on macOS and Linux. It wraps [RyzenAdj](https://github.com/FlyGoat/RyzenAdj) with an interactive terminal UI, allowing you to apply, schedule, and automatically switch between power presets based on your workload and power source without touching the BIOS.
 
 Key features:
 - Premade presets for a wide range of AMD APUs and desktop CPUs
-- Dynamic Mode — automatically switches between presets on AC vs. battery
+- Dynamic Mode - automatically switches between presets on AC vs. battery
 - Auto-reapply on a configurable timer
 - Detailed hardware information panel (CPU, cache, memory)
 - Startup integration (macOS Login Items / Linux XDG Autostart)
@@ -50,7 +50,7 @@ Key features:
 
 ### Supported Hardware
 - AMD Ryzen APUs compatible with [NootedRed](https://github.com/ChefKissInc/NootedRed) or listed in the **Premade Preset** section of [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility)
-- Any CPU/APU supported by [RyzenAdj](https://github.com/FlyGoat/RyzenAdj)
+- Any AMD CPU/APU supported by [RyzenAdj](https://github.com/FlyGoat/RyzenAdj)
 
 ### Supported Operating Systems
 
@@ -69,7 +69,7 @@ Key features:
 | `keyring` Python library | ✅ | ✅ |
 | `dmidecode` | Bundled | Must install separately |
 | `ryzenadj` | Bundled | Bundled in `Assets/Linux/` |
-| `libpci` | — | Required by RyzenAdj |
+| `libpci` | Bundled (custom ryzenadj build) | Required by RyzenAdj |
 | Secure Boot | Must be disabled | Must be disabled (or see [below](#secure-boot-linux)) |
 
 ---
@@ -102,9 +102,9 @@ pip3 install -r /path/to/UXTU4Unix/requirements.txt
    python3 /path/to/UXTU4Unix.py
    ```
 
-2. Follow the first-run setup wizard. It will guide you through configuring OpenCore's `config.plist` with the required boot arguments and SIP flags.
+2. Follow the first-run setup wizard.
 
-3. **Optional — Temperature Management:** For better thermal control, disable **Core Performance Boost** in your BIOS using [Smokeless_UMAF](https://github.com/DavidS95/Smokeless_UMAF).
+3. **Optional - Temperature Management:** For better thermal control, disable **Core Performance Boost** in your BIOS using [Smokeless_UMAF](https://github.com/DavidS95/Smokeless_UMAF).
    > ⚠️ This will reduce peak CPU performance. Core Performance Boost on macOS Hackintosh is not well-optimised and can cause thermal issues.
 
 #### Fixing Python Certificates on macOS
@@ -146,9 +146,9 @@ If you encounter SSL errors, run the certificate installer bundled with Python:
 
 If you want to keep Secure Boot enabled, you must load the `ryzen_smu` kernel module manually instead of disabling Secure Boot.
 
-### Steps
+### Steps (from ryzenadj repo)
 
-1. **Install build prerequisites** (Fedora example — adjust for your distro):
+1. **Install build prerequisites** (Fedora example - adjust for your distro):
    ```bash
    sudo dnf install cmake gcc gcc-c++ dkms openssl
    ```
@@ -166,7 +166,7 @@ If you want to keep Secure Boot enabled, you must load the `ryzen_smu` kernel mo
    ```
    > You will be prompted to set a one-time password. Remember it for the next step.
 
-4. **Restart** — your system will boot into the MOK Manager.
+4. **Restart** - your system will boot into the MOK Manager.
    - Choose **Enroll MOK**
    - Enter the password you set above
    - Reboot
@@ -175,7 +175,7 @@ If you want to keep Secure Boot enabled, you must load the `ryzen_smu` kernel mo
    ```bash
    sudo dmesg | grep ryzen_smu
    ```
-   > A "kernel tainted" message is expected and harmless — it simply indicates a non-mainline module was loaded.
+   > A "kernel tainted" message is expected and harmless - it simply indicates a non-mainline module was loaded.
 
 ---
 
@@ -243,7 +243,7 @@ The bundled `ryzenadj` and `DirectHW` binaries are treated as untrusted kernel e
 
 ### Why are some CPUs not supported?
 
-When porting presets from UXTU to UXTU4Unix, some tuning commands were found to be incompatible with ryzenadj. UXTU uses additional methods to adjust CPU and APU settings beyond what ryzenadj exposes — particularly for desktop CPU presets. Only the compatible subset of commands was retained. Support is expanded with each release.
+When porting presets from UXTU to UXTU4Unix, some tuning commands were found to be incompatible with ryzenadj. UXTU uses additional methods to adjust CPU and APU settings beyond what ryzenadj exposes - particularly for desktop CPU presets. Only the compatible subset of commands was retained. Support is expanded with each release.
 
 ### Why is my preset not being applied on startup?
 
@@ -268,13 +268,13 @@ Dynamic Mode is designed for laptops - it switches between presets based on whet
 
 ---
 
+
 ## Acknowledgments
 
 | Contributor | Contribution |
 |-------------|-------------|
 | [b00t0x](https://github.com/b00t0x) | Guidance on building ryzenadj with DirectHW and pciutils-osx |
-| [FlyGoat](https://github.com/FlyGoat) | [RyzenAdj](https://github.com/FlyGoat/RyzenAdj) — the core power management backend |
-| [JamesCJ60](https://github.com/JamesCJ60) | [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) — original preset design and inspiration |
+| [FlyGoat](https://github.com/FlyGoat) | [RyzenAdj](https://github.com/FlyGoat/RyzenAdj) |
+| [JamesCJ60](https://github.com/JamesCJ60) | [UXTU](https://github.com/JamesCJ60/Universal-x86-Tuning-Utility) original preset design and inspiration |
 | [corpnewt](https://github.com/corpnewt) | macOS `.command` launcher template |
 | [NotchApple1703](https://github.com/NotchApple1703) | Advisor |
-
