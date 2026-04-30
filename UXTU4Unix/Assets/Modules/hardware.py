@@ -1,6 +1,7 @@
 """
 hardware.py - CPU detection, codename resolution, and hardware info display.
 """
+import os
 import shlex
 import shutil
 import subprocess
@@ -55,12 +56,13 @@ def run_cmd(command: str, *, use_sudo: bool = False) -> str:
     return stdout.decode("utf-8", errors="replace").strip()
 
 
+# Binary checks
+
 def _check_macos_binaries() -> None:
     """
     macOS only - verify the bundled ryzenadj and dmidecode binaries exist.
     If either is missing, offer to re-download the latest release.
     """
-    import os
     missing = [
         b for b in (cfg.RYZENADJ, cfg.DMIDECODE)
         if not os.path.isfile(b)
@@ -80,23 +82,46 @@ def _check_macos_binaries() -> None:
     raise SystemExit(1)
 
 
+# Common locations for system binaries
+_SBIN_PATHS = "/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/sbin:/usr/local/bin"
+
+
+def _find_dmidecode() -> str | None:
+    """
+    Locate dmidecode by searching both $PATH and known sbin directories.
+    Returns the full path string, or None if not found anywhere.
+    """
+    user_path = os.environ.get("PATH", "")
+    combined = user_path + (":" if user_path else "") + _SBIN_PATHS
+    seen = []
+    for p in combined.split(":"):
+        if p and p not in seen:
+            seen.append(p)
+    return shutil.which("dmidecode", path=":".join(seen))
+
+
 def _check_linux_binaries() -> None:
     """
     Linux only - check dmidecode and ryzenadj separately and in order.
     dmidecode missing -> install guide.
     ryzenadj missing  -> prompt to re-download the release.
     """
-    import os
 
-    if shutil.which("dmidecode") is None:
+    dmi_path = _find_dmidecode()
+    if dmi_path is None:
         print(
-            "\nError: 'dmidecode' is not installed.\n"
-            "Install it with your package manager, for example:\n"
+            "\nError: 'dmidecode' is not installed or not found.\n"
+            "Install it with your package manager:\n"
             "  Debian/Ubuntu : sudo apt install dmidecode\n"
             "  Fedora/RHEL   : sudo dnf install dmidecode\n"
             "  Arch          : sudo pacman -S dmidecode\n"
+            "  openSUSE      : sudo zypper install dmidecode\n"
         )
         raise SystemExit(1)
+
+    # Store resolved absolute path so all _dmi() calls use it directly,
+    # bypassing PATH issues that also affect the sudo sh -c subshell.
+    cfg.DMIDECODE = dmi_path
 
     if not os.path.isfile(cfg.RYZENADJ):
         print(
@@ -408,12 +433,11 @@ def show_info() -> None:
     """Print a full hardware information summary to the terminal."""
     clear()
 
-    W = 16  # label column width
+    W = 16
 
     def row(label: str, value: str) -> None:
         print(f"  {label:<{W}} {value}")
 
-    # Device Information
     dev = _parse_device_info()
     print("Device Information")
     row("Name",     dev["name"])
@@ -421,28 +445,26 @@ def show_info() -> None:
     row("Model",    dev["model"])
     print()
 
-    # rocessor Information
     proc        = _parse_processor_dmidecode()
     l1, l2, l3  = _parse_cache_sizes()
 
     print("Processor Information")
-    row("Processor",    cfg.get("Info", "CPU"))
-    row("Producer",     proc["manufacturer"])
-    row("Codename",     cfg.get("Info", "Family"))
-    row("Caption",      cfg.get("Info", "Signature"))
-    row("Cores",        proc["cores"])
-    row("Threads",      proc["threads"])
-    row("Base Clock",   proc["base_clock"])
-    row("L1 Cache",     l1)
-    row("L2 Cache",     l2)
-    row("L3 Cache",     l3)
+    row("Processor",  cfg.get("Info", "CPU"))
+    row("Producer",   proc["manufacturer"])
+    row("Codename",   cfg.get("Info", "Family"))
+    row("Caption",    cfg.get("Info", "Signature"))
+    row("Cores",      proc["cores"])
+    row("Threads",    proc["threads"])
+    row("Base Clock", proc["base_clock"])
+    row("L1 Cache",   l1)
+    row("L2 Cache",   l2)
+    row("L3 Cache",   l3)
 
     smu = smu_version()
     if smu:
         print(f"  {smu}")
     print()
 
-    # Memory Information
     mem = _parse_memory()
     print("Memory Information")
     row("Memory",   mem["summary"])

@@ -6,7 +6,6 @@ import os
 import subprocess
 import sys
 
-# Ensure Assets is importable regardless of CWD
 _ROOT = os.path.dirname(os.path.realpath(__file__))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
@@ -18,7 +17,7 @@ from Assets.Modules.about import about_menu
 from Assets.Modules.hardware import check_binaries, show_info as hardware_info
 from Assets.Modules.power import apply_smu, get_presets, preset_menu
 from Assets.Modules.settings import settings_menu
-from Assets.Modules.setup import check_integrity, run_welcome
+from Assets.Modules.setup import check_integrity, ensure_binaries_executable, run_welcome
 from Assets.Modules.updater import check_updates
 from Assets.Modules.ui import clear, pause, quit_app
 
@@ -27,7 +26,7 @@ def main():
     subprocess.run("printf '\\e[8;35;80t'", shell=True)
     check_integrity()
     check_binaries()
-
+    ensure_binaries_executable()
     if cfg.get("Settings", "SoftwareUpdate", "0") == "1":
         check_updates()
 
@@ -63,6 +62,7 @@ def main():
         else:
             print("Invalid option.")
             pause()
+
 
 if __name__ == "__main__":
     main()

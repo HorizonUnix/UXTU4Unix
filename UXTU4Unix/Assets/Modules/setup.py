@@ -13,8 +13,8 @@ from .ui import clear, pause
 
 # Binary permissions
 
-def _ensure_binaries_executable():
-    """chmod +x ryzenadj (and dmidecode on macOS) before first use."""
+def ensure_binaries_executable():
+    """chmod +x ryzenadj (and dmidecode on macOS)."""
     targets = [cfg.RYZENADJ]
     if cfg.KERNEL == "Darwin":
         targets.append(cfg.DMIDECODE)
@@ -218,7 +218,7 @@ def _add_linux_autostart():
 
 def _apply_defaults():
     cfg.ensure_sections("User", "Settings", "Info")
-    cfg.set("Settings", "Time", "30")
+    cfg.set("Settings", "Time", "3")
     cfg.set("Settings", "SoftwareUpdate", "1")
     cfg.set("Settings", "ReApply", "0")
     cfg.set("Settings", "ApplyOnStart", "1")
@@ -247,7 +247,7 @@ def run_welcome():
 
     clear()
     print("Preparing binaries...")
-    _ensure_binaries_executable()
+    ensure_binaries_executable()
     pause()
 
     clear()

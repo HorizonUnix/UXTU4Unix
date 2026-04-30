@@ -11,7 +11,6 @@ def about_menu():
     while True:
         clear()
         print("-" * 15 + " About UXTU4Unix " + "-" * 15)
-        print(f"{cfg.VERSION_DESC}  ({cfg.LOCAL_BUILD})\n")
         print("Maintainer : oxGorou")
         print("CLI        : oxGorou")
         print("Advisor    : NotchApple1703")

@@ -217,7 +217,7 @@ type = Amd_Apu
 
 | Key | Default | Values | Description |
 |-----|---------|--------|-------------|
-| `time` | `30` | seconds | Interval between automatic preset re-applications |
+| `time` | `3` | seconds | Interval between automatic preset re-applications |
 | `softwareupdate` | `1` | `0` / `1` | Check for updates on startup |
 | `reapply` | `1` | `0` / `1` | Automatically re-apply preset on a timer |
 | `applyonstart` | `1` | `0` / `1` | Apply saved preset when the program launches |

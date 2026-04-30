@@ -5,9 +5,8 @@ import os
 import sys
 from configparser import ConfigParser
 
-LOCAL_VERSION = "0.5.2"
-LOCAL_BUILD = "5-universal-280426-r2"
-VERSION_DESC = "The Refractor Update"
+LOCAL_VERSION = "0.5.21"
+LOCAL_BUILD = "5-universal-30Apr26-r2.1"
 GITHUB_API_URL = "https://api.github.com/repos/HorizonUnix/UXTU4Unix/releases/latest"
 LATEST_VER_URL = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest"
 
@@ -35,35 +34,44 @@ def set_loaded_preset(name):
     global _loaded_preset
     _loaded_preset = name
 
+
 def get_loaded_preset():
     return _loaded_preset
+
 
 def load():
     _cfg.read(CONFIG_PATH)
     return _cfg
 
+
 def get(section, key, fallback=""):
     return _cfg.get(section, key, fallback=fallback)
+
 
 def set(section, key, value):
     if not _cfg.has_section(section):
         _cfg.add_section(section)
     _cfg.set(section, key, value)
 
+
 def save():
     with open(CONFIG_PATH, "w") as f:
         _cfg.write(f)
+
 
 def ensure_sections(*sections):
     for s in sections:
         if not _cfg.has_section(s):
             _cfg.add_section(s)
 
+
 def is_debug():
     return get("Settings", "Debug", "1") == "1"
 
+
 def instance():
     return _cfg
+
 
 REQUIRED = {
     "User": ["mode"],

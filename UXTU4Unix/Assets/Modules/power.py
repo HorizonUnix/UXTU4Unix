@@ -153,7 +153,6 @@ def _wait_or_back(seconds):
 
 
 def apply_smu(args, user_mode, *, save_to_config=True):
-    """Apply power settings via ryzenadj."""
     if cfg.get("Info", "Type") == "Intel":
         clear()
         print("Intel chipsets are not currently supported.")
@@ -175,7 +174,7 @@ def apply_smu(args, user_mode, *, save_to_config=True):
         cfg.set("User", "CustomArgs", args)
         cfg.save()
 
-    sleep_secs = int(float(cfg.get("Settings", "Time", "30")))
+    sleep_secs = int(float(cfg.get("Settings", "Time", "3")))
     password = (get_password() or "").encode()
     dynamic = cfg.get("Settings", "DynamicMode", "0") == "1"
     reapply = cfg.get("Settings", "ReApply", "0") == "1"
@@ -196,8 +195,9 @@ def apply_smu(args, user_mode, *, save_to_config=True):
             cmd = _build_command(effective_args, effective_mode)
             print(f"Preset       : {effective_mode}")
             print(f"Dynamic mode : {'Enabled' if dynamic else 'Disabled'}")
-            print(f"Auto reapply : Enabled - every {sleep_secs}s  (press B + Enter to go back)")
-            print("-" * 44)
+            print(f"Auto reapply : Enabled - every {sleep_secs}s")
+            print("Press B + Enter to go back")
+            print("-" * 15 + " RyzenAdj Output " + "-" * 15)
             _run_ryzenadj(cmd, password)
             if _wait_or_back(sleep_secs):
                 cfg.set("Settings", "ReApply", saved_reapply)
@@ -207,7 +207,7 @@ def apply_smu(args, user_mode, *, save_to_config=True):
         cmd = _build_command(args, user_mode)
         print(f"Preset       : {user_mode}")
         print("Auto reapply : Disabled")
-        print("-" * 44)
+        print("-" * 15 + " RyzenAdj Output " + "-" * 15)
         _run_ryzenadj(cmd, password)
         pause()
 

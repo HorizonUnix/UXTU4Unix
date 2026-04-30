@@ -1,3 +1,10 @@
+## [0.5.21]
+
+- Resolve issue #23 by implementing a robust search path for the `dmidecode` binary (`_find_dmidecode`) and storing its absolute path to prevent `PATH` resolution errors within `sudo` subshells (thx @kstutz01).
+- Minor tweaks to `about.py` and `power.py`.
+- Always `chmod +x` binaries when starting.
+- Default sleep time is now `3`s instead of `30`s.
+
 ## [0.5.2]
 
 # What's New?

@@ -89,13 +89,13 @@ def preset_cfg():
 def sleep_cfg():
     while True:
         clear()
-        val = cfg.get("Settings", "Time", "30")
+        val = cfg.get("Settings", "Time", "3")
         print("-" * 15 + " Sleep time " + "-" * 15)
         print(f"Auto-reapply every: {val} seconds")
         print("\n  1. Change\n  B. Back\n")
         c = input("Option: ").strip().lower()
         if c == "1":
-            new_val = input("New interval in seconds (default 30): ").strip()
+            new_val = input("New interval in seconds (default 3): ").strip()
             if new_val.isdigit():
                 cfg.set("Settings", "Time", new_val)
                 cfg.save()
@@ -178,7 +178,7 @@ def sip_cfg():
 
 
 def login_cfg():
-    """Run on startup - Login Items (macOS) or XDG autostart (Linux)."""
+    """Launch at login - Login Items (macOS) or XDG autostart (Linux)."""
     import os
     if cfg.KERNEL == "Darwin":
         from .setup import _add_login_item_path, _login_item_status, _remove_login_item_by_name
@@ -187,7 +187,7 @@ def login_cfg():
         while True:
             clear()
             enabled = _login_item_status(cmd_file)
-            print("-" * 15 + " Run on startup " + "-" * 15)
+            print("-" * 15 + " Launch at login " + "-" * 15)
             print("(macOS Login Items)")
             print(f"\nStatus: {'Enabled' if enabled else 'Disabled'}")
             print("\n  1. Enable\n  2. Disable\n  B. Back\n")
@@ -219,7 +219,7 @@ def login_cfg():
         while True:
             clear()
             enabled = linux_autostart_enabled()
-            print("-" * 15 + " Run on startup " + "-" * 15)
+            print("-" * 15 + " Launch at login " + "-" * 15)
             print("(XDG autostart - GNOME, KDE, XFCE and most DEs)")
             print(f"\nStatus: {'Enabled' if enabled else 'Disabled'}")
             print("\n  1. Enable\n  2. Disable\n  B. Back\n")
@@ -263,7 +263,7 @@ def settings_menu():
         print("  2. Sleep time")
         print("  3. Auto reapply")
         print("  4. Apply on start")
-        print("  5. Run on startup")
+        print("  5. Launch at login")
         print("  6. Software update")
         print("  7. Sudo password")
         if cfg.KERNEL == "Darwin":
