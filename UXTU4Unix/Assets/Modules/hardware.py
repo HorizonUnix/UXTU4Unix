@@ -1,6 +1,7 @@
 """
 hardware.py - CPU detection, codename resolution, and hardware info display.
 """
+
 import os
 import shlex
 import shutil
@@ -56,32 +57,6 @@ def run_cmd(command: str, *, use_sudo: bool = False) -> str:
     return stdout.decode("utf-8", errors="replace").strip()
 
 
-# Binary checks
-
-def _check_macos_binaries() -> None:
-    """
-    macOS only - verify the bundled ryzenadj and dmidecode binaries exist.
-    If either is missing, offer to re-download the latest release.
-    """
-    missing = [
-        b for b in (cfg.RYZENADJ, cfg.DMIDECODE)
-        if not os.path.isfile(b)
-    ]
-    if not missing:
-        return
-
-    names = " and ".join(os.path.basename(b) for b in missing)
-    print(
-        f"\nError: {names} not found.\n"
-        "The bundled binaries are missing - the installation may be incomplete.\n"
-    )
-    ans = input("Re-download the latest release now? (y/n): ").strip().lower()
-    if ans == "y":
-        from .updater import _do_update
-        _do_update()
-    raise SystemExit(1)
-
-
 # Common locations for system binaries
 _SBIN_PATHS = "/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/sbin:/usr/local/bin"
 
@@ -100,9 +75,8 @@ def _find_dmidecode() -> str | None:
     return shutil.which("dmidecode", path=":".join(seen))
 
 
-def _check_linux_binaries() -> None:
+def check_binaries() -> None:
     """
-    Linux only - check dmidecode and ryzenadj separately and in order.
     dmidecode missing -> install guide.
     ryzenadj missing  -> prompt to re-download the release.
     """
@@ -133,17 +107,6 @@ def _check_linux_binaries() -> None:
             from .updater import _do_update
             _do_update()
         raise SystemExit(1)
-
-
-def check_binaries() -> None:
-    """
-    Entry-point binary check - call once at program start.
-    Dispatches to the platform-specific checker.
-    """
-    if cfg.KERNEL == "Darwin":
-        _check_macos_binaries()
-    elif cfg.KERNEL == "Linux":
-        _check_linux_binaries()
 
 
 def _dmi(field: str) -> str:
@@ -475,26 +438,3 @@ def show_info() -> None:
     print()
 
     pause()
-
-
-def check_nvram() -> bool:
-    """
-    macOS only - verify that debug=0x144 boot-arg and the required SIP
-    flags are active in NVRAM.
-    """
-    sip = cfg.get("Settings", "SIP", "03080000")
-    try:
-        boot = subprocess.run(
-            ["nvram", "boot-args"],
-            capture_output=True, text=True, check=True,
-        )
-        if "debug=0x144" not in boot.stdout:
-            return False
-        csr = subprocess.run(
-            ["nvram", "csr-active-config"],
-            capture_output=True, text=True, check=True,
-        )
-        return sip in csr.stdout.replace("%", "")
-    except subprocess.CalledProcessError as exc:
-        print(f"NVRAM check error: {exc}")
-        return False

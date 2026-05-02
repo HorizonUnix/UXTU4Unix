@@ -1,6 +1,7 @@
 """
 settings.py - All settings sub-menus.
 """
+
 import getpass
 import subprocess
 
@@ -156,102 +157,7 @@ def pass_cfg():
             pause()
 
 
-def sip_cfg():
-    while True:
-        clear()
-        sip = cfg.get("Settings", "SIP", "03080000")
-        print("-" * 15 + " SIP flags " + "-" * 15)
-        print(f"Current: {sip}")
-        print("\n  1. Change SIP flags\n  B. Back\n")
-        c = input("Option: ").strip().lower()
-        if c == "1":
-            print("Must include at least ALLOW_UNTRUSTED_KEXTS (0x1).")
-            new_sip = input("New SIP flags: ").strip()
-            if new_sip:
-                cfg.set("Settings", "SIP", new_sip)
-                cfg.save()
-        elif c == "b":
-            break
-        else:
-            print("Invalid option.")
-            pause()
-
-
-def login_cfg():
-    """Launch at login - Login Items (macOS) or XDG autostart (Linux)."""
-    import os
-    if cfg.KERNEL == "Darwin":
-        from .setup import _add_login_item_path, _login_item_status, _remove_login_item_by_name
-        cmd_file = cfg.CMD_FILE
-        cmd_name = os.path.basename(cmd_file)
-        while True:
-            clear()
-            enabled = _login_item_status(cmd_file)
-            print("-" * 15 + " Launch at login " + "-" * 15)
-            print("(macOS Login Items)")
-            print(f"\nStatus: {'Enabled' if enabled else 'Disabled'}")
-            print("\n  1. Enable\n  2. Disable\n  B. Back\n")
-            c = input("Option: ").strip().lower()
-            if c == "1":
-                if not enabled:
-                    _add_login_item_path(cmd_file)
-                    print("Added to Login Items.")
-                    pause()
-                else:
-                    print("Already registered at the correct path.")
-                    pause()
-            elif c == "2":
-                if enabled:
-                    _remove_login_item_by_name(cmd_name)
-                    print("Removed from Login Items.")
-                    pause()
-                else:
-                    print("Not in Login Items.")
-                    pause()
-            elif c == "b":
-                break
-            else:
-                print("Invalid option.")
-                pause()
-
-    elif cfg.KERNEL == "Linux":
-        from .setup import linux_autostart_enabled, linux_autostart_enable, linux_autostart_disable
-        while True:
-            clear()
-            enabled = linux_autostart_enabled()
-            print("-" * 15 + " Launch at login " + "-" * 15)
-            print("(XDG autostart - GNOME, KDE, XFCE and most DEs)")
-            print(f"\nStatus: {'Enabled' if enabled else 'Disabled'}")
-            print("\n  1. Enable\n  2. Disable\n  B. Back\n")
-            c = input("Option: ").strip().lower()
-            if c == "1":
-                if not enabled:
-                    linux_autostart_enable()
-                    print("Autostart enabled.")
-                    pause()
-                else:
-                    print("Already enabled.")
-                    pause()
-            elif c == "2":
-                if enabled:
-                    linux_autostart_disable()
-                    print("Autostart disabled.")
-                    pause()
-                else:
-                    print("Autostart is not enabled.")
-                    pause()
-            elif c == "b":
-                break
-            else:
-                print("Invalid option.")
-                pause()
-
-
 def settings_menu():
-    def _open_installer():
-        from .installer import install_menu
-        install_menu()
-
     def _reset_all():
         from .setup import reset_all
         reset_all()
@@ -263,15 +169,9 @@ def settings_menu():
         print("  2. Sleep time")
         print("  3. Auto reapply")
         print("  4. Apply on start")
-        print("  5. Launch at login")
-        print("  6. Software update")
-        print("  7. Sudo password")
-        if cfg.KERNEL == "Darwin":
-            print("  8. SIP flags")
-            print("  9. Debug")
-            print("\n  I. Install UXTU4Unix dependencies")
-        else:
-            print("  8. Debug")
+        print("  5. Software update")
+        print("  6. Sudo password")
+        print("  7. Debug")
         print("\n  R. Reset all settings")
         print("  B. Back\n")
 
@@ -279,16 +179,10 @@ def settings_menu():
 
         base_map = {
             "1": preset_cfg, "2": sleep_cfg, "3": reapply_cfg,
-            "4": applystart_cfg, "5": login_cfg, "6": cfu_cfg, "7": pass_cfg,
+            "4": applystart_cfg, "5": cfu_cfg,
+            "6": pass_cfg, "7": debug_cfg,
             "r": _reset_all, "b": None,
         }
-
-        if cfg.KERNEL == "Darwin":
-            base_map["8"] = sip_cfg
-            base_map["9"] = debug_cfg
-            base_map["i"] = _open_installer
-        else:
-            base_map["8"] = debug_cfg
 
         if c == "b":
             break

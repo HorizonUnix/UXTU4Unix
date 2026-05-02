@@ -2,10 +2,8 @@
 about.py - About screen and forced-update entry point.
 """
 import webbrowser
-from . import config as cfg
 from .updater import get_latest_version, show_updater
 from .ui import clear, pause
-
 
 def about_menu():
     while True:
@@ -14,9 +12,6 @@ def about_menu():
         print("Maintainer : oxGorou")
         print("CLI        : oxGorou")
         print("Advisor    : NotchApple1703")
-        if cfg.KERNEL == "Darwin":
-            print("dmidecode  : Acidanthera")
-            print("CMD file   : CorpNewt")
         print()
         print("  1. Open GitHub page")
         has_latest = False

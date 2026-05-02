@@ -1,6 +1,7 @@
 """
 power.py - Preset resolution and RyzenAdj power management.
 """
+
 import importlib
 import os
 import select
@@ -9,7 +10,7 @@ import sys
 import time
 
 from . import config as cfg
-from .hardware import RYZEN_FAMILY, check_nvram, run_cmd
+from .hardware import RYZEN_FAMILY, run_cmd
 from .secure_password import get_password
 from .ui import clear, pause
 
@@ -97,9 +98,6 @@ def get_presets():
 
 
 def _on_ac():
-    if cfg.KERNEL == "Darwin":
-        out = subprocess.check_output(["pmset", "-g", "batt"]).decode()
-        return "Battery Power" not in out
     ac_online = False
     found_ac = False
     battery_discharging = False
@@ -156,16 +154,6 @@ def apply_smu(args, user_mode, *, save_to_config=True):
     if cfg.get("Info", "Type") == "Intel":
         clear()
         print("Intel chipsets are not currently supported.")
-        pause()
-        return
-
-    if cfg.KERNEL == "Darwin" and not check_nvram():
-        clear()
-        print(
-            "Cannot run RyzenAdj.\n"
-            "Missing: debug=0x144 boot-arg or required SIP flags.\n"
-            "Go to Settings -> Install UXTU4Unix dependencies, then restart."
-        )
         pause()
         return
 
