@@ -1,3 +1,8 @@
+## [0.5.22]
+
+### macOS Deprecation Notice
+- `v0.5.22` will be the last version to support the macOS branch.
+
 ## [0.5.21]
 
 - Resolve issue #23 by implementing a robust search path for the `dmidecode` binary (`_find_dmidecode`) and storing its absolute path to prevent `PATH` resolution errors within `sudo` subshells (thx @kstutz01).
