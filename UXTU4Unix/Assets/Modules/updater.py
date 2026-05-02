@@ -13,6 +13,7 @@ import zipfile
 from . import config as cfg
 from .ui import clear, pause
 
+_MACOS_LAST_SERIES = (0, 5)
 
 def _ver_tuple(v):
     try:
@@ -21,9 +22,39 @@ def _ver_tuple(v):
         return (0,)
 
 
+def _series(t):
+    """Return (major, minor) from a version tuple."""
+    return (t[0], t[1]) if len(t) >= 2 else (t[0], 0)
+
+
+def _get_all_releases():
+    """Fetch all releases from the GitHub API."""
+    url = cfg.GITHUB_API_URL.replace("/releases/latest", "/releases?per_page=50")
+    req = urllib.request.Request(url)
+    return json.loads(urllib.request.urlopen(req).read())
+
+
 def get_latest_version():
-    url = urllib.request.urlopen(cfg.LATEST_VER_URL).geturl()
-    return url.rstrip("/").split("/")[-1]
+    """
+    Return the latest version string appropriate for the current platform.
+
+    macOS  : latest non-prerelease tag in the v0.5.x series.
+    Linux  : global latest release.
+    """
+    if cfg.KERNEL != "Darwin":
+        url = urllib.request.urlopen(cfg.LATEST_VER_URL).geturl()
+        return url.rstrip("/").split("/")[-1]
+
+    releases = _get_all_releases()
+    for rel in releases:
+        tag = rel.get("tag_name", "")
+        if not rel.get("prerelease", False) and _series(_ver_tuple(tag)) == _MACOS_LAST_SERIES:
+            return tag
+
+    raise RuntimeError(
+        f"No release found in the "
+        f"{'.'.join(str(x) for x in _MACOS_LAST_SERIES)}.x series."
+    )
 
 
 def get_changelog():
@@ -32,9 +63,37 @@ def get_changelog():
     return data.get("body", "No changelog available.")
 
 
-def _do_update():
-    """Download the latest release zip and replace the current installation."""
-    url = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest/download/UXTU4Unix.zip"
+def _get_changelog_for_tag(tag):
+    url = cfg.GITHUB_API_URL.replace("/releases/latest", f"/releases/tags/{tag}")
+    req = urllib.request.Request(url)
+    data = json.loads(urllib.request.urlopen(req).read())
+    return data.get("body", "No changelog available.")
+
+
+def _is_beyond_macos_series(ver):
+    return _series(_ver_tuple(ver)) > _MACOS_LAST_SERIES
+
+
+def _print_eol_notice(global_latest):
+    clear()
+    print("-" * 15 + " macOS End-of-Support Notice " + "-" * 15)
+    print(
+        "\n"
+        "  v0.5.x is the last UXTU4Unix series that supports macOS.\n"
+        f"  The project has moved on to {global_latest}, which will not\n"
+        "  be available for macOS.\n\n"
+        "  You will continue to receive v0.5.x patch updates only.\n"
+    )
+    pause()
+
+
+def _do_update(tag=None):
+    """Download the release zip for *tag* (or latest) and replace the current installation."""
+    if tag:
+        url = f"https://github.com/HorizonUnix/UXTU4Unix/releases/download/{tag}/UXTU4Unix.zip"
+    else:
+        url = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest/download/UXTU4Unix.zip"
+
     script_dir = os.path.dirname(os.path.realpath(__file__))
     assets_dir = os.path.dirname(script_dir)
     root_dir = os.path.dirname(assets_dir)
@@ -97,18 +156,31 @@ def show_updater():
         clear()
         try:
             latest = get_latest_version()
-            changelog = get_changelog()
+            changelog = _get_changelog_for_tag(latest)
         except Exception as e:
             print(f"Could not fetch release info: {e}")
             pause()
             return
+
+        if cfg.KERNEL == "Darwin":
+            try:
+                global_url = urllib.request.urlopen(cfg.LATEST_VER_URL).geturl()
+                global_latest = global_url.rstrip("/").split("/")[-1]
+                if _is_beyond_macos_series(global_latest):
+                    _print_eol_notice(global_latest)
+                    clear()
+            except Exception:
+                pass
+
         print("-" * 15 + " Software Update " + "-" * 15)
         print("A new update is available!\n")
         print(f"Latest version : {latest}")
+        if cfg.KERNEL == "Darwin":
+            print("  (macOS receives v0.5.x updates only)")
         print(f"\nChangelog:\n{changelog}\n")
         c = input("Update now? (y/n): ").strip().lower()
         if c == "y":
-            _do_update()
+            _do_update(tag=latest)
             raise SystemExit
         elif c == "n":
             print("Skipping update.")
@@ -137,6 +209,18 @@ def check_updates():
         if input("Skip the update check and continue? (y/n): ").strip().lower() != "y":
             sys.exit("Quitting.")
         return
+
+    # On macOS, separately check if the global latest has moved past 0.5.x
+    # and show the EOL notice once per session before doing any comparison.
+    if cfg.KERNEL == "Darwin":
+        try:
+            global_url = urllib.request.urlopen(cfg.LATEST_VER_URL).geturl()
+            global_latest = global_url.rstrip("/").split("/")[-1]
+            if _is_beyond_macos_series(global_latest):
+                _print_eol_notice(global_latest)
+                clear()
+        except Exception:
+            pass
 
     local = _ver_tuple(cfg.LOCAL_VERSION)
     remote = _ver_tuple(latest)
