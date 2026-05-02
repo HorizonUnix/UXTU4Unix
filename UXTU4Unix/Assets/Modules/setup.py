@@ -127,6 +127,21 @@ def macos_login_item_validate():
         _add_login_item_path(cmd_file)
 
 
+# macOS EOL notice
+
+def _print_macos_eol_notice():
+    clear()
+    print("-" * 15 + " macOS End-of-Support Notice " + "-" * 15)
+    print(
+        "\n"
+        "  v0.5.x is the last UXTU4Unix series that supports macOS.\n"
+        "  Future releases will be available on Linux only.\n\n"
+        "  You will continue to receive v0.5.x patch updates, but no\n"
+        "  new features or major versions will be released for macOS.\n"
+    )
+    pause()
+
+
 # Linux XDG autostart helpers
 
 _DESKTOP_FILENAME = "UXTU4Unix.desktop"
@@ -236,6 +251,9 @@ def run_welcome():
         clear()
         print(f"Unsupported OS: {cfg.KERNEL}  (only macOS and Linux are supported).")
         return
+
+    if cfg.KERNEL == "Darwin":
+        _print_macos_eol_notice()
 
     cfg.ensure_sections("User", "Settings", "Info")
     clear()
