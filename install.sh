@@ -227,7 +227,7 @@ run_setup() {
     echo ""
     info "Launching UXTU4Unix..."
     echo ""
-    exec "$BIN_WRAPPER"
+    exec "$BIN_WRAPPER" </dev/tty
 }
 
 print_banner() {
