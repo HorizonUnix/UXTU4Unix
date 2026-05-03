@@ -27,18 +27,6 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 CURRENT_USER="$(whoami)"
 CURRENT_GROUP="$(id -gn)"
 
-detect_init() {
-    if command -v systemctl &>/dev/null && systemctl --version &>/dev/null 2>&1; then
-        echo "systemd"
-    elif [[ -f /sbin/openrc ]]; then
-        echo "openrc"
-    elif [[ -d /run/runit ]]; then
-        echo "runit"
-    else
-        echo "unknown"
-    fi
-}
-
 detect_pm() {
     if   command -v apt-get &>/dev/null; then echo "apt"
     elif command -v dnf     &>/dev/null; then echo "dnf"
@@ -192,32 +180,6 @@ EOF
     ok "Launcher → $BIN_WRAPPER"
 }
 
-install_service() {
-    if [[ "$1" != "systemd" ]]; then
-        warn "Init system '$1' not supported — start manually: uxtu4unix"
-        return
-    fi
-    info "Installing systemd service..."
-    sudo tee "$SERVICE_FILE" > /dev/null <<EOF
-[Unit]
-Description=UXTU4Unix Power Management Daemon
-After=multi-user.target
-
-[Service]
-Type=simple
-ExecStart=$VENV_PYTHON $SRC_DIR/Assets/Modules/daemon.py
-Restart=on-failure
-RestartSec=5
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-EOF
-    sudo systemctl daemon-reload
-    sudo systemctl enable "$SERVICE_NAME" 2>/dev/null || true
-    ok "Service enabled."
-}
 
 run_setup() {
     echo ""
@@ -254,11 +216,9 @@ print_banner() {
 main() {
     print_banner
 
-    local pm init
+    local pm
     pm="$(detect_pm)"
-    init="$(detect_init)"
     info "Package manager : $pm"
-    info "Init system     : $init"
     echo ""
 
     install_deps "$pm"
@@ -274,8 +234,6 @@ main() {
     set_permissions
     echo ""
     install_wrapper
-    echo ""
-    install_service "$init"
     echo ""
 
     run_setup
