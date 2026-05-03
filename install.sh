@@ -22,7 +22,7 @@ hr()   { echo -e "  $(printf '─%.0s' {1..58})"; }
 
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-[[ $EUID -eq 0 ]] && die "Do not run as root: bash install.sh"
+[[ $EUID -eq 0 ]] && die "Do not run as root. Run as your normal user:  bash install.sh"
 
 CURRENT_USER="$(whoami)"
 CURRENT_GROUP="$(id -gn)"
@@ -223,13 +223,11 @@ run_setup() {
     echo ""
     hr
     ok "Installation complete!"
-    echo ""
-    info "Run:"
-    echo ""
-    echo -e "      ${_C}uxtu4unix${_R}"
-    echo ""
     hr
     echo ""
+    info "Launching UXTU4Unix..."
+    echo ""
+    exec "$BIN_WRAPPER"
 }
 
 print_banner() {
