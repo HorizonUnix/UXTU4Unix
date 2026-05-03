@@ -8,6 +8,10 @@
 
 <br/>
 
+> [!NOTE]
+> - The upcoming v0.6.0 update will be released on 10 May, you can get a preview and demo [here](https://github.com/HorizonUnix/UXTU4Unix/releases/tag/0.6.0Beta03).
+> - After 10 May, `UXTU4Unix` will be renamed to `UXTU4Unix`.
+
 > [!WARNING]
 > **macOS Support Notice:** With the end of Hackintosh support in macOS 26 Tahoe, the `v0.5.x` series will be the **last** to support macOS. Development will shift solely to Linux afterwards until UXTU officially supports Linux.
 
