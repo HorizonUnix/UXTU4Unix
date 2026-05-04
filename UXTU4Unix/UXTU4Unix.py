@@ -80,8 +80,8 @@ def main() -> None:
 
     try:
         get_presets()
-    except Exception:
-        pass
+    except Exception as exc:
+        print(f"  Warning: failed to preload presets: {exc}")
 
     _apply_on_start()
 

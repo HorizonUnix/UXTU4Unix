@@ -2,7 +2,7 @@
 settings.py
 """
 from __future__ import annotations
-import getpass, subprocess
+import subprocess
 from . import config as cfg
 from .power import _daemon_apply_saved
 from .ui import menu, clear, ask, pause, confirm

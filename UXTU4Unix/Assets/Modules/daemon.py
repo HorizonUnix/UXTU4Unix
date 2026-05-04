@@ -45,22 +45,25 @@ def _on_ac() -> bool:
         for entry in os.listdir("/sys/class/power_supply"):
             base = f"/sys/class/power_supply/{entry}"
             try:
-                ptype = open(f"{base}/type").read().strip()
+                with open(f"{base}/type") as f:
+                    ptype = f.read().strip()
             except OSError:
                 continue
             if ptype in _AC_TYPES:
                 found_ac = True
                 try:
-                    if open(f"{base}/online").read().strip() == "1":
-                        ac_online = True
-                except OSError:
-                    pass
+                    with open(f"{base}/online") as f:
+                        if f.read().strip() == "1":
+                            ac_online = True
+                except OSError as exc:
+                    logging.debug("Failed to read AC online state from %s/online: %s", base, exc)
             elif ptype == "Battery":
                 try:
-                    if open(f"{base}/status").read().strip().lower() == "discharging":
-                        battery_discharging = True
-                except OSError:
-                    pass
+                    with open(f"{base}/status") as f:
+                        if f.read().strip().lower() == "discharging":
+                            battery_discharging = True
+                except OSError as exc:
+                    logging.debug("Unable to read battery status from %s/status: %s", base, exc)
     except Exception:
         pass
     if found_ac:
@@ -369,6 +372,13 @@ def main() -> None:
         logging.error("Intel CPUs are not supported.")
         sys.exit(1)
 
+    from Assets.Modules.hardware import _find_dmidecode
+    dmi = _find_dmidecode()
+    if dmi is None:
+        logging.error("dmidecode not found in PATH — hardware detection will fail.")
+        sys.exit(1)
+    cfg.DMIDECODE = dmi
+
     logging.info("UXTU4Unix daemon v%s", cfg.LOCAL_VERSION)
 
     daemon = PowerDaemon()
@@ -377,7 +387,6 @@ def main() -> None:
         _apply_on_start(daemon)
 
     daemon.run()
-
 
 if __name__ == "__main__":
     main()

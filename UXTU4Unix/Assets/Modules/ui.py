@@ -3,7 +3,7 @@ ui.py
 """
 
 from __future__ import annotations
-import os, select, shutil, subprocess, sys, termios, tty
+import os, select, subprocess, sys, termios, tty
 from . import config as cfg
 
 BANNER = """
