@@ -45,12 +45,12 @@ For full details, troubleshooting, and manual steps see the **[Wiki](../../wiki)
 ## Preview
  
 <p align="left">
-  <img src="/Img/main_menu.png" width="380"/>
-  <img src="/Img/apply_preset.png" width="380"/>
-  <img src="/Img/preset.png" width="380"/>
-  <img src="/Img/preset_setting.png" width="380"/>
-  <img src="/Img/hardware_info.png" width="380"/>
-  <img src="/Img/settings.png" width="380"/>
+  <img src="/Img/main_menu.png"/>
+  <img src="/Img/apply_preset.png"/>
+  <img src="/Img/preset.png"/>
+  <img src="/Img/preset_setting.png"/>
+  <img src="/Img/hardware_info.png"/>
+  <img src="/Img/settings.png"/>
 </p>
  
 ## Acknowledgments
