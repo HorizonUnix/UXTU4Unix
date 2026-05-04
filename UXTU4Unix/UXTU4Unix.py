@@ -13,7 +13,7 @@ from Assets.Modules.power     import apply_smu, get_presets, preset_menu
 from Assets.Modules.settings  import settings_menu
 from Assets.Modules.setup     import (
     check_integrity, ensure_binaries_executable,
-    run_welcome, service_running, verify_service_path,
+    run_welcome, verify_service_path,
 )
 from Assets.Modules.updater   import check_updates
 from Assets.Modules.ui        import clear, pause, quit_app, menu, about_menu

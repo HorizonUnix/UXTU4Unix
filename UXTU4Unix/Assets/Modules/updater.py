@@ -12,7 +12,7 @@ import zipfile
 
 from . import config as cfg
 from .ui import clear, pause
-
+from .setup import restart_service, service_running
 
 def _ver_tuple(v: str) -> tuple:
     try:
@@ -72,7 +72,9 @@ def _do_update() -> None:
 
         if os.path.exists(zip_path):
             os.remove(zip_path)
-
+        print("Restarting daemon...")
+        if service_running():
+            restart_service()
         print("Update complete. Relaunching - please close this window.")
         os.execv(sys.executable, [sys.executable, launch])
 

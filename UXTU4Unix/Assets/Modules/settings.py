@@ -4,7 +4,7 @@ settings.py
 from __future__ import annotations
 import getpass, subprocess
 from . import config as cfg
-from .power import apply_smu, get_presets, _daemon_apply_saved
+from .power import _daemon_apply_saved
 from .ui import menu, clear, ask, pause, confirm
 
 
@@ -77,44 +77,6 @@ def settings_menu() -> None:
             _do_toggle(choice, items)
         elif lbl == "Reset all":
             _reset_all()
-
-
-def preset_cfg() -> None:
-    presets = get_presets()
-    names   = list(presets.keys())
-
-    items = (
-        [("Dynamic mode (recommended)", "auto AC/battery")]
-        + [(n, "") for n in names]
-        + [("Custom", "manual ryzenadj args"), ("Back", "")]
-    )
-
-    while True:
-        choice = menu("Choose a preset", items, subtitle="You can change this later in Power Management")
-        if choice == -1 or items[choice][0] == "Back":
-            return
-
-        lbl = items[choice][0]
-
-        if lbl == "Dynamic mode (recommended)":
-            cfg.set("User",     "Mode",        "Balance")
-            cfg.set("Settings", "DynamicMode", "1")
-            cfg.set("Settings", "ReApply",     "1")
-            cfg.save()
-            return
-        elif lbl == "Custom":
-            args = ask("ryzenadj arguments")
-            if args:
-                cfg.set("User",     "Mode",        "Custom")
-                cfg.set("User",     "CustomArgs",  args)
-                cfg.set("Settings", "DynamicMode", "0")
-                cfg.save()
-            return
-        elif lbl in names:
-            cfg.set("User",     "Mode",        lbl)
-            cfg.set("Settings", "DynamicMode", "0")
-            cfg.save()
-            return
 
 
 def sleep_cfg() -> None:

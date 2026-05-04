@@ -262,22 +262,45 @@ def run_welcome() -> None:
     print("  The power daemon runs in the background keeping your preset active.")
     print("  It is required for UXTU4Unix to work properly.\n")
     if confirm("Install and enable daemon service"):
-        install_service()
+        if service_running():
+            restart_service()
+        else:
+            install_service()
         print("\n  Waiting for daemon...", end="", flush=True)
         if _wait_for_daemon():
             print(" ready.")
         else:
             print("\n  Warning: daemon did not start in time.")
             print("  Hardware detection may fail — check logs if issues occur.")
+    else:
+        print("\n  Daemon is required. Exiting setup.")
+        pause()
+        return
+        
     pause()
 
     _step(3, TOTAL, "Hardware detection")
-    print("  Detecting hardware...")
+    print("  Detecting hardware...\n")
     detect_hardware()
-    pause()
 
-    from .settings import preset_cfg
-    preset_cfg()
+    cpu      = cfg.get("Info", "CPU")
+    family   = cfg.get("Info", "Family")
+    arch     = cfg.get("Info", "Architecture")
+    cpu_type = cfg.get("Info", "Type")
+    sig      = cfg.get("Info", "Signature")
+
+    W = 14
+    def row(label: str, value: str) -> None:
+        print(f"  \033[2m{label:<{W}}\033[0m  {value}")
+
+    row("CPU",      cpu      or "Not detected")
+    row("Family",   family   or "Unknown")
+    row("Arch",     arch     or "Unknown")
+    row("Type",     cpu_type or "Unknown")
+    row("Signature",sig      or "Unknown")
+    
+    print()
+    pause()
 
     clear()
     print("  Setup complete. UXTU4Unix is ready.\n")
