@@ -2,7 +2,7 @@
 hardware.py
 """
 
-import glob, os, shlex, shutil, subprocess
+import glob, os, shutil, subprocess
 from . import config as cfg
 from .ui import clear, pause
 
@@ -16,29 +16,6 @@ RYZEN_FAMILY = [
 ]
 
 _SBIN_PATHS = "/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/sbin:/usr/local/bin"
-
-
-def run_cmd(command: str, *, use_sudo: bool = False) -> str:
-    from .keyring import get_password
-
-    if use_sudo:
-        password = (get_password() or "").encode()
-        proc = subprocess.Popen(
-            ["sudo", "-S", "sh", "-c", command],
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        )
-        stdout, _ = proc.communicate(input=password)
-    else:
-        try:
-            args = shlex.split(command)
-        except ValueError:
-            return ""
-        proc = subprocess.Popen(
-            args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        )
-        stdout, _ = proc.communicate()
-
-    return stdout.decode("utf-8", errors="replace").strip()
 
 
 def _find_dmidecode() -> str | None:
@@ -114,15 +91,17 @@ def check_system_compat() -> None:
     pause()
 
 
-def _dmi(field: str) -> str:
-    return run_cmd(
-        f"{cfg.DMIDECODE} -t processor | grep '{field}' | awk -F': ' '{{print $2}}'",
-        use_sudo=True,
-    )
-
-
 def _dmi_raw(dmi_type: str) -> str:
-    return run_cmd(f"{cfg.DMIDECODE} -t {dmi_type}", use_sudo=True)
+    from .ipc import get_client
+    return get_client().dmidecode(dmi_type)
+
+
+def _dmi(field: str) -> str:
+    for line in _dmi_raw("processor").splitlines():
+        s = line.strip()
+        if s.startswith(f"{field}:"):
+            return s.split(":", 1)[-1].strip()
+    return ""
 
 
 def _extract(raw: str, field: str) -> str:
@@ -241,10 +220,10 @@ def _parse_memory() -> dict[str, str]:
     if in_device:
         _flush(current)
 
-    total_str   = f"{total_mb // 1024} GB" if total_mb >= 1024 else f"{total_mb} MB"
-    spd_fmt     = speed if speed != "Unknown" else ""
-    summary     = f"{total_str} {mem_type}" + (f" @ {spd_fmt}" if spd_fmt else "")
-    total_bus   = module_width * module_count
+    total_str = f"{total_mb // 1024} GB" if total_mb >= 1024 else f"{total_mb} MB"
+    spd_fmt   = speed if speed != "Unknown" else ""
+    summary   = f"{total_str} {mem_type}" + (f" @ {spd_fmt}" if spd_fmt else "")
+    total_bus = module_width * module_count
 
     return {
         "summary":      summary,
@@ -344,13 +323,6 @@ def refresh_codename() -> None:
     cfg.save()
 
 
-def smu_version() -> str:
-    return run_cmd(
-        f"{cfg.RYZENADJ} -i | grep 'SMU BIOS Interface Version'",
-        use_sudo=True,
-    ).strip()
-
-
 def show_info() -> None:
     clear()
 
@@ -384,9 +356,6 @@ def show_info() -> None:
     row("L2 cache",   l2)
     row("L3 cache",   l3)
 
-    smu = smu_version()
-    if smu:
-        print(f"  {smu}")
 
     mem = _parse_memory()
     section("Memory")

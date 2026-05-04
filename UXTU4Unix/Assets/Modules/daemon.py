@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import shlex
 import signal
 import subprocess
 import sys
@@ -22,6 +23,18 @@ from Assets.Modules import config as cfg
 cfg.load()
 
 _AC_TYPES = frozenset({"Mains", "USB", "USB_C", "USB_PD", "USB_PD_DRP", "USB_C_DRP"})
+
+
+def _run_cmd(command: str) -> str:
+    try:
+        args = shlex.split(command)
+    except ValueError:
+        return ""
+    proc = subprocess.Popen(
+        args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    stdout, _ = proc.communicate()
+    return stdout.decode("utf-8", errors="replace").strip()
 
 
 def _on_ac() -> bool:
@@ -241,6 +254,16 @@ class PowerDaemon:
         self._stop_loop()
         return {"ok": True}
 
+    def _cmd_dmidecode(self, msg: dict) -> dict:
+        dmi_type = msg.get("type", "")
+        if not dmi_type:
+            return {"ok": False, "error": "missing 'type'"}
+        try:
+            out = _run_cmd(f"{cfg.DMIDECODE} -t {dmi_type}")
+            return {"ok": True, "output": out}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
     _DISPATCH = {
         "ping":        "_cmd_ping",
         "apply":       "_cmd_apply",
@@ -249,6 +272,7 @@ class PowerDaemon:
         "status":      "_cmd_status",
         "apply_saved": "_cmd_apply_saved",
         "shutdown":    "_cmd_shutdown",
+        "dmidecode":   "_cmd_dmidecode",
     }
 
     def handle(self, raw: str) -> str:

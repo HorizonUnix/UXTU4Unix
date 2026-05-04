@@ -5,7 +5,6 @@ from __future__ import annotations
 import getpass, subprocess
 from . import config as cfg
 from .power import apply_smu, get_presets, _daemon_apply_saved
-from .keyring import save_password, has_password
 from .ui import menu, clear, ask, pause, confirm
 
 
@@ -52,7 +51,6 @@ def _settings_items() -> list:
         ("Software update",  _tog("Settings", "SoftwareUpdate","1"),  "toggle"),
         ("Debug",            _tog("Settings", "Debug",         "1"),  "toggle"),
         ("─", "", "sep"),
-        ("Sudo password",    "Set" if has_password() else "Not set"),
         ("Reset all",        ""),
         ("Back",             ""),
     ]
@@ -77,8 +75,6 @@ def settings_menu() -> None:
             daemon_menu()
         elif lbl in _TOGGLE_MAP:
             _do_toggle(choice, items)
-        elif lbl == "Sudo password":
-            pass_cfg()
         elif lbl == "Reset all":
             _reset_all()
 
@@ -132,25 +128,6 @@ def sleep_cfg() -> None:
     else:
         print("\n  Must be a whole number.")
         pause()
-
-
-def pass_cfg() -> None:
-    while True:
-        subtitle = f"Stored: {'Yes (keyring)' if has_password() else 'Not set'}"
-        items    = [("Change password", ""), ("Back", "")]
-        choice   = menu("Sudo Password", items, subtitle=subtitle)
-        if choice == -1 or items[choice][0] == "Back":
-            return
-
-        clear()
-        while True:
-            pw = getpass.getpass("  New sudo password: ")
-            if _verify_sudo(pw):
-                save_password(pw)
-                print("  Password saved.")
-                pause()
-                return
-            print("  Incorrect — try again.")
 
 
 def _reset_all() -> None:
