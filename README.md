@@ -17,7 +17,6 @@ UXTU4Linux is a power management tool for **AMD Ryzen APUs and CPUs** on Linux (
 - Dynamic Mode - auto-switches between presets on AC vs. battery
 - Auto-reapply on a configurable timer via background daemon
 - Built-in updater with config backup and restore
-- Secure keyring-backed sudo password storage
 ---
  
 ## Compatibility
