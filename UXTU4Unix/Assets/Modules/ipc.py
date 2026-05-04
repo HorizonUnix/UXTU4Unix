@@ -63,6 +63,12 @@ class DaemonClient:
     def shutdown(self) -> dict:
         return self._send({"cmd": "shutdown"}) or {"ok": False}
 
+    def dmidecode(self, dmi_type: str) -> str:
+        r = self._send({"cmd": "dmidecode", "type": dmi_type})
+        if r and r.get("ok"):
+            return r["output"]
+        return ""
+
 
 _client: DaemonClient | None = None
 

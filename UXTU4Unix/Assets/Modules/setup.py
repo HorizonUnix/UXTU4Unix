@@ -3,31 +3,21 @@ setup.py
 """
 
 from __future__ import annotations
-import getpass, os, re, subprocess, sys, tempfile
+import os, re, subprocess, sys, tempfile, time
 from . import config as cfg
 from .hardware import detect as detect_hardware
-from .keyring import (
-    backend_available, delete_password,
-    get_password, has_password, save_password,
-)
-from .ui import clear, pause, confirm, ask, menu
+from .ui import clear, pause, confirm, menu
 
 SERVICE_NAME = "uxtu4unix.service"
 SERVICE_FILE = f"/etc/systemd/system/{SERVICE_NAME}"
 
 
 def _ensure_venv() -> None:
-    password    = (get_password() or "").encode()
     venv_dir    = cfg.VENV_DIR
     venv_python = cfg.VENV_PYTHON
 
     def _sudo(*args: str) -> int:
-        return subprocess.run(
-            ["sudo", "-S", *args],
-            input=password,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        ).returncode
+        return subprocess.run(["sudo", *args]).returncode
 
     if not os.path.isfile(venv_python):
         print(f"  Creating venv at {venv_dir}...")
@@ -79,13 +69,7 @@ def _render_unit() -> str:
 
 
 def _sudo_run(*args: str) -> int:
-    password = (get_password() or "").encode()
-    return subprocess.run(
-        ["sudo", "-S", *args],
-        input=password,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    ).returncode
+    return subprocess.run(["sudo", *args]).returncode
 
 
 def _systemctl(*args: str) -> int:
@@ -93,28 +77,34 @@ def _systemctl(*args: str) -> int:
 
 
 def _sudo_write(path: str, content: str) -> bool:
-    password = (get_password() or "").encode()
     with tempfile.NamedTemporaryFile(mode="w", suffix=".service", delete=False) as f:
         f.write(content)
         tmp = f.name
     try:
-        r = subprocess.run(
-            ["sudo", "-S", "mv", tmp, path],
-            input=password,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        r = subprocess.run(["sudo", "mv", tmp, path])
         return r.returncode == 0
     finally:
         if os.path.exists(tmp):
             os.unlink(tmp)
 
 
+def _wait_for_daemon(timeout: float = 10.0, interval: float = 0.3) -> bool:
+    from .ipc import get_client
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            if get_client().ping():
+                return True
+        except Exception:
+            pass
+        time.sleep(interval)
+    return False
+
+
 def install_service() -> None:
     _ensure_venv()
     if not _sudo_write(SERVICE_FILE, _render_unit()):
         print("  Failed to write service file.")
-        print("  Check sudo password in Settings.")
         return
     _systemctl("daemon-reload")
     _systemctl("enable", SERVICE_NAME)
@@ -208,7 +198,11 @@ def daemon_menu() -> None:
         clear()
         if lbl == "Install & enable":
             install_service()
-            print("  Service installed and started.")
+            print("  Waiting for daemon...", end="", flush=True)
+            if _wait_for_daemon():
+                print(" ready.")
+            else:
+                print("\n  Warning: daemon did not start in time.")
             pause()
         elif lbl == "Uninstall":
             uninstall_service()
@@ -230,20 +224,6 @@ def ensure_binaries_executable() -> None:
                 subprocess.run(["chmod", "+x", path], check=True)
             except subprocess.CalledProcessError:
                 pass
-
-
-def _prompt_sudo() -> None:
-    while True:
-        subprocess.run("sudo -k", shell=True)
-        pw = getpass.getpass("  Sudo (login) password: ")
-        r  = subprocess.run(
-            ["sudo", "-S", "ls", "/"],
-            input=pw.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        )
-        if r.returncode == 0:
-            save_password(pw)
-            return
-        print("  Incorrect — try again.")
 
 
 def _apply_defaults() -> None:
@@ -268,44 +248,36 @@ def run_welcome() -> None:
         return
 
     cfg.ensure_sections("User", "Settings", "Info")
-    TOTAL = 5
+    TOTAL = 3
 
     _step(1, TOTAL, "Welcome")
     print("  UXTU4Unix — AMD Zen power management for Linux")
     print("  Built on RyzenAdj — inspired by UXTU\n")
     pause()
 
-    _step(2, TOTAL, "Keyring")
-    print("  Checking secret service backend...")
-    if not backend_available():
-        print("\n  No keyring found.")
-        print("  Install gnome-keyring or kwallet, then restart UXTU4Unix.")
-        sys.exit(1)
-    print("  Keyring OK.")
-    pause()
-
-    _step(3, TOTAL, "Sudo password")
-    _prompt_sudo()
+    _step(2, TOTAL, "Daemon service")
     _apply_defaults()
     ensure_binaries_executable()
     cfg.save()
+    print("  The power daemon runs in the background keeping your preset active.")
+    print("  It is required for UXTU4Unix to work properly.\n")
+    if confirm("Install and enable daemon service"):
+        install_service()
+        print("\n  Waiting for daemon...", end="", flush=True)
+        if _wait_for_daemon():
+            print(" ready.")
+        else:
+            print("\n  Warning: daemon did not start in time.")
+            print("  Hardware detection may fail — check logs if issues occur.")
+    pause()
 
-    _step(4, TOTAL, "Hardware detection")
+    _step(3, TOTAL, "Hardware detection")
     print("  Detecting hardware...")
     detect_hardware()
     pause()
 
     from .settings import preset_cfg
     preset_cfg()
-
-    _step(5, TOTAL, "Daemon service")
-    if not service_running():
-        print("  The power daemon runs in the background keeping your preset active.")
-        print("  It is required for UXTU4Unix to work properly.\n")
-        if confirm("Install and enable daemon service"):
-            install_service()
-            print("\n  Daemon installed and started.")
-        pause()
 
     clear()
     print("  Setup complete. UXTU4Unix is ready.\n")
@@ -330,17 +302,10 @@ def check_integrity() -> None:
     )
     if broken:
         reset_all()
-        return
-
-    if not has_password():
-        print("  Warning: sudo password not found in keyring.")
-        print("  Go to Settings → Sudo password.")
-        pause()
 
 
 def reset_all() -> None:
     if os.path.isfile(cfg.CONFIG_PATH):
         os.remove(cfg.CONFIG_PATH)
-    delete_password()
     cfg.load()
     run_welcome()

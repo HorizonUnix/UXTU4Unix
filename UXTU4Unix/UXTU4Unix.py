@@ -19,17 +19,6 @@ from Assets.Modules.updater   import check_updates
 from Assets.Modules.ui        import clear, pause, quit_app, menu, about_menu
 
 
-def _check_keyring() -> None:
-    from Assets.Modules.keyring import backend_available
-    if not backend_available():
-        print(
-            "\n  No secret service backend found.\n"
-            "  UXTU4Unix needs gnome-keyring or kwallet.\n"
-            "  Start your keyring daemon and try again.\n"
-        )
-        sys.exit(1)
-
-
 def _require_daemon() -> None:
     from Assets.Modules.ipc   import get_client
     from Assets.Modules.setup import daemon_menu
@@ -78,7 +67,6 @@ def _apply_on_start() -> None:
 def main() -> None:
     subprocess.run("printf '\\e[8;35;80t'", shell=True)
 
-    _check_keyring()
     check_integrity()
     check_binaries()
     ensure_binaries_executable()
