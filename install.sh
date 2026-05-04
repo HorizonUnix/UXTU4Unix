@@ -8,8 +8,8 @@ SRC_DIR="$INSTALL_DIR/src"
 BIN_WRAPPER="/usr/local/bin/uxtu4unix"
 SERVICE_NAME="uxtu4unix.service"
 SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME"
-RELEASE_TAG="0.6.0Beta04"
-RELEASE_ZIP="UXTU4Unix-v0.6Beta04.zip"
+RELEASE_TAG="0.6.0Beta05"
+RELEASE_ZIP="UXTU4Unix-v0.6Beta05.zip"
 RELEASE_URL="https://github.com/HorizonUnix/UXTU4Unix/releases/download/${RELEASE_TAG}/${RELEASE_ZIP}"
 TMP_DIR="$(mktemp -d)"
 
@@ -26,7 +26,6 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 CURRENT_USER="$(whoami)"
 CURRENT_GROUP="$(id -gn)"
-
 
 detect_pm() {
     if   command -v apt-get &>/dev/null; then echo "apt"
@@ -112,28 +111,28 @@ install_deps() {
             sudo apt-get install -y -qq --no-install-recommends \
                 python3 python3-venv python3-pip \
                 dmidecode wget unzip curl \
-                gnome-keyring libsecret-1-0 dbus-x11 2>/dev/null
+                2>/dev/null
             ;;
         dnf)
             sudo dnf install -y -q python3 python3-pip \
                 dmidecode wget unzip curl \
-                gnome-keyring libsecret 2>/dev/null
+                2>/dev/null
             ;;
         yum)
             sudo yum install -y -q python3 python3-pip \
                 dmidecode wget unzip curl \
-                gnome-keyring libsecret 2>/dev/null
+                2>/dev/null
             ;;
         pacman)
             sudo pacman -Sy --noconfirm --quiet \
                 python python-pip \
                 dmidecode wget unzip curl \
-                gnome-keyring libsecret 2>/dev/null
+                2>/dev/null
             ;;
         zypper)
             sudo zypper install -y --quiet python3 python3-pip \
                 dmidecode wget unzip curl \
-                gnome-keyring libsecret1 2>/dev/null
+                2>/dev/null
             ;;
     esac
     ok "Done."
@@ -166,7 +165,6 @@ install_files() {
     src="$(find "$TMP_DIR/extracted" -maxdepth 1 -mindepth 1 -type d | head -1)"
     [[ -d "$src" ]] || die "Couldn't find source dir in zip."
 
-    # Create install dir owned by the current user
     sudo mkdir -p "$INSTALL_DIR"
     sudo chown "$CURRENT_USER:$CURRENT_GROUP" "$INSTALL_DIR"
 
@@ -222,7 +220,7 @@ setup_venv() {
             || die "Failed to install requirements."
     else
         warn "No requirements.txt — installing known deps."
-        "$VENV_PYTHON" -m pip install --quiet --no-cache-dir pyzmq keyring 2>/dev/null \
+        "$VENV_PYTHON" -m pip install --quiet --no-cache-dir pyzmq 2>/dev/null \
             || die "Failed to install deps."
     fi
     ok "Done."
