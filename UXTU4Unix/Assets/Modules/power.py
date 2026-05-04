@@ -3,7 +3,7 @@ power.py
 """
 
 from __future__ import annotations
-import importlib, os
+import importlib
 from . import config as cfg
 from .hardware import RYZEN_FAMILY
 from .ui import menu, clear, ask, pause

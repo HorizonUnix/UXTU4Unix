@@ -297,6 +297,7 @@ def detect() -> None:
     for key, field in {"CPU": "Version", "Signature": "Signature"}.items():
         cfg.set("Info", key, _dmi(field))
     _compute_codename()
+
     cfg.save()
 
 
@@ -316,11 +317,6 @@ def _compute_codename() -> None:
     cfg.set("Info", "Architecture", arch)
     cfg.set("Info", "Family",       family)
     cfg.set("Info", "Type",         _cpu_type(family, arch))
-
-
-def refresh_codename() -> None:
-    _compute_codename()
-    cfg.save()
 
 
 def show_info() -> None:
