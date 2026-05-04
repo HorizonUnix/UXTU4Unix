@@ -8,8 +8,8 @@ SRC_DIR="$INSTALL_DIR/src"
 BIN_WRAPPER="/usr/local/bin/uxtu4unix"
 SERVICE_NAME="uxtu4unix.service"
 SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME"
-RELEASE_TAG="0.6.0Beta03"
-RELEASE_ZIP="UXTU4Unix-v0.6Beta03.zip"
+RELEASE_TAG="0.6.0Beta04"
+RELEASE_ZIP="UXTU4Unix-v0.6Beta04.zip"
 RELEASE_URL="https://github.com/HorizonUnix/UXTU4Unix/releases/download/${RELEASE_TAG}/${RELEASE_ZIP}"
 TMP_DIR="$(mktemp -d)"
 
@@ -27,6 +27,7 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 CURRENT_USER="$(whoami)"
 CURRENT_GROUP="$(id -gn)"
 
+
 detect_pm() {
     if   command -v apt-get &>/dev/null; then echo "apt"
     elif command -v dnf     &>/dev/null; then echo "dnf"
@@ -35,6 +36,71 @@ detect_pm() {
     elif command -v zypper  &>/dev/null; then echo "zypper"
     else die "Unsupported distro — https://github.com/HorizonUnix/UXTU4Unix"
     fi
+}
+
+ensure_python310() {
+    local py=""
+    for candidate in python3.14 python3.13 python3.12 python3.11 python3.10 python3; do
+        if command -v "$candidate" &>/dev/null; then
+            if "$candidate" -c "import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)" 2>/dev/null; then
+                py="$candidate"
+                break
+            fi
+        fi
+    done
+
+    if [[ -n "$py" ]]; then
+        ok "Python OK: $($py --version)"
+        return
+    fi
+
+    warn "Python 3.10+ not found — installing latest available..."
+    case "$1" in
+        apt)
+            if grep -qi "ubuntu" /etc/os-release 2>/dev/null; then
+                sudo apt-get install -y -qq software-properties-common 2>/dev/null
+                sudo add-apt-repository -y ppa:deadsnakes/ppa 2>/dev/null
+                sudo apt-get update -qq 2>/dev/null
+            fi
+            local best=""
+            for v in 3.14 3.13 3.12 3.11 3.10; do
+                if sudo apt-get install -y -qq --dry-run "python${v}" "python${v}-venv" \
+                        &>/dev/null 2>&1; then
+                    best="$v"; break
+                fi
+            done
+            [[ -n "$best" ]] || die "No Python 3.10+ package found in apt repos."
+            sudo apt-get install -y -qq "python${best}" "python${best}-venv" 2>/dev/null \
+                || die "Failed to install python${best}."
+            ;;
+        dnf)
+            sudo dnf install -y -q python3 python3-pip 2>/dev/null \
+                || die "Failed to install Python via dnf."
+            ;;
+        yum)
+            sudo yum install -y -q python3 python3-pip 2>/dev/null \
+                || die "Failed to install Python via yum."
+            ;;
+        pacman)
+            sudo pacman -Sy --noconfirm --quiet python 2>/dev/null \
+                || die "Failed to install Python via pacman."
+            ;;
+        zypper)
+            sudo zypper install -y --quiet python3 python3-pip 2>/dev/null \
+                || die "Failed to install Python via zypper."
+            ;;
+    esac
+
+    for candidate in python3.14 python3.13 python3.12 python3.11 python3.10 python3; do
+        if command -v "$candidate" &>/dev/null; then
+            if "$candidate" -c "import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)" 2>/dev/null; then
+                ok "Python OK: $($candidate --version)"
+                return
+            fi
+        fi
+    done
+
+    die "Could not install Python 3.10+. Install it manually and re-run."
 }
 
 install_deps() {
@@ -221,6 +287,8 @@ main() {
     info "Package manager : $pm"
     echo ""
 
+    ensure_python310 "$pm"
+    echo ""
     install_deps "$pm"
     echo ""
     download_release
