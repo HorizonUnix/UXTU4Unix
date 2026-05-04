@@ -1,194 +1,160 @@
 """
-settings.py - All settings sub-menus.
+settings.py
 """
-
-import getpass
-import subprocess
-
+from __future__ import annotations
+import getpass, subprocess
 from . import config as cfg
-from .power import get_presets, apply_smu
-from .secure_password import save_password, has_password
-from .ui import clear, pause, confirm
-
-def _toggle_menu(title, description, section, key, *, default="0", enable_label="Enable", disable_label="Disable"):
-    """Generic enable/disable toggle sub-menu."""
-    while True:
-        clear()
-        print(f"{'-' * 15} {title} {'-' * 15}")
-        print(f"({description})")
-        status = cfg.get(section, key, default) == "1"
-        print(f"\nStatus: {'Enabled' if status else 'Disabled'}")
-        print(f"\n  1. {enable_label}")
-        print(f"  2. {disable_label}")
-        print("\n  B. Back\n")
-        c = input("Option: ").strip().lower()
-        if c == "1":
-            cfg.set(section, key, "1")
-            cfg.save()
-        elif c == "2":
-            cfg.set(section, key, "0")
-            cfg.save()
-        elif c == "b":
-            break
-        else:
-            print("Invalid option.")
-            pause()
+from .power import apply_smu, get_presets, _daemon_apply_saved
+from .keyring import save_password, has_password
+from .ui import menu, clear, ask, pause, confirm
 
 
-def _verify_sudo(password):
+def _tog(section: str, key: str, default: str = "0") -> str:
+    return "ON" if cfg.get(section, key, default) == "1" else "OFF"
+
+
+def _verify_sudo(pw: str) -> bool:
     subprocess.run("sudo -k", shell=True)
-    result = subprocess.run(
+    r = subprocess.run(
         ["sudo", "-S", "ls", "/"],
-        input=password.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        input=pw.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
     )
-    return result.returncode == 0
+    return r.returncode == 0
 
 
-def preset_cfg():
+_TOGGLE_MAP = {
+    "Apply preset on daemon start":  ("Settings", "ApplyOnStart",   "1", False),
+    "Software update": ("Settings", "SoftwareUpdate", "1", False),
+    "Debug":           ("Settings", "Debug",          "1", False),
+}
+
+
+def _do_toggle(idx: int, items: list) -> None:
+    lbl = items[idx][0]
+    if lbl not in _TOGGLE_MAP:
+        return
+    section, key, default, notify = _TOGGLE_MAP[lbl]
+    was_on = cfg.get(section, key, default) == "1"
+    cfg.set(section, key, "0" if was_on else "1")
+    cfg.save()
+    items[idx] = (lbl, "OFF" if was_on else "ON", "toggle")
+    if notify:
+        _daemon_apply_saved()
+
+
+def _settings_items() -> list:
+    from .setup import service_running
+    running = service_running()
+    return [
+        ("Daemon service",   "Running" if running else "Stopped"),
+        ("─", "", "sep"),
+        ("Apply preset on daemon start",   _tog("Settings", "ApplyOnStart",  "1"),  "toggle"),
+        ("Software update",  _tog("Settings", "SoftwareUpdate","1"),  "toggle"),
+        ("Debug",            _tog("Settings", "Debug",         "1"),  "toggle"),
+        ("─", "", "sep"),
+        ("Sudo password",    "Set" if has_password() else "Not set"),
+        ("Reset all",        ""),
+        ("Back",             ""),
+    ]
+
+
+def settings_menu() -> None:
+    from .setup import daemon_menu
+
+    last_idx = 0
+    while True:
+        items  = _settings_items()
+        choice = menu("Settings", items, selected=last_idx, on_toggle=_do_toggle)
+        if choice == -1:
+            return
+
+        last_idx = choice
+        lbl = items[choice][0]
+
+        if lbl == "Back":
+            return
+        elif lbl == "Daemon service":
+            daemon_menu()
+        elif lbl in _TOGGLE_MAP:
+            _do_toggle(choice, items)
+        elif lbl == "Sudo password":
+            pass_cfg()
+        elif lbl == "Reset all":
+            _reset_all()
+
+
+def preset_cfg() -> None:
     presets = get_presets()
+    names   = list(presets.keys())
+
+    items = (
+        [("Dynamic mode (recommended)", "auto AC/battery")]
+        + [(n, "") for n in names]
+        + [("Custom", "manual ryzenadj args"), ("Back", "")]
+    )
+
     while True:
-        clear()
-        print("-" * 15 + " Preset " + "-" * 15)
-        for i, name in enumerate(presets, 1):
-            print(f"  {i}. {name}")
-        print("\n  D. Dynamic Mode\n  C. Custom\n  B. Back")
-        print("\n  Tip: Dynamic Mode is recommended for normal use.\n")
-        c = input("Option: ").strip().lower()
-        if c == "b":
+        choice = menu("Choose a preset", items, subtitle="You can change this later in Power Management")
+        if choice == -1 or items[choice][0] == "Back":
             return
-        if c == "d":
-            cfg.set("User", "Mode", "Balance")
+
+        lbl = items[choice][0]
+
+        if lbl == "Dynamic mode (recommended)":
+            cfg.set("User",     "Mode",        "Balance")
             cfg.set("Settings", "DynamicMode", "1")
-            cfg.set("Settings", "ReApply", "1")
-            print("Dynamic Mode enabled.")
-            pause()
+            cfg.set("Settings", "ReApply",     "1")
             cfg.save()
             return
-        if c == "c":
-            args = input("Enter custom ryzenadj arguments: ")
-            cfg.set("User", "Mode", "Custom")
-            cfg.set("User", "CustomArgs", args)
-            cfg.set("Settings", "DynamicMode", "0")
-            print("Custom preset saved.")
-            pause()
-            cfg.save()
-            return
-        try:
-            n = int(c)
-            name = list(presets.keys())[n - 1]
-            cfg.set("User", "Mode", name)
-            cfg.set("Settings", "DynamicMode", "0")
-            print(f"Preset '{name}' saved.")
-            pause()
-            cfg.save()
-            return
-        except (ValueError, IndexError):
-            print("Invalid option.")
-            pause()
-
-
-def sleep_cfg():
-    while True:
-        clear()
-        val = cfg.get("Settings", "Time", "3")
-        print("-" * 15 + " Sleep time " + "-" * 15)
-        print(f"Auto-reapply every: {val} seconds")
-        print("\n  1. Change\n  B. Back\n")
-        c = input("Option: ").strip().lower()
-        if c == "1":
-            new_val = input("New interval in seconds (default 3): ").strip()
-            if new_val.isdigit():
-                cfg.set("Settings", "Time", new_val)
+        elif lbl == "Custom":
+            args = ask("ryzenadj arguments")
+            if args:
+                cfg.set("User",     "Mode",        "Custom")
+                cfg.set("User",     "CustomArgs",  args)
+                cfg.set("Settings", "DynamicMode", "0")
                 cfg.save()
-            else:
-                print("Invalid value - must be a whole number.")
-                pause()
-        elif c == "b":
-            break
-        else:
-            print("Invalid option.")
-            pause()
+            return
+        elif lbl in names:
+            cfg.set("User",     "Mode",        lbl)
+            cfg.set("Settings", "DynamicMode", "0")
+            cfg.save()
+            return
 
 
-def reapply_cfg():
-    _toggle_menu("Auto reapply", "Automatically reapply preset on a timer",
-                 "Settings", "ReApply",
-                 enable_label="Enable Auto reapply", disable_label="Disable Auto reapply")
+def sleep_cfg() -> None:
+    clear()
+    current = cfg.get("Settings", "Time", "3")
+    val = ask("Reapply interval in seconds", default=current)
+    if val.isdigit():
+        cfg.set("Settings", "Time", val)
+        cfg.save()
+        _daemon_apply_saved()
+    else:
+        print("\n  Must be a whole number.")
+        pause()
 
 
-def applystart_cfg():
-    _toggle_menu("Apply on start", "Apply preset when UXTU4Unix launches",
-                 "Settings", "ApplyOnStart", default="1",
-                 enable_label="Enable Apply on start", disable_label="Disable Apply on start")
-
-
-def debug_cfg():
-    _toggle_menu("Debug", "Show extra process information",
-                 "Settings", "Debug", default="1",
-                 enable_label="Enable Debug", disable_label="Disable Debug")
-
-
-def cfu_cfg():
-    _toggle_menu("Software update", "Check for updates on launch",
-                 "Settings", "SoftwareUpdate", default="1",
-                 enable_label="Enable Software update", disable_label="Disable Software update")
-
-
-def pass_cfg():
+def pass_cfg() -> None:
     while True:
+        subtitle = f"Stored: {'Yes (keyring)' if has_password() else 'Not set'}"
+        items    = [("Change password", ""), ("Back", "")]
+        choice   = menu("Sudo Password", items, subtitle=subtitle)
+        if choice == -1 or items[choice][0] == "Back":
+            return
+
         clear()
-        print("-" * 15 + " Sudo password " + "-" * 15)
-        print(f"Stored: {'Yes (system keyring)' if has_password() else 'Not set'}")
-        print("\n  1. Change password\n  B. Back\n")
-        c = input("Option: ").strip().lower()
-        if c == "1":
-            while True:
-                pw = getpass.getpass("New sudo password: ")
-                if _verify_sudo(pw):
-                    save_password(pw)
-                    print("Password updated.")
-                    pause()
-                    break
-                print("Incorrect password - try again.")
-        elif c == "b":
-            break
-        else:
-            print("Invalid option.")
-            pause()
+        while True:
+            pw = getpass.getpass("  New sudo password: ")
+            if _verify_sudo(pw):
+                save_password(pw)
+                print("  Password saved.")
+                pause()
+                return
+            print("  Incorrect — try again.")
 
 
-def settings_menu():
-    def _reset_all():
+def _reset_all() -> None:
+    clear()
+    if confirm("Reset all settings? This cannot be undone"):
         from .setup import reset_all
         reset_all()
-
-    while True:
-        clear()
-        print("-" * 15 + " Settings " + "-" * 15)
-        print("  1. Preset")
-        print("  2. Sleep time")
-        print("  3. Auto reapply")
-        print("  4. Apply on start")
-        print("  5. Software update")
-        print("  6. Sudo password")
-        print("  7. Debug")
-        print("\n  R. Reset all settings")
-        print("  B. Back\n")
-
-        c = input("Option: ").strip().lower()
-
-        base_map = {
-            "1": preset_cfg, "2": sleep_cfg, "3": reapply_cfg,
-            "4": applystart_cfg, "5": cfu_cfg,
-            "6": pass_cfg, "7": debug_cfg,
-            "r": _reset_all, "b": None,
-        }
-
-        if c == "b":
-            break
-        action = base_map.get(c)
-        if action is None:
-            print("Invalid option.")
-            pause()
-        else:
-            action()
