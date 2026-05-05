@@ -102,14 +102,14 @@ def run_welcome() -> None:
 
     label_width = 14
 
-    def row(label: str, value: str) -> None:
-        print(f"  \033[2m{label:<{label_width}}\033[0m  {value}")
+    def row(label: str, value: str, width: int) -> None:
+        print(f"  \033[2m{label:<{width}}\033[0m  {value}")
 
-    row("CPU",       cpu      or "Not detected")
-    row("Family",    family   or "Unknown")
-    row("Arch",      arch     or "Unknown")
-    row("Type",      cpu_type or "Unknown")
-    row("Signature", sig      or "Unknown")
+    row("CPU",       cpu      or "Not detected", label_width)
+    row("Family",    family   or "Unknown",      label_width)
+    row("Arch",      arch     or "Unknown",      label_width)
+    row("Type",      cpu_type or "Unknown",      label_width)
+    row("Signature", sig      or "Unknown",      label_width)
     print()
     pause()
 
@@ -134,34 +134,41 @@ def check_integrity() -> None:
         - dict[str, iterable[str]]
         - iterable[str] (legacy: section names only, no required keys)
         """
-        def fail(message: str) -> dict[str, tuple[str, ...]]:
-            print(message)
+        class InvalidRequiredError(Exception):
+            pass
+
+        try:
+            if isinstance(required_value, dict):
+                normalized: dict[str, tuple[str, ...]] = {}
+                for section, keys in required_value.items():
+                    if not isinstance(section, str):
+                        raise InvalidRequiredError("  Warning: ignoring invalid cfg.REQUIRED section name (must be str).")
+                    if keys is None:
+                        normalized[section] = ()
+                        continue
+                    if isinstance(keys, (list, tuple, set)):
+                        if any(not isinstance(key, str) for key in keys):
+                            raise InvalidRequiredError(
+                                f"  Warning: ignoring invalid cfg.REQUIRED keys for section '{section}' (must be str)."
+                            )
+                        normalized[section] = tuple(keys)
+                        continue
+                    raise InvalidRequiredError(
+                        f"  Warning: ignoring invalid cfg.REQUIRED keys container for section '{section}'."
+                    )
+                return normalized
+
+            if isinstance(required_value, (list, tuple, set)):
+                if any(not isinstance(section, str) for section in required_value):
+                    raise InvalidRequiredError("  Warning: ignoring invalid cfg.REQUIRED sections (must be str).")
+                return {section: () for section in required_value}
+
+            if required_value is not None:
+                raise InvalidRequiredError("  Warning: ignoring invalid cfg.REQUIRED format.")
             return {}
-
-        if isinstance(required_value, dict):
-            normalized: dict[str, tuple[str, ...]] = {}
-            for section, keys in required_value.items():
-                if not isinstance(section, str):
-                    return fail("  Warning: ignoring invalid cfg.REQUIRED section name (must be str).")
-                if keys is None:
-                    normalized[section] = ()
-                    continue
-                if isinstance(keys, (list, tuple, set)):
-                    if any(not isinstance(key, str) for key in keys):
-                        return fail(f"  Warning: ignoring invalid cfg.REQUIRED keys for section '{section}' (must be str).")
-                    normalized[section] = tuple(keys)
-                    continue
-                return fail(f"  Warning: ignoring invalid cfg.REQUIRED keys container for section '{section}'.")
-            return normalized
-
-        if isinstance(required_value, (list, tuple, set)):
-            if any(not isinstance(section, str) for section in required_value):
-                return fail("  Warning: ignoring invalid cfg.REQUIRED sections (must be str).")
-            return {section: () for section in required_value}
-
-        if required_value is not None:
-            return fail("  Warning: ignoring invalid cfg.REQUIRED format.")
-        return {}
+        except InvalidRequiredError as error:
+            print(error)
+            return {}
 
     required = normalize_required(cfg.REQUIRED)
 
@@ -181,7 +188,7 @@ def check_integrity() -> None:
     if broken:
         print("  Warning: configuration integrity check failed.")
         print("  Resetting will remove the current configuration and recreate defaults.")
-        if confirm("  Do you want to reset the configuration now?", default=False):
+        if confirm("Do you want to reset the configuration now?", default=False):
             reset_all()
         else:
             print("  Keeping existing configuration unchanged.")
