@@ -45,8 +45,6 @@ def _apply_if_idle() -> None:
 
 
 def main() -> None:
-    subprocess.run("printf '\\e[8;35;80t'", shell=True)
-
     check_integrity()
     check_binaries()
     ensure_binaries_executable()
