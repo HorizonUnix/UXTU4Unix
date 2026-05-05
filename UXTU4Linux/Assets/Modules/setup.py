@@ -20,12 +20,6 @@ from .service import (
 
 DEFAULT_SETTINGS_TIME = "3"
 DEFAULT_SETTINGS_SOFTWARE_UPDATE = "1"
-
-
-class InvalidRequiredError(ValueError):
-    """Raised when cfg.REQUIRED has an invalid format or content."""
-
-    pass
 DEFAULT_SETTINGS_REAPPLY = "0"
 DEFAULT_SETTINGS_APPLY_ON_START = "1"
 DEFAULT_SETTINGS_DYNAMIC_MODE = "0"
