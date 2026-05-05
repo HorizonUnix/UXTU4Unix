@@ -119,7 +119,12 @@ def check_integrity() -> None:
 
     cfg.load()
 
-    required = cfg.REQUIRED if isinstance(cfg.REQUIRED, dict) else {s: () for s in cfg.REQUIRED}
+    if isinstance(cfg.REQUIRED, dict):
+        required = cfg.REQUIRED
+    elif isinstance(cfg.REQUIRED, (list, tuple, set)):
+        required = {s: () for s in cfg.REQUIRED}
+    else:
+        required = {}
 
     def has_all_sections() -> bool:
         return all(cfg.instance().has_section(section) for section in required)
