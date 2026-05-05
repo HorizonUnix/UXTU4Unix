@@ -205,7 +205,8 @@ class PowerDaemon:
         self._interval         = 3
         self._last_output      = ""
         self._running_loop     = False
-        self._last_logged_mode = ""
+        with self._lock:
+            self._last_logged_mode = ""
 
         self._dispatch = {
             "ping":        self._cmd_ping,
@@ -249,7 +250,6 @@ class PowerDaemon:
                 self._stop_evt.wait(min(remaining, max_wait_step))
             if self._stop_evt.is_set():
                 break
-            eff_mode = mode
             try:
                 eff_mode, eff_args = self._effective_mode_args(mode, args, dynamic)
                 with self._lock:
@@ -259,7 +259,8 @@ class PowerDaemon:
                     with self._lock:
                         self._last_logged_mode = eff_mode
             except Exception as exc:
-                logging.warning("Failed to apply preset '%s' in loop: %s", eff_mode, exc)
+                failed_mode = locals().get("eff_mode", mode)
+                logging.warning("Failed to apply preset '%s' in loop: %s", failed_mode, exc)
         with self._lock:
             self._running_loop = False
 
@@ -316,7 +317,8 @@ class PowerDaemon:
         try:
             eff_mode, eff_args = self._effective_mode_args(mode, args, dynamic)
             self._apply_once(eff_args, eff_mode, log=True)
-            self._last_logged_mode = eff_mode
+            with self._lock:
+                self._last_logged_mode = eff_mode
         except Exception as exc:
             with self._lock:
                 self._running_loop = False
@@ -433,8 +435,8 @@ class PowerDaemon:
         # while avoiding a tight loop that would wake the CPU too frequently.
         poll_timeout_ms = ZMQ_POLL_TIMEOUT_MS
 
-        signal.signal(signal.SIGTERM, lambda *args: self._sig_handler(stop_requested, *args))
-        signal.signal(signal.SIGINT,  lambda *args: self._sig_handler(stop_requested, *args))
+        signal.signal(signal.SIGTERM, lambda signum, frame: self._sig_handler(stop_requested, signum, frame))
+        signal.signal(signal.SIGINT,  lambda signum, frame: self._sig_handler(stop_requested, signum, frame))
 
         while True:
             if stop_requested.is_set():
