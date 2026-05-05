@@ -20,12 +20,6 @@ from .service import (
 
 DEFAULT_SETTINGS_TIME = "3"
 DEFAULT_SETTINGS_SOFTWARE_UPDATE = "1"
-
-
-class InvalidRequiredError(ValueError):
-    """Raised when cfg.REQUIRED has an invalid format or content."""
-
-    pass
 DEFAULT_SETTINGS_REAPPLY = "0"
 DEFAULT_SETTINGS_APPLY_ON_START = "1"
 DEFAULT_SETTINGS_DYNAMIC_MODE = "0"
@@ -140,38 +134,39 @@ def check_integrity() -> None:
         - dict[str, iterable[str]]
         - iterable[str] (legacy: section names only, no required keys)
         """
-        try:
-            if isinstance(required_value, dict):
-                normalized: dict[str, tuple[str, ...]] = {}
-                for section, keys in required_value.items():
-                    if not isinstance(section, str):
-                        raise ValueError("  Warning: ignoring invalid cfg.REQUIRED section name (must be str).")
-                    if keys is None:
-                        normalized[section] = ()
-                        continue
-                    if isinstance(keys, (list, tuple, set)):
-                        if any(not isinstance(key, str) for key in keys):
-                            raise ValueError(
-                                f"  Warning: ignoring invalid cfg.REQUIRED keys for section '{section}' (must be str)."
-                            )
-                        normalized[section] = tuple(keys)
-                        continue
-                    raise ValueError(
-                        f"  Warning: ignoring invalid cfg.REQUIRED keys container for section '{section}'."
-                    )
-                return normalized
+        if isinstance(required_value, dict):
+            normalized: dict[str, tuple[str, ...]] = {}
+            for section, keys in required_value.items():
+                if not isinstance(section, str):
+                    print("  Warning: ignoring invalid cfg.REQUIRED section name (must be str).")
+                    return {}
+                if keys is None:
+                    normalized[section] = ()
+                    continue
+                if isinstance(keys, (list, tuple, set)):
+                    if any(not isinstance(key, str) for key in keys):
+                        print(
+                            f"  Warning: ignoring invalid cfg.REQUIRED keys for section '{section}' (must be str)."
+                        )
+                        return {}
+                    normalized[section] = tuple(keys)
+                    continue
+                print(
+                    f"  Warning: ignoring invalid cfg.REQUIRED keys container for section '{section}'."
+                )
+                return {}
+            return normalized
 
-            if isinstance(required_value, (list, tuple, set)):
-                if any(not isinstance(section, str) for section in required_value):
-                    raise ValueError("  Warning: ignoring invalid cfg.REQUIRED sections (must be str).")
-                return {section: () for section in required_value}
+        if isinstance(required_value, (list, tuple, set)):
+            if any(not isinstance(section, str) for section in required_value):
+                print("  Warning: ignoring invalid cfg.REQUIRED sections (must be str).")
+                return {}
+            return {section: () for section in required_value}
 
-            if required_value is not None:
-                raise ValueError("  Warning: ignoring invalid cfg.REQUIRED format.")
+        if required_value is not None:
+            print("  Warning: ignoring invalid cfg.REQUIRED format.")
             return {}
-        except ValueError as error:
-            print(error)
-            return {}
+        return {}
 
     required = normalize_required(cfg.REQUIRED)
 
