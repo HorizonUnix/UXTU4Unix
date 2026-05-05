@@ -101,7 +101,7 @@ def _do_update() -> None:
         for path in (launch, ryzen):
             if os.path.exists(path):
                 if _sudo("chmod", "+x", path) != 0:
-                    raise PermissionError(f"Could not set executable permission on {path}")
+            raise RuntimeError(f"Refusing to relaunch with untrusted interpreter path: {python_exec!r}")
 
         new_config = os.path.join(src_dir, "Assets", "config.toml")
         if os.path.exists(config_bak):
