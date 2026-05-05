@@ -210,7 +210,14 @@ def _do_update() -> None:
 
         print("Update complete. Relaunching - please close this window.")
         raw_executable = sys.executable
-        if not raw_executable:
+        if not launch or not os.path.isabs(launch) or not os.path.isfile(launch) or not os.access(launch, os.R_OK):
+            raise RuntimeError(f"Refusing to relaunch with invalid launch target: {launch!r}")
+        try:
+            subprocess.Popen([python_exec, launch])
+        except (OSError, PermissionError, subprocess.SubprocessError) as e:
+            raise RuntimeError(
+                f"Failed to relaunch updater using interpreter {python_exec!r} and script {launch!r}: {e}"
+            ) from e
             raise RuntimeError("Refusing to relaunch: sys.executable is not set")
         python_exec = os.path.realpath(raw_executable)
         if not python_exec or not os.path.isabs(python_exec) or not os.path.isfile(python_exec) or not os.access(python_exec, os.X_OK):
