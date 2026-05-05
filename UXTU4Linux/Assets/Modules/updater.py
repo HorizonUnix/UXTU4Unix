@@ -201,7 +201,7 @@ def _do_update() -> None:
         else:
             print(f"Update failed ({err_type}): {e}")
         pause()
-        
+
 
 def show_updater() -> None:
     while True:
