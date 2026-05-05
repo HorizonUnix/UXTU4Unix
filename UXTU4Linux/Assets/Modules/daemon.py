@@ -386,19 +386,24 @@ class PowerDaemon:
 
         logging.info("Listening on %s", cfg.ZMQ_SOCKET_ADDR)
 
+        stop_requested = False
+
         def _sig_handler(*_):
-            logging.info("Shutting down.")
-            self._stop_loop()
-            if os.path.exists(cfg.ZMQ_SOCKET_PATH):
-                os.unlink(cfg.ZMQ_SOCKET_PATH)
-            sock.close()
-            ctx.term()
-            sys.exit(0)
+            nonlocal stop_requested
+            stop_requested = True
 
         signal.signal(signal.SIGTERM, _sig_handler)
         signal.signal(signal.SIGINT,  _sig_handler)
 
         while True:
+            if stop_requested:
+                logging.info("Shutting down.")
+                self._stop_loop()
+                break
+
+            if not sock.poll(500):
+                continue
+
             raw  = sock.recv_string()
             resp = self.handle(raw)
             is_shutdown = False
