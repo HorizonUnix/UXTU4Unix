@@ -1,6 +1,7 @@
 """
 config.py
 """
+
 import os
 import sys
 from configparser import ConfigParser
@@ -13,10 +14,10 @@ LATEST_VER_URL = "https://github.com/HorizonUnix/UXTU4Linux/releases/latest"
 
 _ROOT       = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 ASSETS_DIR  = os.path.join(_ROOT, "Assets")
-CONFIG_PATH = os.path.join(ASSETS_DIR, "config.toml")
+CONFIG_PATH = os.path.join(ASSETS_DIR, "config.ini")
+
 MODULES_DIR = os.path.join(ASSETS_DIR, "Modules")
 PRESETS_DIR = os.path.join(ASSETS_DIR, "Presets")
-
 RYZENADJ = os.path.join(ASSETS_DIR, "Linux", "ryzenadj")
 CMD_FILE  = os.path.realpath(sys.argv[0])
 DMIDECODE = "dmidecode"
@@ -28,8 +29,19 @@ VENV_PYTHON = os.path.join(VENV_DIR, "bin", "python3")
 ZMQ_SOCKET_PATH = "/run/uxtu4linux.sock"
 ZMQ_SOCKET_ADDR = f"ipc://{ZMQ_SOCKET_PATH}"
 
+MIN_INTERVAL_SECONDS: int = 1
+MAX_INTERVAL_SECONDS: int = 86400
+
 _cfg           = ConfigParser()
 _loaded_preset = ""
+
+
+def parse_interval(raw, default: int = 3) -> int:
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        value = default
+    return max(MIN_INTERVAL_SECONDS, min(MAX_INTERVAL_SECONDS, value))
 
 
 def set_loaded_preset(name: str) -> None:

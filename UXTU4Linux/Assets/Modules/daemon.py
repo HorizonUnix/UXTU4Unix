@@ -1,6 +1,7 @@
 """
 daemon.py
 """
+
 from __future__ import annotations
 
 import json
@@ -32,12 +33,15 @@ _DMI_ALLOWED_TYPES = frozenset({
     *(str(i) for i in range(42)),
 })
 
-MIN_INTERVAL_SECONDS: int = 1
-MAX_INTERVAL_SECONDS: int = 3600
-
 _RYZENADJ_TOKEN_RE = re.compile(
-    r'^--?[a-zA-Z][a-zA-Z0-9_-]*(=\S+)?$'
+    r'^--?[a-zA-Z][a-zA-Z0-9_-]*(=\d+(\.\d+)?)?$'
 )
+
+MIN_INTERVAL_SECONDS = cfg.MIN_INTERVAL_SECONDS
+MAX_INTERVAL_SECONDS = cfg.MAX_INTERVAL_SECONDS
+
+_STOP_LOOP_TIMEOUT_S: int = 10
+
 
 def _validate_ryzenadj_payload(tokens: list[str]) -> list[str]:
     invalid = [t for t in tokens if not _RYZENADJ_TOKEN_RE.match(t)]
@@ -116,14 +120,6 @@ def _run_ryzenadj(args: str, mode: str) -> str:
     return out.strip()
 
 
-def _parse_interval(raw, default: int) -> int:
-    try:
-        value = int(raw)
-    except (TypeError, ValueError):
-        value = default
-    return max(MIN_INTERVAL_SECONDS, min(MAX_INTERVAL_SECONDS, value))
-
-
 @dataclass
 class PresetState:
     mode:     str
@@ -146,10 +142,10 @@ def _load_saved_preset() -> PresetState | None:
         logging.warning("Saved preset %r not found.", user_mode)
         return None
 
-    reapply  = cfg.get("Settings", "ReApply",     "0") == "1"
-    dynamic  = cfg.get("Settings", "DynamicMode", "0") == "1"
+    reapply     = cfg.get("Settings", "ReApply",     "0") == "1"
+    dynamic     = cfg.get("Settings", "DynamicMode", "0") == "1"
     cfg_default = int(cfg.get("Settings", "Time", "3"))
-    interval = _parse_interval(cfg.get("Settings", "Time", str(cfg_default)), cfg_default)
+    interval    = cfg.parse_interval(cfg.get("Settings", "Time", str(cfg_default)), cfg_default)
 
     return PresetState(
         mode=user_mode,
@@ -220,10 +216,12 @@ class PowerDaemon:
 
     def _stop_loop(self) -> None:
         self._stop_evt.set()
-        with self._lock:
-            interval = self._interval
         if self._loop_thread and self._loop_thread.is_alive():
-            self._loop_thread.join(timeout=interval + 2)
+            self._loop_thread.join(timeout=_STOP_LOOP_TIMEOUT_S)
+            if self._loop_thread.is_alive():
+                logging.warning(
+                    "Reapply thread did not exit within %ds.", _STOP_LOOP_TIMEOUT_S
+                )
 
     def apply_preset_state_once(self, state: PresetState) -> str:
         return self._apply_once(state.args, state.mode, log=True)
@@ -250,13 +248,11 @@ class PowerDaemon:
             return {"ok": False, "error": str(exc)}
 
     def _cmd_apply_loop(self, msg: dict) -> dict:
-        args = msg.get("args", "")
-        mode = msg.get("mode", "Unknown")
-
+        args        = msg.get("args", "")
+        mode        = msg.get("mode", "Unknown")
         cfg_default = int(cfg.get("Settings", "Time", "3"))
-        interval    = _parse_interval(msg.get("interval", cfg_default), cfg_default)
-
-        dynamic = bool(msg.get("dynamic", False))
+        interval    = cfg.parse_interval(msg.get("interval", cfg_default), cfg_default)
+        dynamic     = bool(msg.get("dynamic", False))
 
         self._stop_loop()
 
@@ -353,7 +349,7 @@ class PowerDaemon:
             resp = {"ok": False, "error": str(exc)}
         return json.dumps(resp)
 
-    def run(self) -> None:
+    def run(self, on_ready=None) -> None:
         if os.path.exists(cfg.ZMQ_SOCKET_PATH):
             try:
                 os.unlink(cfg.ZMQ_SOCKET_PATH)
@@ -387,6 +383,12 @@ class PowerDaemon:
 
         signal.signal(signal.SIGTERM, _sig_handler)
         signal.signal(signal.SIGINT,  _sig_handler)
+
+        if on_ready is not None:
+            try:
+                on_ready()
+            except Exception as exc:
+                logging.warning("on_ready callback raised: %s", exc)
 
         while True:
             raw  = sock.recv_string()
@@ -442,10 +444,12 @@ def main() -> None:
 
     daemon = PowerDaemon()
 
-    if cfg.get("Settings", "ApplyOnStart", "1") == "1":
-        _apply_on_start(daemon)
-
-    daemon.run()
+    on_ready = (
+        (lambda: _apply_on_start(daemon))
+        if cfg.get("Settings", "ApplyOnStart", "1") == "1"
+        else None
+    )
+    daemon.run(on_ready=on_ready)
 
 
 if __name__ == "__main__":

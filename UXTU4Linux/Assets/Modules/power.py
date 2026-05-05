@@ -100,7 +100,7 @@ def apply_smu(args: str, user_mode: str, *, save_to_config: bool = True) -> None
         pause()
         return
 
-    interval = int(float(cfg.get("Settings", "Time", "3")))
+    interval = cfg.parse_interval(cfg.get("Settings", "Time", "3"), default=3)
     dynamic  = cfg.get("Settings", "DynamicMode", "0") == "1"
     reapply  = cfg.get("Settings", "ReApply", "0") == "1" or dynamic
 
@@ -113,7 +113,8 @@ def apply_smu(args: str, user_mode: str, *, save_to_config: bool = True) -> None
 def update_reapply_interval(val: str) -> bool:
     if not val.isdigit():
         return False
-    cfg.set("Settings", "Time", val)
+    clamped = str(cfg.parse_interval(val, default=3))
+    cfg.set("Settings", "Time", clamped)
     cfg.save()
     from .ipc import get_client
     client = get_client()
@@ -132,7 +133,7 @@ class PowerState:
 
 def load_power_state() -> PowerState:
     dynamic  = cfg.get("Settings", "DynamicMode", "0") == "1"
-    interval = int(float(cfg.get("Settings", "Time", "3")))
+    interval = cfg.parse_interval(cfg.get("Settings", "Time", "3"), default=3)
     try:
         from .ipc import get_client
         s    = get_client().status()
@@ -146,10 +147,11 @@ def load_power_state() -> PowerState:
 
 def _refresh_state_from_daemon(state: PowerState, client) -> PowerState:
     try:
-        s = client.status()
+        s       = client.status()
+        dynamic = s.get("dynamic", state.dynamic)
         return PowerState(
-            mode     = "Dynamic" if state.dynamic else (s.get("mode") or state.mode),
-            dynamic  = state.dynamic,
+            mode     = "Dynamic" if dynamic else (s.get("mode") or state.mode),
+            dynamic  = dynamic,
             loop     = s.get("running_loop", state.loop),
             interval = state.interval,
         )
@@ -202,7 +204,6 @@ def _toggle_dynamic_state(state: PowerState, client, presets: dict) -> PowerStat
         return state
 
     if new_dynamic:
-        apply_smu(presets.get("Balance", ""), "Balance", save_to_config=False)
         client.apply_saved()
         return PowerState(mode="Dynamic", dynamic=True, loop=True, interval=state.interval)
     else:
@@ -268,11 +269,12 @@ def _reapply_interval_menu(state: PowerState, client) -> PowerState:
         print("\n  Must be a whole number.")
         pause()
         return state
+    saved = cfg.parse_interval(cfg.get("Settings", "Time", val), default=3)
     return PowerState(
         mode     = state.mode,
         dynamic  = state.dynamic,
         loop     = state.loop,
-        interval = int(val),
+        interval = saved,
     )
 
 

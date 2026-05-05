@@ -43,7 +43,7 @@ def _do_update() -> None:
 
     zip_path   = os.path.join(install_dir, "UXTU4Linux.zip")
     new_folder = os.path.join(install_dir, "UXTU4Linux_new")
-    config_bak = os.path.join(install_dir, "config.toml.bak")
+    config_bak = os.path.join(install_dir, "config.ini.bak")
 
     def _sudo(*args: str) -> int:
         return subprocess.run(["sudo", *args]).returncode
@@ -74,7 +74,7 @@ def _do_update() -> None:
             if os.path.exists(path):
                 subprocess.run(["chmod", "+x", path], check=True)
 
-        new_config = os.path.join(src_dir, "Assets", "config.toml")
+        new_config = os.path.join(src_dir, "Assets", "config.ini")
         if os.path.exists(config_bak):
             shutil.move(config_bak, new_config)
 

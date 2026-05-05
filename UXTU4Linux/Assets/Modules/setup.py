@@ -46,38 +46,60 @@ def _step(n: int, total: int, title: str) -> None:
 
 
 def run_welcome() -> None:
+    from .service import _has_systemctl, install_service, restart_service, wait_for_daemon_or_warn, wait_for_daemon
+    from .ipc import get_client
+
     if cfg.KERNEL not in ("Linux",):
         clear()
         print(f"  Unsupported OS: {cfg.KERNEL}")
         return
 
     cfg.ensure_sections("User", "Settings", "Info")
-    TOTAL = 3
+    has_systemd = _has_systemctl()
+    TOTAL = 3 if has_systemd else 2
 
     _step(1, TOTAL, "Welcome")
     print("  UXTU4Linux — AMD Zen power management for Linux")
     print("  Built on RyzenAdj — inspired by UXTU\n")
     pause()
 
-    _step(2, TOTAL, "Daemon service")
     _apply_defaults()
     ensure_binaries_executable()
     cfg.save()
-    print("  The power daemon runs in the background keeping your preset active.")
-    print("  It is required for UXTU4Linux to work properly.\n")
-    if confirm("Install and enable daemon service"):
-        if service_running():
-            restart_service()
-        else:
-            install_service()
-        wait_for_daemon_or_warn(context="setup")
-    else:
-        print("\n  Daemon is required. Exiting setup.")
-        pause()
-        return
-    pause()
 
-    _step(3, TOTAL, "Hardware detection")
+    if has_systemd:
+        _step(2, TOTAL, "Daemon service")
+        print("  The power daemon runs in the background keeping your preset active.")
+        print("  It is required for UXTU4Linux to work properly.\n")
+        if confirm("Install and enable daemon service"):
+            if service_running():
+                restart_service()
+            else:
+                install_service()
+            wait_for_daemon_or_warn(context="setup")
+        else:
+            print("\n  Daemon is required. Exiting setup.")
+            pause()
+            return
+        pause()
+    else:
+        _step(2, TOTAL, "Daemon service")
+        from .service import _daemon_script, _python
+        print("  systemd is not available on this system.")
+        print("  The daemon must be started manually before running UXTU4Linux.\n")
+        print("  In a separate terminal, run:\n")
+        print(f"    sudo {_python()} {_daemon_script()}\n")
+        print("  Waiting for the daemon to become available...")
+        print("  (start it now, then come back here)\n")
+        if not wait_for_daemon(timeout=120.0, interval=1.0):
+            print("\n  Daemon did not start within 2 minutes.")
+            print("  Start it manually and re-run UXTU4Linux.")
+            pause()
+            return
+        print("  Daemon is running.\n")
+        pause()
+
+    _step(TOTAL, TOTAL, "Hardware detection")
     print("  Detecting hardware...\n")
     detect_hardware()
 

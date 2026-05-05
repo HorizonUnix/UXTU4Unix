@@ -1,10 +1,10 @@
 """
 ipc.py
 """
-
 from __future__ import annotations
 
 import json
+import threading
 import zmq
 
 from . import config as cfg
@@ -15,21 +15,41 @@ class DaemonClient:
 
     def __init__(self, addr: str = cfg.ZMQ_SOCKET_ADDR) -> None:
         self._addr = addr
+        self._ctx  = zmq.Context.instance()
+        self._sock: zmq.Socket | None = None
+        self._lock = threading.Lock()
+
+    def _get_sock(self) -> zmq.Socket:
+        if self._sock is None:
+            sock = self._ctx.socket(zmq.REQ)
+            sock.setsockopt(zmq.RCVTIMEO, self.TIMEOUT_MS)
+            sock.setsockopt(zmq.SNDTIMEO, self.TIMEOUT_MS)
+            sock.setsockopt(zmq.LINGER,   0)
+            sock.connect(self._addr)
+            self._sock = sock
+        return self._sock
+
+    def _reset_sock(self) -> None:
+        if self._sock is not None:
+            try:
+                self._sock.close()
+            except zmq.ZMQError:
+                pass
+            self._sock = None
 
     def _send(self, cmd: dict) -> dict | None:
-        ctx  = zmq.Context.instance()
-        sock = ctx.socket(zmq.REQ)
-        sock.setsockopt(zmq.RCVTIMEO, self.TIMEOUT_MS)
-        sock.setsockopt(zmq.SNDTIMEO, self.TIMEOUT_MS)
-        sock.setsockopt(zmq.LINGER, 0)
-        sock.connect(self._addr)
-        try:
-            sock.send_string(json.dumps(cmd))
-            return json.loads(sock.recv_string())
-        except zmq.ZMQError:
-            return None
-        finally:
-            sock.close()
+        with self._lock:
+            try:
+                sock = self._get_sock()
+                sock.send_string(json.dumps(cmd))
+                return json.loads(sock.recv_string())
+            except zmq.ZMQError:
+                self._reset_sock()
+                return None
+
+    def close(self) -> None:
+        with self._lock:
+            self._reset_sock()
 
     def ping(self) -> bool:
         r = self._send({"cmd": "ping"})

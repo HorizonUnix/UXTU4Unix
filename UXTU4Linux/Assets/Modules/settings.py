@@ -1,7 +1,6 @@
 """
 settings.py
 """
-
 from __future__ import annotations
 
 from . import config as cfg
@@ -31,11 +30,13 @@ def _do_toggle(idx: int, items: list) -> None:
 
 
 def _settings_items() -> list[MenuItem]:
-    from .service import service_running
-    running = service_running()
-    return [
-        MenuItem("Daemon service",               "Running" if running else "Stopped"),
-        MenuItem("─",                            kind="separator"),
+    from .service import service_running, _has_systemctl
+    items: list[MenuItem] = []
+    if _has_systemctl():
+        running = service_running()
+        items.append(MenuItem("Daemon service", "Running" if running else "Stopped"))
+        items.append(MenuItem("─", kind="separator"))
+    items += [
         MenuItem("Apply preset on daemon start", _tog("Settings", "ApplyOnStart",   "1"), "toggle"),
         MenuItem("Software update",              _tog("Settings", "SoftwareUpdate", "1"), "toggle"),
         MenuItem("Debug",                        _tog("Settings", "Debug",          "1"), "toggle"),
@@ -43,6 +44,7 @@ def _settings_items() -> list[MenuItem]:
         MenuItem("Reset all"),
         MenuItem("Back"),
     ]
+    return items
 
 
 def settings_menu() -> None:

@@ -221,7 +221,6 @@ def menu(
 
 
 def about_menu() -> None:
-    import webbrowser
     from .updater import get_latest_version, show_updater
 
     while True:
@@ -231,9 +230,7 @@ def about_menu() -> None:
         except Exception:
             latest = None
 
-        items: list[MenuItem] = [
-            MenuItem("Open GitHub page", key="open_github"),
-        ]
+        items: list[MenuItem] = []
         if latest:
             items.append(MenuItem("Force update", hint=f"→ {latest}", key="force_update"))
         items.append(MenuItem("Back", key="back"))
@@ -247,8 +244,6 @@ def about_menu() -> None:
         item = items[choice]
         if item.key == "back":
             return
-        elif item.key == "open_github":
-            webbrowser.open("https://www.github.com/HorizonUnix/UXTU4Linux")
         elif item.key == "force_update" and latest:
             show_updater()
             return
