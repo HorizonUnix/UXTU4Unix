@@ -3,6 +3,7 @@ updater.py
 """
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -79,12 +80,10 @@ def _do_update() -> None:
         if cmd not in allowed_commands:
             raise ValueError(f"Disallowed sudo command: {cmd}")
 
-        forbidden_chars = set(";&|`$><")
+        safe_value_re = re.compile(r"^[A-Za-z0-9._/\-]+$")
         for arg in args:
             if any(ch in arg for ch in ("\x00", "\n", "\r")):
                 raise ValueError("Invalid control characters in sudo arguments")
-            if any(ch in forbidden_chars for ch in arg):
-                raise ValueError("Invalid metacharacters in sudo arguments")
 
         cmd_args = list(args[1:])
 
@@ -98,6 +97,8 @@ def _do_update() -> None:
                 else:
                     if not a.strip():
                         raise ValueError("Empty path/value argument is not allowed")
+                    if not safe_value_re.fullmatch(a):
+                        raise ValueError(f"Invalid characters in sudo argument for {cmd}: {a}")
                     paths.append(a)
             if len(paths) < min_paths:
                 raise ValueError(f"Insufficient path/value arguments for {cmd}")
