@@ -82,7 +82,13 @@ def _do_update() -> None:
 
     try:
         if os.path.exists(cfg.CONFIG_PATH):
-            shutil.copy2(cfg.CONFIG_PATH, config_bak)
+            try:
+                shutil.copy2(cfg.CONFIG_PATH, config_bak)
+            except OSError as e:
+                raise RuntimeError(
+                    f"Configuration backup failed: could not copy {cfg.CONFIG_PATH} to {config_bak}. "
+                    "Aborting update to avoid potential configuration loss."
+                ) from e
 
         print("Downloading update...")
         try:
