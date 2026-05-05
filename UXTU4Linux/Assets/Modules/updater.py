@@ -34,7 +34,7 @@ def get_latest_version() -> str:
 def get_changelog() -> str:
     req = urllib.request.Request(cfg.GITHUB_API_URL)
     try:
-        raw = urllib.request.urlopen(req).read()
+        raw = urllib.request.urlopen(req, timeout=10).read()
         data = json.loads(raw)
         return data.get("body", "No changelog available.")
     except (urllib.error.URLError, json.JSONDecodeError, UnicodeDecodeError):
