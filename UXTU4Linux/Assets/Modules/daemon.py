@@ -293,7 +293,8 @@ class PowerDaemon:
             mode   = msg.get("mode", "Unknown")
             args   = msg.get("args", "")
             output = self._apply_once(args, mode, log=True)
-            self._last_logged_mode = mode
+            with self._lock:
+                self._last_logged_mode = mode
             return {"ok": True, "output": output}
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
@@ -435,8 +436,8 @@ class PowerDaemon:
         # while avoiding a tight loop that would wake the CPU too frequently.
         poll_timeout_ms = ZMQ_POLL_TIMEOUT_MS
 
-        signal.signal(signal.SIGTERM, lambda signum, frame: self._sig_handler(stop_requested, signum, frame))
-        signal.signal(signal.SIGINT,  lambda signum, frame: self._sig_handler(stop_requested, signum, frame))
+        signal.signal(signal.SIGTERM, lambda *args: self._sig_handler(stop_requested, *args))
+        signal.signal(signal.SIGINT,  lambda *args: self._sig_handler(stop_requested, *args))
 
         while True:
             if stop_requested.is_set():
