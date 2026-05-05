@@ -35,6 +35,7 @@ _DMI_ALLOWED_TYPES = frozenset({
 
 MIN_INTERVAL_SECONDS: int = 1
 MAX_INTERVAL_SECONDS: int = 3600
+COMMAND_TIMEOUT_SECONDS: int = 10
 
 _RYZENADJ_TOKEN_RE = re.compile(
     r'^--?[a-zA-Z][a-zA-Z0-9_-]*(=\S+)?$'
@@ -61,11 +62,11 @@ def _run_cmd(command: str) -> str:
         logging.warning("Failed to start command %r: %s", command, exc)
         return ""
     try:
-        stdout, _ = proc.communicate(timeout=10)
+        stdout, _ = proc.communicate(timeout=COMMAND_TIMEOUT_SECONDS)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
-        logging.warning("Command timed out after 10s: %r", command)
+        logging.warning("Command timed out after %ss: %r", COMMAND_TIMEOUT_SECONDS, command)
         return ""
     if proc.returncode != 0:
         logging.debug("Command exited with non-zero status %s: %r", proc.returncode, command)
