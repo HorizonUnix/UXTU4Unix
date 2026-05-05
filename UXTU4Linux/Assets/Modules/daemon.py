@@ -50,12 +50,25 @@ def _validate_ryzenadj_payload(tokens: list[str]) -> list[str]:
 def _run_cmd(command: str) -> str:
     try:
         args = shlex.split(command)
-    except ValueError:
+    except ValueError as exc:
+        logging.warning("Failed to parse command %r: %s", command, exc)
         return ""
-    proc = subprocess.Popen(
-        args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-    )
-    stdout, _ = proc.communicate()
+    try:
+        proc = subprocess.Popen(
+            args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+    except OSError as exc:
+        logging.warning("Failed to start command %r: %s", command, exc)
+        return ""
+    try:
+        stdout, _ = proc.communicate(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        logging.warning("Command timed out after 10s: %r", command)
+        return ""
+    if proc.returncode != 0:
+        logging.debug("Command exited with non-zero status %s: %r", proc.returncode, command)
     return stdout.decode("utf-8", errors="replace").strip()
 
 
