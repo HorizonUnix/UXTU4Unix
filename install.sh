@@ -19,7 +19,7 @@ warn() { echo -e "${_Y}  !${_R} $*"; }
 die()  { echo -e "${_E}  ✗${_R} $*"; exit 1; }
 hr()   { echo -e "  $(printf '─%.0s' {1..58})"; }
 
-trap 'rm -rf "$TMP_DIR"' EXIT
+trap '[[ -n "$TMP_DIR" && ( "$TMP_DIR" == /tmp/* || "$TMP_DIR" == /var/tmp/* ) ]] && rm -rf -- "$TMP_DIR"' EXIT
 
 [[ $EUID -eq 0 ]] && die "Do not run as root. Run as your normal user:  bash install.sh"
 
@@ -155,13 +155,12 @@ download_release() {
     info "Downloading release..."
     local err="$TMP_DIR/dl.err"
     if command -v wget &>/dev/null; then
-        if wget --version 2>&1 | grep -q "GNU Wget2"; then
-            wget -q -O "$TMP_DIR/release.zip" "$RELEASE_URL" 2>"$err" \
-                || { cat "$err" >&2; die "Download failed."; }
-        else
-            wget -q --show-progress -O "$TMP_DIR/release.zip" "$RELEASE_URL" 2>"$err" \
-                || { cat "$err" >&2; die "Download failed."; }
+        local -a wget_progress_flag=()
+        if ! wget --version 2>&1 | grep -q "GNU Wget2"; then
+            wget_progress_flag+=(--show-progress)
         fi
+        wget -q "${wget_progress_flag[@]}" -O "$TMP_DIR/release.zip" "$RELEASE_URL" 2>"$err" \
+            || { cat "$err" >&2; die "Download failed."; }
     elif command -v curl &>/dev/null; then
         curl -fsSL -o "$TMP_DIR/release.zip" "$RELEASE_URL" 2>"$err" \
             || { cat "$err" >&2; die "Download failed."; }
@@ -208,10 +207,14 @@ PYEOF
     ok "Done."
 }
 
+find_python_executable() {
+    command -v python3.13 || command -v python3.12 || command -v python3.11 || command -v python3.10 || command -v python3 || true
+}
+
 setup_venv() {
     info "Setting up Python venv..."
     local py
-    py="$(command -v python3.13 || command -v python3.12 || command -v python3.11 || command -v python3.10 || command -v python3 || true)"
+    py="$(find_python_executable)"
     [[ -n "$py" ]] || die "python3 not found."
 
     if [[ -d "$VENV_DIR" ]] && ! "$VENV_PYTHON" -c "" &>/dev/null 2>&1; then
