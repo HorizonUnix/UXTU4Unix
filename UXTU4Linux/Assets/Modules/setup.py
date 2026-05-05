@@ -52,14 +52,14 @@ def run_welcome() -> None:
         return
 
     cfg.ensure_sections("User", "Settings", "Info")
-    TOTAL = 3
+    total_steps = 3
 
-    _step(1, TOTAL, "Welcome")
+    _step(1, total_steps, "Welcome")
     print("  UXTU4Linux — AMD Zen power management for Linux")
     print("  Built on RyzenAdj — inspired by UXTU\n")
     pause()
 
-    _step(2, TOTAL, "Daemon service")
+    _step(2, total_steps, "Daemon service")
     _apply_defaults()
     ensure_binaries_executable()
     cfg.save()
@@ -77,7 +77,7 @@ def run_welcome() -> None:
         return
     pause()
 
-    _step(3, TOTAL, "Hardware detection")
+    _step(3, total_steps, "Hardware detection")
     print("  Detecting hardware...\n")
     detect_hardware()
 
