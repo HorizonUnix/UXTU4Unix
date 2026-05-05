@@ -159,7 +159,8 @@ def _do_update() -> None:
         zipfile.BadZipFile,
         json.JSONDecodeError,
     ) as e:
-        print(f"Update failed: {e}")
+        err_type = type(e).__name__
+        print(f"Update failed ({err_type}): {e}")
         pause()
         
 
