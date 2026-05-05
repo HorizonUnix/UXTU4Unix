@@ -158,6 +158,7 @@ def _do_update() -> None:
                 if os.path.isabs(member_name):
                     raise RuntimeError(f"Unsafe absolute path in zip entry: {member_name}")
 
+                target_path = os.path.realpath(os.path.join(dest_root, member_name))
                 try:
                     common_root = os.path.commonpath([dest_root, target_path])
                 except ValueError as e:
