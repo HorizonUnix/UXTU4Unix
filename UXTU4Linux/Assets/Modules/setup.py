@@ -30,6 +30,8 @@ def ensure_binaries_executable() -> None:
 
 def _apply_defaults() -> None:
     cfg.ensure_sections("User", "Settings", "Info")
+    if not cfg.get("User", "Mode"):
+        cfg.set("User", "Mode", "Balance")
     cfg.set("Settings", "Time",           "3")
     cfg.set("Settings", "SoftwareUpdate", "1")
     cfg.set("Settings", "ReApply",        "0")
