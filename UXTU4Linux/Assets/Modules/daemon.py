@@ -18,6 +18,9 @@ from dataclasses import dataclass
 
 _HERE = os.path.dirname(os.path.realpath(__file__))
 _ROOT = os.path.dirname(os.path.dirname(_HERE))
+
+AC_PRESET_NAME = "Extreme"
+BATTERY_PRESET_NAME = "Eco"
 THREAD_JOIN_TIMEOUT_SECONDS = 10
 ZMQ_POLL_TIMEOUT_MS = 500
 if _ROOT not in sys.path:
@@ -221,7 +224,7 @@ class PowerDaemon:
         if not dynamic:
             return base_mode, base_args
         presets = _load_presets()
-        mode    = "Extreme" if _on_ac() else "Eco"
+        mode    = AC_PRESET_NAME if _on_ac() else BATTERY_PRESET_NAME
         args    = presets.get(mode, base_args)
         return mode, args
 
@@ -241,7 +244,7 @@ class PowerDaemon:
                 self._running_loop = False
             return
         max_wait_step = 1.0
-        while not self._stop_evt.is_set():
+        while True:
             deadline = time.monotonic() + interval
             while not self._stop_evt.is_set():
                 remaining = deadline - time.monotonic()
@@ -432,8 +435,8 @@ class PowerDaemon:
         # while avoiding a tight loop that would wake the CPU too frequently.
         poll_timeout_ms = ZMQ_POLL_TIMEOUT_MS
 
-        signal.signal(signal.SIGTERM, lambda signum, frame: self._sig_handler(stop_requested, signum, frame))
-        signal.signal(signal.SIGINT,  lambda signum, frame: self._sig_handler(stop_requested, signum, frame))
+        signal.signal(signal.SIGTERM, lambda *args: self._sig_handler(stop_requested, *args))
+        signal.signal(signal.SIGINT,  lambda *args: self._sig_handler(stop_requested, *args))
 
         while True:
             if stop_requested.is_set():
