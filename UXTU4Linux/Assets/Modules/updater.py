@@ -71,7 +71,8 @@ def _do_update() -> None:
         if _sudo("mv", inner, src_dir) != 0:
             raise PermissionError(f"Could not move new release into {src_dir}")
 
-        _sudo("rm", "-rf", new_folder)
+        if _sudo("rm", "-rf", new_folder) != 0:
+            print(f"Warning: Could not remove temporary folder: {new_folder}")
 
         launch = os.path.join(src_dir, "UXTU4Linux.py")
         ryzen  = os.path.join(src_dir, "Assets", "Linux", "ryzenadj")
