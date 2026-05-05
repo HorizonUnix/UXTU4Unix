@@ -36,6 +36,12 @@ curl -fsSL https://raw.githubusercontent.com/HorizonUnix/UXTU4Linux/main/install
  
 For full details, troubleshooting, and manual steps see the **[Wiki](../../wiki)**.
  
+## Usage
+
+```bash
+uxtu4linux
+```
+
 ---
  
 ## Preview
