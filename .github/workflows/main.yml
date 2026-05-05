@@ -18,9 +18,6 @@ jobs:
 
       - name: Make file executable
         run: |
-            chmod +x UXTU4Linux/Assets/Darwin/ryzenadj
-            chmod +x UXTU4Linux/Assets/Darwin/dmidecode
-            chmod +x UXTU4Linux/UXTU4Linux.command
             chmod +x UXTU4Linux/Assets/Linux/ryzenadj
 
       - name: Rename and Zip folders
