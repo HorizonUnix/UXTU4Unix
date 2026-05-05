@@ -13,15 +13,6 @@ def _tog(section: str, key: str, default: str = "0") -> str:
     return "ON" if cfg.get(section, key, default) == "1" else "OFF"
 
 
-def _verify_sudo(pw: str) -> bool:
-    subprocess.run("sudo -k", shell=True)
-    r = subprocess.run(
-        ["sudo", "-S", "ls", "/"],
-        input=pw.encode(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-    )
-    return r.returncode == 0
-
-
 _TOGGLE_MAP = {
     "Apply preset on daemon start": ("Settings", "ApplyOnStart",   "1", False),
     "Software update":              ("Settings", "SoftwareUpdate", "1", False),
@@ -46,12 +37,12 @@ def _settings_items() -> list[MenuItem]:
     from .setup import service_running
     running = service_running()
     return [
-        MenuItem("Daemon service",              "Running" if running else "Stopped"),
-        MenuItem("─",                           kind="separator"),
+        MenuItem("Daemon service",               "Running" if running else "Stopped"),
+        MenuItem("─",                            kind="separator"),
         MenuItem("Apply preset on daemon start", _tog("Settings", "ApplyOnStart",   "1"), "toggle"),
         MenuItem("Software update",              _tog("Settings", "SoftwareUpdate", "1"), "toggle"),
         MenuItem("Debug",                        _tog("Settings", "Debug",          "1"), "toggle"),
-        MenuItem("─",                           kind="separator"),
+        MenuItem("─",                            kind="separator"),
         MenuItem("Reset all"),
         MenuItem("Back"),
     ]
@@ -78,6 +69,45 @@ def settings_menu() -> None:
             _do_toggle(choice, items)
         elif lbl == "Reset all":
             _reset_all()
+
+
+def preset_cfg() -> None:
+    from .power import get_presets
+    presets = get_presets()
+    names   = list(presets.keys())
+
+    items: list[MenuItem] = (
+        [MenuItem("Dynamic mode (recommended)", "auto AC/battery")]
+        + [MenuItem(n) for n in names]
+        + [MenuItem("Custom", "manual ryzenadj args"), MenuItem("Back")]
+    )
+
+    while True:
+        choice = menu("Choose a preset", items, subtitle="You can change this later in Power Management")
+        if choice == -1 or items[choice].label == "Back":
+            return
+
+        lbl = items[choice].label
+
+        if lbl == "Dynamic mode (recommended)":
+            cfg.set("User",     "Mode",        "Balance")
+            cfg.set("Settings", "DynamicMode", "1")
+            cfg.set("Settings", "ReApply",     "1")
+            cfg.save()
+            return
+        elif lbl == "Custom":
+            args = ask("ryzenadj arguments")
+            if args:
+                cfg.set("User",     "Mode",        "Custom")
+                cfg.set("User",     "CustomArgs",  args)
+                cfg.set("Settings", "DynamicMode", "0")
+                cfg.save()
+            return
+        elif lbl in names:
+            cfg.set("User",     "Mode",        lbl)
+            cfg.set("Settings", "DynamicMode", "0")
+            cfg.save()
+            return
 
 
 def sleep_cfg() -> None:

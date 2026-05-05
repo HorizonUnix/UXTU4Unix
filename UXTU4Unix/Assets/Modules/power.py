@@ -7,7 +7,7 @@ import importlib
 from dataclasses import dataclass
 from . import config as cfg
 from .hardware import RYZEN_FAMILY
-from .ui import menu, clear, ask, pause
+from .ui import menu, clear, ask, pause, MenuItem
 
 
 def _strip_cpu_name(raw: str) -> str:
@@ -112,10 +112,10 @@ def apply_smu(args: str, user_mode: str, *, save_to_config: bool = True) -> None
 
 @dataclass
 class PowerState:
-    mode:     str  
+    mode:     str
     dynamic:  bool
     loop:     bool
-    interval: int 
+    interval: int
 
 
 def load_power_state() -> PowerState:
@@ -132,23 +132,23 @@ def load_power_state() -> PowerState:
     return PowerState(mode=mode, dynamic=dynamic, loop=loop, interval=interval)
 
 
-def build_menu_items(state: PowerState) -> list:
-    items: list = [
-        ("Select preset",    state.mode),
-        ("Dynamic mode",     "ON" if state.dynamic else "OFF", "toggle"),
-        ("Custom arguments", ""),
-        ("─", "", "sep"),
+def build_menu_items(state: PowerState) -> list[MenuItem]:
+    items: list[MenuItem] = [
+        MenuItem("Select preset",    state.mode),
+        MenuItem("Dynamic mode",     "ON" if state.dynamic else "OFF", "toggle"),
+        MenuItem("Custom arguments"),
+        MenuItem("─", kind="separator"),
     ]
     if state.loop:
-        stop_row = ("Stop reapply", "[dynamic]", "disabled") if state.dynamic \
-                   else ("Stop reapply", "")
-        items.append(stop_row)
-        items.append(("Reapply interval", f"{state.interval}s"))
+        kind = "disabled" if state.dynamic else "action"
+        hint = "[dynamic]" if state.dynamic else ""
+        items.append(MenuItem("Stop reapply", hint, kind))
+        items.append(MenuItem("Reapply interval", f"{state.interval}s"))
     else:
-        items.append(("Start reapply", ""))
+        items.append(MenuItem("Start reapply"))
     items += [
-        ("Daemon status", ""),
-        ("Back",          ""),
+        MenuItem("Daemon status"),
+        MenuItem("Back"),
     ]
     return items
 
@@ -170,10 +170,10 @@ def _toggle_dynamic_state(state: PowerState) -> PowerState:
 
     if not client.ping():
         return PowerState(
-            mode="Dynamic" if new_dynamic else cfg.get("User", "Mode"),
-            dynamic=new_dynamic,
-            loop=cfg.get("Settings", "ReApply", "0") == "1",
-            interval=state.interval,
+            mode     = "Dynamic" if new_dynamic else cfg.get("User", "Mode"),
+            dynamic  = new_dynamic,
+            loop     = cfg.get("Settings", "ReApply", "0") == "1",
+            interval = state.interval,
         )
 
     if new_dynamic:
@@ -182,12 +182,7 @@ def _toggle_dynamic_state(state: PowerState) -> PowerState:
         presets = get_presets()
         apply_smu(presets.get("Balance", ""), "Balance", save_to_config=False)
         client.apply_saved()
-        return PowerState(
-            mode="Dynamic",
-            dynamic=True,
-            loop=True,
-            interval=state.interval,
-        )
+        return PowerState(mode="Dynamic", dynamic=True, loop=True, interval=state.interval)
     else:
         client.apply_saved()
         return load_power_state()
@@ -249,9 +244,10 @@ def _reapply_interval_menu() -> None:
 
 
 def _select_preset_menu(presets: dict, names: list, current: str) -> None:
-    items = [(n, "← current" if n == current else "") for n in names] + [("Back", "")]
+    items = [MenuItem(n, "← current" if n == current else "") for n in names]
+    items.append(MenuItem("Back"))
     choice = menu("Select Preset", items)
-    if choice == -1 or items[choice][0] == "Back":
+    if choice == -1 or items[choice].label == "Back":
         return
     set_current_preset(names[choice], presets[names[choice]])
 
@@ -282,29 +278,27 @@ def preset_menu() -> None:
 
         last_idx = choice
         item = items[choice]
-        lbl  = item[0] if isinstance(item, tuple) else item
-        tag  = item[2] if isinstance(item, tuple) and len(item) > 2 else ""
 
-        if lbl == "Back":
+        if item.label == "Back":
             return
-        elif lbl == "Select preset":
+        elif item.label == "Select preset":
             _select_preset_menu(presets, names, state.mode)
             state = load_power_state()
-        elif lbl == "Dynamic mode":
+        elif item.label == "Dynamic mode":
             state = _toggle_dynamic_state(state)
-        elif lbl == "Custom arguments":
+        elif item.label == "Custom arguments":
             _custom_args_menu()
             state = load_power_state()
-        elif lbl == "Reapply interval":
+        elif item.label == "Reapply interval":
             _reapply_interval_menu()
             state = load_power_state()
-        elif lbl == "Stop reapply" and tag != "disabled":
+        elif item.label == "Stop reapply" and not item.is_disabled:
             _stop_loop_screen()
             state = load_power_state()
-        elif lbl == "Start reapply":
+        elif item.label == "Start reapply":
             _start_loop_screen()
             state = load_power_state()
-        elif lbl == "Daemon status":
+        elif item.label == "Daemon status":
             _daemon_status_screen()
 
 
@@ -315,4 +309,5 @@ def _daemon_apply_saved() -> None:
         if client.ping():
             client.apply_saved()
     except Exception:
+        # Best-effort daemon sync: ignore IPC/import failures and continue.
         pass

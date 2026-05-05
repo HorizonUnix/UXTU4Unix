@@ -58,6 +58,8 @@ def secure_boot_enabled() -> bool:
             if len(data) >= 5 and data[4] == 1:
                 return True
         except OSError:
+            # efivar entries may be unreadable or disappear between listing and
+            # opening; ignore and continue probing other entries or the fallback.
             pass
     try:
         out = subprocess.run(
@@ -75,7 +77,8 @@ def ryzen_smu_loaded() -> bool:
         out = subprocess.run(["lsmod"], capture_output=True, text=True, timeout=3).stdout
         return "ryzen_smu" in out
     except Exception:
-        return False
+        pass
+    return False
 
 
 def check_system_compat() -> None:

@@ -64,8 +64,8 @@ def _on_ac() -> bool:
                             battery_discharging = True
                 except OSError as exc:
                     logging.debug("Unable to read battery status from %s/status: %s", base, exc)
-    except Exception:
-        pass
+    except Exception as exc:
+        logging.debug("Unexpected error while detecting AC state: %s", exc)
     if found_ac:
         return ac_online
     return not battery_discharging
@@ -292,9 +292,22 @@ class PowerDaemon:
         return json.dumps(resp)
 
     def run(self) -> None:
+        if os.path.exists(cfg.ZMQ_SOCKET_PATH):
+            try:
+                os.unlink(cfg.ZMQ_SOCKET_PATH)
+                logging.warning("Removed stale IPC socket at %s", cfg.ZMQ_SOCKET_PATH)
+            except OSError as exc:
+                logging.error("Could not remove stale socket at %s: %s", cfg.ZMQ_SOCKET_PATH, exc)
+
         ctx  = zmq.Context()
         sock = ctx.socket(zmq.REP)
-        sock.bind(cfg.ZMQ_SOCKET_ADDR)
+        try:
+            sock.bind(cfg.ZMQ_SOCKET_ADDR)
+        except zmq.ZMQError as exc:
+            logging.error("Failed to bind ZMQ socket on %s: %s", cfg.ZMQ_SOCKET_ADDR, exc)
+            sock.close()
+            ctx.term()
+            return
 
         if os.path.exists(cfg.ZMQ_SOCKET_PATH):
             os.chmod(cfg.ZMQ_SOCKET_PATH, 0o666)

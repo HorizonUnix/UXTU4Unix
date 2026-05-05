@@ -98,7 +98,8 @@ def _wait_for_daemon(timeout: float = 10.0, interval: float = 0.3) -> bool:
             if get_client().ping():
                 return True
         except Exception:
-            pass
+            # Daemon may not be ready yet; ignore transient IPC errors and retry.
+            continue
         time.sleep(interval)
     return False
 
@@ -227,8 +228,8 @@ def ensure_binaries_executable() -> None:
         if path and os.path.isfile(path) and not os.access(path, os.X_OK):
             try:
                 subprocess.run(["chmod", "+x", path], check=True)
-            except subprocess.CalledProcessError:
-                pass
+            except subprocess.CalledProcessError as exc:
+                print(f"  Warning: could not mark '{path}' as executable: {exc}")
 
 
 def _apply_defaults() -> None:
