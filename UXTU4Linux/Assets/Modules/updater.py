@@ -86,8 +86,7 @@ def _do_update() -> None:
             restart_service()
 
         print("Update complete. Relaunching - please close this window.")
-        subprocess.Popen([sys.executable, launch], start_new_session=True)
-        return
+        os.execv(sys.executable, [sys.executable, launch])
 
     except Exception as e:
         print(f"Update failed: {e}")
