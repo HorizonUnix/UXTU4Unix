@@ -4,7 +4,6 @@ updater.py
 import json
 import os
 import re
-import re
 import shutil
 import subprocess
 import sys
@@ -81,13 +80,22 @@ def _do_update() -> None:
         if cmd not in allowed_commands:
             raise ValueError(f"Disallowed sudo command: {cmd}")
         safe_value_re = re.compile(r"^[A-Za-z0-9._/\-]+$")
-        safe_value_re = re.compile(r"^[A-Za-z0-9._/\-]+$")
         for arg in args:
             if any(ch in arg for ch in ("\x00", "\n", "\r")):
+                raise ValueError(f"Invalid character detected in argument: {arg!r}")
         cmd_args = list(args[1:])
 
         install_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
         def _validate_args(allowed_flags: set, min_paths: int) -> None:
+            nonlocal cmd_args
+            for a in cmd_args:
+                if a.startswith("-") and a not in allowed_flags:
+                    raise ValueError(f"Disallowed flag for {cmd}: {a}")
+            path_args = [a for a in cmd_args if not a.startswith("-")]
+            if len(path_args) < min_paths:
+                raise ValueError(f"Insufficient path arguments for {cmd}")
+            _assert_paths_within_install_root(path_args)
+
         def _is_within_install_root(path_value: str) -> bool:
             real_target = os.path.realpath(path_value)
             try:
@@ -99,8 +107,6 @@ def _do_update() -> None:
             for p in paths:
                 if not _is_within_install_root(p):
                     raise ValueError(f"Path escapes installation directory: {p}")
-
-            nonlocal cmd_args
             paths = []
             for a in cmd_args:
                 if a.startswith("-"):
@@ -110,8 +116,6 @@ def _do_update() -> None:
                     if not a.strip():
                         raise ValueError("Empty path/value argument is not allowed")
                     if not safe_value_re.fullmatch(a):
-                    if not safe_value_re.fullmatch(a):
-                        raise ValueError(f"Invalid characters in sudo argument for {cmd}: {a}")
                         raise ValueError(f"Invalid characters in sudo argument for {cmd}: {a}")
                     paths.append(a)
             if len(paths) < min_paths:
