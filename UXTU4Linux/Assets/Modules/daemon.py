@@ -220,8 +220,10 @@ class PowerDaemon:
 
     def _stop_loop(self) -> None:
         self._stop_evt.set()
+        with self._lock:
+            interval = self._interval
         if self._loop_thread and self._loop_thread.is_alive():
-            self._loop_thread.join(timeout=self._interval + 2)
+            self._loop_thread.join(timeout=interval + 2)
 
     def apply_preset_state_once(self, state: PresetState) -> str:
         return self._apply_once(state.args, state.mode, log=True)
