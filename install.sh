@@ -155,13 +155,12 @@ download_release() {
     info "Downloading release..."
     local err="$TMP_DIR/dl.err"
     if command -v wget &>/dev/null; then
-        if wget --version 2>&1 | grep -q "GNU Wget2"; then
-            wget -q -O "$TMP_DIR/release.zip" "$RELEASE_URL" 2>"$err" \
-                || { cat "$err" >&2; die "Download failed."; }
-        else
-            wget -q --show-progress -O "$TMP_DIR/release.zip" "$RELEASE_URL" 2>"$err" \
-                || { cat "$err" >&2; die "Download failed."; }
+        local -a wget_progress_flag=()
+        if ! wget --version 2>&1 | grep -q "GNU Wget2"; then
+            wget_progress_flag+=(--show-progress)
         fi
+        wget -q "${wget_progress_flag[@]}" -O "$TMP_DIR/release.zip" "$RELEASE_URL" 2>"$err" \
+            || { cat "$err" >&2; die "Download failed."; }
     elif command -v curl &>/dev/null; then
         curl -fsSL -o "$TMP_DIR/release.zip" "$RELEASE_URL" 2>"$err" \
             || { cat "$err" >&2; die "Download failed."; }
