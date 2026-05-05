@@ -203,6 +203,7 @@ def show_updater() -> None:
 
 def check_updates() -> None:
     MAX_RETRIES = 10
+    RETRY_DELAY_SECONDS = 5
     clear()
     latest = None
     for attempt in range(1, MAX_RETRIES + 1):
@@ -212,7 +213,7 @@ def check_updates() -> None:
         except Exception as e:
             print(f"Could not fetch version (attempt {attempt}/{MAX_RETRIES}): {e}")
             if attempt < MAX_RETRIES:
-                time.sleep(5)
+                time.sleep(RETRY_DELAY_SECONDS)
 
     if latest is None:
         clear()
