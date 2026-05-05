@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+import urllib.error
 import zipfile
 
 from . import config as cfg
@@ -28,9 +29,13 @@ def get_latest_version() -> str:
 
 
 def get_changelog() -> str:
-    req  = urllib.request.Request(cfg.GITHUB_API_URL)
-    data = json.loads(urllib.request.urlopen(req).read())
-    return data.get("body", "No changelog available.")
+    req = urllib.request.Request(cfg.GITHUB_API_URL)
+    try:
+        raw = urllib.request.urlopen(req).read()
+        data = json.loads(raw)
+        return data.get("body", "No changelog available.")
+    except (urllib.error.URLError, json.JSONDecodeError, UnicodeDecodeError):
+        return "No changelog available."
 
 
 def _do_update() -> None:
