@@ -173,7 +173,13 @@ def check_integrity() -> None:
 
     broken = not (has_all_sections() and has_all_keys())
     if broken:
-        reset_all()
+        print("  Warning: configuration integrity check failed.")
+        print("  Resetting will remove the current configuration and recreate defaults.")
+        if confirm("  Do you want to reset the configuration now?", default=False):
+            reset_all()
+        else:
+            print("  Keeping existing configuration unchanged.")
+            pause()
 
 
 def reset_all() -> None:
