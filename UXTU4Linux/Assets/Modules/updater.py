@@ -71,9 +71,25 @@ def _do_update() -> None:
             zf.extractall(new_folder)
 
         if _sudo("rm", "-rf", src_dir) != 0:
-            raise PermissionError(f"Could not remove {src_dir} — try running with sudo")
+            raise PermissionError(f"Could not remove {src_dir}; the privileged remove command failed (possible permission issue or directory in use)")
 
-        inner = os.path.join(new_folder, "UXTU4Linux")
+        expected_inner = os.path.join(new_folder, "UXTU4Linux")
+        if os.path.isdir(expected_inner):
+            inner = expected_inner
+        else:
+            extracted_dirs = [
+                os.path.join(new_folder, name)
+                for name in os.listdir(new_folder)
+                if os.path.isdir(os.path.join(new_folder, name))
+            ]
+            if len(extracted_dirs) == 1:
+                inner = extracted_dirs[0]
+            else:
+                raise RuntimeError(
+                    f"Unexpected update archive structure in {new_folder}. "
+                    f"Expected directory 'UXTU4Linux', found: {[os.path.basename(d) for d in extracted_dirs]}"
+                )
+
         if _sudo("mv", inner, src_dir) != 0:
             raise PermissionError(f"Could not move new release into {src_dir}")
 
@@ -101,7 +117,7 @@ def _do_update() -> None:
         print("Update complete. Relaunching - please close this window.")
         python_exec = os.path.realpath(sys.executable or "")
         if not python_exec or not os.path.isabs(python_exec) or not os.path.isfile(python_exec) or not os.access(python_exec, os.X_OK):
-            raise RuntimeError(f"Refusing to relaunch with untrusted interpreter path: {sys.executable!r}")
+            raise RuntimeError(f"Refusing to relaunch with untrusted interpreter path: {python_exec!r}")
         subprocess.Popen([python_exec, launch])
         return
 
