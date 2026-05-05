@@ -410,6 +410,9 @@ class PowerDaemon:
         logging.info("Listening on %s", cfg.ZMQ_SOCKET_ADDR)
 
         stop_requested = False
+        # Poll every 500ms so shutdown signals are handled within at most ~0.5s
+        # while avoiding a tight loop that would wake the CPU too frequently.
+        poll_timeout_ms = 500
 
         def _sig_handler(*_):
             nonlocal stop_requested
@@ -424,7 +427,7 @@ class PowerDaemon:
                 self._stop_loop()
                 break
 
-            if not sock.poll(500):
+            if not sock.poll(poll_timeout_ms):
                 continue
 
             raw  = sock.recv_string()
