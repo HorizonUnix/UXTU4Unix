@@ -205,7 +205,8 @@ class PowerDaemon:
         self._interval         = 3
         self._last_output      = ""
         self._running_loop     = False
-        self._last_logged_mode = ""
+        with self._lock:
+            self._last_logged_mode = ""
 
         self._dispatch = {
             "ping":        self._cmd_ping,
