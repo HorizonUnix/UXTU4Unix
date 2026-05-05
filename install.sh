@@ -49,6 +49,21 @@ detect_pm() {
     fi
 }
 
+check_systemd() {
+    if ! command -v systemctl &>/dev/null; then
+        echo ""
+        warn "systemd is not available on this system."
+        echo ""
+        echo "  This installer requires systemd to manage the daemon service."
+        echo "  For non-systemd distros, follow the manual installation guide:"
+        echo ""
+        echo -e "  ${_C}https://github.com/HorizonUnix/UXTU4Linux/wiki/Linux-Installation#manual-installation${_R}"
+        echo ""
+        die "Unsupported init system."
+    fi
+    ok "systemd detected."
+}
+
 ensure_python310() {
     local py=""
     for candidate in python3.14 python3.13 python3.12 python3.11 python3.10 python3; do
@@ -319,7 +334,10 @@ main() {
     local pm
     pm="$(detect_pm)"
     info "Package manager : $pm"
-
+    
+    check_systemd
+    echo ""
+        
     if daemon_is_installed; then
         warn "Existing installation detected — updating files and restarting daemon."
     fi
