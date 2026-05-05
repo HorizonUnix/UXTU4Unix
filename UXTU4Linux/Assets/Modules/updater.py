@@ -101,7 +101,7 @@ def _do_update() -> None:
         print("Update complete. Relaunching - please close this window.")
         python_exec = os.path.realpath(sys.executable or "")
         if not python_exec or not os.path.isabs(python_exec) or not os.path.isfile(python_exec) or not os.access(python_exec, os.X_OK):
-            raise RuntimeError(f"Refusing to relaunch with untrusted interpreter path: {sys.executable!r}")
+            raise RuntimeError(f"Refusing to relaunch with untrusted interpreter path: {python_exec!r}")
         subprocess.Popen([python_exec, launch])
         return
 
