@@ -137,7 +137,7 @@ def _run_ryzenadj(args: str, mode: str) -> str:
     return out.strip()
 
 
-def _parse_interval(raw_interval, default: int) -> int:
+def _parse_interval(raw_interval: int | str | None, default: int) -> int:
     try:
         value = int(raw_interval)
     except (TypeError, ValueError):
@@ -230,7 +230,10 @@ class PowerDaemon:
         return output
 
     def _loop_body(self, args: str, mode: str, interval: int, dynamic: bool) -> None:
-        self._stop_evt.clear()
+        if self._stop_evt.is_set():
+            with self._lock:
+                self._running_loop = False
+            return
         max_wait_step = 1.0
         while not self._stop_evt.is_set():
             deadline = time.monotonic() + interval
@@ -387,6 +390,10 @@ class PowerDaemon:
             resp = {"ok": False, "error": str(exc)}
         return json.dumps(resp)
 
+    @staticmethod
+    def _sig_handler(stop_requested: threading.Event, *_: object) -> None:
+        stop_requested.set()
+
     def run(self) -> None:
         if os.path.exists(cfg.ZMQ_SOCKET_PATH):
             try:
@@ -415,11 +422,8 @@ class PowerDaemon:
         # while avoiding a tight loop that would wake the CPU too frequently.
         poll_timeout_ms = 500
 
-        def _sig_handler(*_):
-            stop_requested.set()
-
-        signal.signal(signal.SIGTERM, _sig_handler)
-        signal.signal(signal.SIGINT,  _sig_handler)
+        signal.signal(signal.SIGTERM, lambda *args: self._sig_handler(stop_requested, *args))
+        signal.signal(signal.SIGINT,  lambda *args: self._sig_handler(stop_requested, *args))
 
         while True:
             if stop_requested.is_set():
