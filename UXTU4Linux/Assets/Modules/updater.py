@@ -110,8 +110,6 @@ def _do_update() -> None:
                     if not a.strip():
                         raise ValueError("Empty path/value argument is not allowed")
                     if not safe_value_re.fullmatch(a):
-                    if not safe_value_re.fullmatch(a):
-                        raise ValueError(f"Invalid characters in sudo argument for {cmd}: {a}")
                         raise ValueError(f"Invalid characters in sudo argument for {cmd}: {a}")
                     paths.append(a)
             if len(paths) < min_paths:
