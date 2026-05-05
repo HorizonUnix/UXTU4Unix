@@ -27,7 +27,8 @@ def get_latest_version() -> str:
     try:
         url = urllib.request.urlopen(cfg.LATEST_VER_URL, timeout=10).geturl()
         return url.rstrip("/").split("/")[-1]
-    except urllib.error.URLError:
+    except urllib.error.URLError as e:
+        print(f"Failed to fetch latest version from {cfg.LATEST_VER_URL}: {e}")
         return "v0.0.0"
 
 
