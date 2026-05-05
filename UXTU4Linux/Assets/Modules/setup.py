@@ -176,7 +176,7 @@ def check_integrity() -> None:
     def has_all_keys() -> bool:
         for section, keys in required.items():
             if not cfg.instance().has_section(section):
-                continue
+                return False
             section_data = cfg.instance()[section]
             if any(key not in section_data for key in keys):
                 return False
