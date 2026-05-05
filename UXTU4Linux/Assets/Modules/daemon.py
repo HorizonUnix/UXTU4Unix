@@ -18,6 +18,9 @@ from dataclasses import dataclass
 
 _HERE = os.path.dirname(os.path.realpath(__file__))
 _ROOT = os.path.dirname(os.path.dirname(_HERE))
+
+AC_PRESET_NAME = "Extreme"
+BATTERY_PRESET_NAME = "Eco"
 THREAD_JOIN_TIMEOUT_SECONDS = 10
 ZMQ_POLL_TIMEOUT_MS = 500
 if _ROOT not in sys.path:
@@ -221,7 +224,7 @@ class PowerDaemon:
         if not dynamic:
             return base_mode, base_args
         presets = _load_presets()
-        mode    = "Extreme" if _on_ac() else "Eco"
+        mode    = AC_PRESET_NAME if _on_ac() else BATTERY_PRESET_NAME
         args    = presets.get(mode, base_args)
         return mode, args
 
