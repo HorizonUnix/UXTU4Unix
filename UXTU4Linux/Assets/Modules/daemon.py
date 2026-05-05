@@ -106,11 +106,17 @@ def _run_ryzenadj(args: str, mode: str) -> str:
         logging.error("%s", exc)
         return ""
 
-    result = subprocess.run(
-        [cfg.RYZENADJ] + payload,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    try:
+        result = subprocess.run(
+            [cfg.RYZENADJ] + payload,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=10,
+        )
+    except subprocess.TimeoutExpired:
+        logging.error("ryzenadj timed out")
+        return ""
+
     out = result.stdout.decode(errors="replace")
     if cfg.is_debug() and result.stderr:
         out += result.stderr.decode(errors="replace")
