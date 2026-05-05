@@ -140,7 +140,11 @@ def _load_saved_preset() -> PresetState | None:
     presets   = _load_presets()
 
     if user_mode == "Custom":
-        args = cfg.get("User", "CustomArgs")
+        custom_args = cfg.get("User", "CustomArgs")
+        if not isinstance(custom_args, str) or not custom_args.strip():
+            logging.warning("Saved custom preset has no valid CustomArgs.")
+            return None
+        args = custom_args.strip()
     elif user_mode in presets:
         args = presets[user_mode]
     else:
