@@ -18,6 +18,7 @@ from dataclasses import dataclass
 
 _HERE = os.path.dirname(os.path.realpath(__file__))
 _ROOT = os.path.dirname(os.path.dirname(_HERE))
+THREAD_JOIN_TIMEOUT_SECONDS = 10
 ZMQ_POLL_TIMEOUT_MS = 500
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
@@ -263,9 +264,12 @@ class PowerDaemon:
     def _stop_loop(self) -> None:
         self._stop_evt.set()
         if self._loop_thread and self._loop_thread.is_alive():
-            self._loop_thread.join(timeout=10)
+            self._loop_thread.join(timeout=THREAD_JOIN_TIMEOUT_SECONDS)
             if self._loop_thread.is_alive():
-                logging.warning("Loop thread did not terminate within 10 seconds")
+                logging.warning(
+                    "Loop thread did not terminate within %s seconds",
+                    THREAD_JOIN_TIMEOUT_SECONDS,
+                )
 
     def apply_preset_state_once(self, state: PresetState) -> str:
         return self._apply_once(state.args, state.mode, log=True)
@@ -427,8 +431,8 @@ class PowerDaemon:
         # while avoiding a tight loop that would wake the CPU too frequently.
         poll_timeout_ms = ZMQ_POLL_TIMEOUT_MS
 
-        signal.signal(signal.SIGTERM, lambda *args: self._sig_handler(stop_requested, *args))
-        signal.signal(signal.SIGINT,  lambda *args: self._sig_handler(stop_requested, *args))
+        signal.signal(signal.SIGTERM, lambda signum, frame: self._sig_handler(stop_requested, signum, frame))
+        signal.signal(signal.SIGINT,  lambda signum, frame: self._sig_handler(stop_requested, signum, frame))
 
         while True:
             if stop_requested.is_set():
