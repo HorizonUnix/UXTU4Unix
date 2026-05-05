@@ -84,6 +84,7 @@ def _do_update() -> None:
         safe_value_re = re.compile(r"^[A-Za-z0-9._/\-]+$")
         for arg in args:
             if any(ch in arg for ch in ("\x00", "\n", "\r")):
+                raise ValueError(f"Invalid character detected in argument: {arg!r}")
         cmd_args = list(args[1:])
 
         install_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
