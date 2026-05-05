@@ -90,6 +90,22 @@ def _do_update() -> None:
                     f"Expected directory 'UXTU4Linux', found: {[os.path.basename(d) for d in extracted_dirs]}"
                 )
 
+        if os.path.isdir(expected_inner):
+            inner = expected_inner
+        else:
+            extracted_dirs = [
+                os.path.join(new_folder, name)
+                for name in os.listdir(new_folder)
+                if os.path.isdir(os.path.join(new_folder, name))
+            ]
+            if len(extracted_dirs) == 1:
+                inner = extracted_dirs[0]
+            else:
+                raise RuntimeError(
+                    f"Unexpected update archive structure in {new_folder}. "
+                    f"Expected directory 'UXTU4Linux', found: {[os.path.basename(d) for d in extracted_dirs]}"
+                )
+
         if _sudo("mv", inner, src_dir) != 0:
             raise PermissionError(f"Could not move new release into {src_dir}")
 
@@ -101,7 +117,7 @@ def _do_update() -> None:
         for path in (launch, ryzen):
             if os.path.exists(path):
                 if _sudo("chmod", "+x", path) != 0:
-                    raise PermissionError(f"Could not set executable permission on {path}")
+            raise RuntimeError(f"Refusing to relaunch with untrusted interpreter path: {python_exec!r}")
 
         new_config = os.path.join(src_dir, "Assets", "config.toml")
         if os.path.exists(config_bak):
