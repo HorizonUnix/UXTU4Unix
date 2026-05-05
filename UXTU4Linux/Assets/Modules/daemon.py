@@ -25,7 +25,11 @@ from Assets.Modules import config as cfg
 
 cfg.load()
 
-_AC_TYPES = frozenset({"Mains", "USB", "USB_C", "USB_PD", "USB_PD_DRP", "USB_C_DRP"})
+# Traditional AC/mains power-supply types.
+_AC_TYPES = frozenset({"Mains"})
+# USB-derived power supplies are treated as external power for policy decisions.
+_USB_POWER_TYPES = frozenset({"USB", "USB_C", "USB_PD", "USB_PD_DRP", "USB_C_DRP"})
+_EXTERNAL_POWER_TYPES = _AC_TYPES | _USB_POWER_TYPES
 
 _DMI_ALLOWED_TYPES = frozenset({
     "bios", "system", "baseboard", "chassis", "processor",
@@ -85,7 +89,7 @@ def _on_ac() -> bool:
                     ptype = f.read().strip()
             except OSError:
                 continue
-            if ptype in _AC_TYPES:
+            if ptype in _EXTERNAL_POWER_TYPES:
                 found_ac = True
                 try:
                     with open(f"{base}/online") as f:
