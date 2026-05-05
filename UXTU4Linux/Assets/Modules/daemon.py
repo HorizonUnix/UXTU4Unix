@@ -221,7 +221,9 @@ class PowerDaemon:
     def _stop_loop(self) -> None:
         self._stop_evt.set()
         if self._loop_thread and self._loop_thread.is_alive():
-            self._loop_thread.join(timeout=self._interval + 2)
+            self._loop_thread.join(timeout=10)
+            if self._loop_thread.is_alive():
+                logging.warning("Loop thread did not terminate within 10 seconds")
 
     def apply_preset_state_once(self, state: PresetState) -> str:
         return self._apply_once(state.args, state.mode, log=True)
