@@ -18,6 +18,13 @@ from .service import (
     wait_for_daemon_or_warn,
 )
 
+DEFAULT_SETTINGS_TIME = "3"
+DEFAULT_SETTINGS_SOFTWARE_UPDATE = "1"
+DEFAULT_SETTINGS_REAPPLY = "0"
+DEFAULT_SETTINGS_APPLY_ON_START = "1"
+DEFAULT_SETTINGS_DYNAMIC_MODE = "0"
+DEFAULT_SETTINGS_DEBUG = "1"
+
 
 def ensure_binaries_executable() -> None:
     for path in [cfg.RYZENADJ]:
@@ -32,12 +39,12 @@ def _apply_defaults() -> None:
     cfg.ensure_sections("User", "Settings", "Info")
     if not cfg.get("User", "Mode"):
         cfg.set("User", "Mode", "Balance")
-    cfg.set("Settings", "Time",           "3")
-    cfg.set("Settings", "SoftwareUpdate", "1")
-    cfg.set("Settings", "ReApply",        "0")
-    cfg.set("Settings", "ApplyOnStart",   "1")
-    cfg.set("Settings", "DynamicMode",    "0")
-    cfg.set("Settings", "Debug",          "1")
+    cfg.set("Settings", "Time",           DEFAULT_SETTINGS_TIME)
+    cfg.set("Settings", "SoftwareUpdate", DEFAULT_SETTINGS_SOFTWARE_UPDATE)
+    cfg.set("Settings", "ReApply",        DEFAULT_SETTINGS_REAPPLY)
+    cfg.set("Settings", "ApplyOnStart",   DEFAULT_SETTINGS_APPLY_ON_START)
+    cfg.set("Settings", "DynamicMode",    DEFAULT_SETTINGS_DYNAMIC_MODE)
+    cfg.set("Settings", "Debug",          DEFAULT_SETTINGS_DEBUG)
 
 
 def _step(n: int, total: int, title: str) -> None:
