@@ -9,11 +9,11 @@ from Assets.Modules import config as cfg
 cfg.load()
 
 from Assets.Modules.hardware  import check_binaries, check_system_compat, show_info as hardware_info
-from Assets.Modules.power     import get_presets, preset_menu
+from Assets.Modules.power     import apply_smu, get_presets, preset_menu
 from Assets.Modules.settings  import settings_menu
 from Assets.Modules.setup     import (
     check_integrity, ensure_binaries_executable,
-    verify_service_path,
+    run_welcome, verify_service_path,
 )
 from Assets.Modules.updater   import check_updates
 from Assets.Modules.ui        import clear, pause, quit_app, menu, about_menu, MenuItem
@@ -86,4 +86,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as exc:
+        sys.stderr.write(f"\n  Error: {exc}\n")
+        sys.exit(1)

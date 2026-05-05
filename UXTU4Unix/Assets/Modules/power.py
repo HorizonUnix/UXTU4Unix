@@ -110,6 +110,18 @@ def apply_smu(args: str, user_mode: str, *, save_to_config: bool = True) -> None
         client.apply(args=args, mode=user_mode)
 
 
+def update_reapply_interval(val: str) -> bool:
+    if not val.isdigit():
+        return False
+    cfg.set("Settings", "Time", val)
+    cfg.save()
+    from .ipc import get_client
+    client = get_client()
+    if client.ping():
+        client.apply_saved()
+    return True
+
+
 @dataclass
 class PowerState:
     mode:     str
@@ -237,14 +249,7 @@ def _reapply_interval_menu() -> None:
     clear()
     current = cfg.get("Settings", "Time", "3")
     val = ask("Reapply interval in seconds", default=current)
-    if val.isdigit():
-        cfg.set("Settings", "Time", val)
-        cfg.save()
-        from .ipc import get_client
-        client = get_client()
-        if client.ping():
-            client.apply_saved()
-    else:
+    if not update_reapply_interval(val):
         print("\n  Must be a whole number.")
         pause()
 

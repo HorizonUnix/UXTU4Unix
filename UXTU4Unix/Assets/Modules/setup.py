@@ -1,226 +1,28 @@
 """
 setup.py
 """
-
 from __future__ import annotations
-import os, re, subprocess, sys, tempfile, time
+
+import os
+import subprocess
+import sys
+
 from . import config as cfg
 from .hardware import detect as detect_hardware
-from .ui import clear, pause, confirm, menu, MenuItem
+from .ui import clear, confirm, pause
 
-SERVICE_NAME = "uxtu4unix.service"
-SERVICE_FILE = f"/etc/systemd/system/{SERVICE_NAME}"
-
-
-def _ensure_venv() -> bool:
-    venv_dir    = cfg.VENV_DIR
-    venv_python = cfg.VENV_PYTHON
-
-    def _sudo(*args: str) -> int:
-        return subprocess.run(["sudo", *args]).returncode
-
-    if not os.path.isfile(venv_python):
-        print(f"  Creating venv at {venv_dir}...")
-        _sudo("mkdir", "-p", venv_dir)
-        if _sudo(sys.executable, "-m", "venv", "--without-pip", venv_dir) != 0:
-            print("  Failed to create venv.")
-            pause()
-            return False
-        if _sudo(venv_python, "-m", "ensurepip", "--upgrade") != 0:
-            print("  Failed to bootstrap pip.")
-            pause()
-            return False
-
-    probe = subprocess.run(
-        [venv_python, "-c", "import zmq"],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    )
-    if probe.returncode != 0:
-        print("  Installing pyzmq...")
-        if _sudo(venv_python, "-m", "pip", "install", "pyzmq", "--quiet") != 0:
-            print("  Failed to install pyzmq.")
-            pause()
-            return False
-
-    return True
-
-
-def _daemon_script() -> str:
-    return os.path.join(os.path.dirname(os.path.realpath(__file__)), "daemon.py")
-
-
-def _python() -> str:
-    return cfg.VENV_PYTHON if os.path.isfile(cfg.VENV_PYTHON) else sys.executable
-
-
-def _render_unit() -> str:
-    return (
-        "[Unit]\n"
-        "Description=UXTU4Unix Power Management Daemon\n"
-        "After=multi-user.target\n\n"
-        "[Service]\n"
-        "Type=simple\n"
-        f"ExecStart={_python()} {_daemon_script()}\n"
-        "Restart=on-failure\n"
-        "RestartSec=5\n"
-        "StandardOutput=journal\n"
-        "StandardError=journal\n\n"
-        "[Install]\n"
-        "WantedBy=multi-user.target\n"
-    )
-
-
-def _sudo_run(*args: str) -> int:
-    return subprocess.run(["sudo", *args]).returncode
-
-
-def _systemctl(*args: str) -> int:
-    return _sudo_run("systemctl", *args)
-
-
-def _sudo_write(path: str, content: str) -> bool:
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".service", delete=False) as f:
-        f.write(content)
-        tmp = f.name
-    try:
-        r = subprocess.run(["sudo", "mv", tmp, path])
-        return r.returncode == 0
-    finally:
-        if os.path.exists(tmp):
-            os.unlink(tmp)
-
-
-def _wait_for_daemon(timeout: float = 10.0, interval: float = 0.3) -> bool:
-    from .ipc import get_client
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        try:
-            if get_client().ping():
-                return True
-        except Exception:
-            # Daemon may not be ready yet; ignore transient IPC errors and retry.
-            continue
-        time.sleep(interval)
-    return False
-
-
-def install_service() -> None:
-    if not _ensure_venv():
-        print("  Aborting service installation due to venv errors.")
-        return
-    if not _sudo_write(SERVICE_FILE, _render_unit()):
-        print("  Failed to write service file.")
-        return
-    _systemctl("daemon-reload")
-    _systemctl("enable", SERVICE_NAME)
-    _systemctl("start",  SERVICE_NAME)
-
-
-def uninstall_service() -> None:
-    _systemctl("stop",    SERVICE_NAME)
-    _systemctl("disable", SERVICE_NAME)
-    _sudo_run("rm", "-f", SERVICE_FILE)
-    _systemctl("daemon-reload")
-
-
-def service_running() -> bool:
-    return subprocess.call(
-        ["systemctl", "is-active", "--quiet", SERVICE_NAME],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    ) == 0
-
-
-def service_enabled() -> bool:
-    return subprocess.call(
-        ["systemctl", "is-enabled", "--quiet", SERVICE_NAME],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    ) == 0
-
-
-def restart_service() -> None:
-    _systemctl("restart", SERVICE_NAME)
-
-
-def show_logs() -> None:
-    subprocess.call(["journalctl", "-u", SERVICE_NAME, "-n", "50", "--no-pager"])
-
-
-def verify_service_path() -> None:
-    if not os.path.isfile(SERVICE_FILE):
-        return
-    current = _daemon_script()
-    try:
-        with open(SERVICE_FILE) as f:
-            content = f.read()
-    except OSError:
-        return
-    for line in content.splitlines():
-        if not line.startswith("ExecStart="):
-            continue
-        parts = line.split()
-        if len(parts) < 3:
-            break
-        installed = parts[2]
-        if installed == current:
-            break
-        print(f"  Service path stale (app was moved).")
-        print(f"  Was: {installed}")
-        print(f"  Now: {current}")
-        new = re.sub(
-            r"(ExecStart=\S+\s+)\S+",
-            lambda m: m.group(1) + current,
-            content,
-        )
-        if _sudo_write(SERVICE_FILE, new):
-            _systemctl("daemon-reload")
-            _systemctl("restart", SERVICE_NAME)
-            print("  Service file updated and daemon restarted.")
-        else:
-            print(f"  Update manually: sudo nano {SERVICE_FILE}")
-        pause()
-        break
-
-
-def daemon_menu() -> None:
-    while True:
-        running  = service_running()
-        enabled  = service_enabled()
-        subtitle = (
-            f"Status: {'Running' if running else 'Stopped'}\n"
-            f"{'Enabled on boot' if enabled else 'Not enabled'}"
-        )
-        items: list[MenuItem] = [
-            MenuItem("Install & enable"),
-            MenuItem("Uninstall"),
-            MenuItem("Restart"),
-            MenuItem("View logs", hint="last 50 lines"),
-            MenuItem("Back"),
-        ]
-        choice = menu("Daemon Service", items, subtitle=subtitle)
-        if choice == -1 or items[choice].label == "Back":
-            return
-
-        lbl = items[choice].label
-        clear()
-        if lbl == "Install & enable":
-            install_service()
-            print("  Waiting for daemon...", end="", flush=True)
-            if _wait_for_daemon():
-                print(" ready.")
-            else:
-                print("\n  Warning: daemon did not start in time.")
-            pause()
-        elif lbl == "Uninstall":
-            uninstall_service()
-            print("  Service removed.")
-            pause()
-        elif lbl == "Restart":
-            restart_service()
-            print("  Service restarted.")
-            pause()
-        elif lbl == "View logs":
-            show_logs()
-            pause()
+from .service import (
+    SERVICE_FILE,
+    SERVICE_NAME,
+    daemon_menu,
+    install_service,
+    restart_service,
+    service_enabled,
+    service_running,
+    show_logs,
+    verify_service_path,
+    wait_for_daemon_or_warn,
+)
 
 
 def ensure_binaries_executable() -> None:
@@ -272,12 +74,7 @@ def run_welcome() -> None:
             restart_service()
         else:
             install_service()
-        print("\n  Waiting for daemon...", end="", flush=True)
-        if _wait_for_daemon():
-            print(" ready.")
-        else:
-            print("\n  Warning: daemon did not start in time.")
-            print("  Hardware detection may fail — check logs if issues occur.")
+        wait_for_daemon_or_warn(context="setup")
     else:
         print("\n  Daemon is required. Exiting setup.")
         pause()
@@ -295,6 +92,7 @@ def run_welcome() -> None:
     sig      = cfg.get("Info", "Signature")
 
     W = 14
+
     def row(label: str, value: str) -> None:
         print(f"  \033[2m{label:<{W}}\033[0m  {value}")
 

@@ -43,6 +43,10 @@ class MenuItem:
     def is_disabled(self) -> bool:
         return self.kind == "disabled"
 
+    @property
+    def is_selectable(self) -> bool:
+        return not (self.is_separator or self.is_disabled)
+
 
 def clear() -> None:
     subprocess.call("clear", shell=True)
@@ -86,7 +90,7 @@ def _clamp_skip(idx: int, items: list[MenuItem]) -> int:
     idx = max(0, min(idx, n - 1))
     for delta in range(n):
         i = (idx + delta) % n
-        if not items[i].is_separator:
+        if items[i].is_selectable:
             return i
     return idx
 
@@ -95,7 +99,7 @@ def _nav_step(idx: int, d: int, items: list[MenuItem]) -> int:
     n = len(items)
     for _ in range(n):
         idx = (idx + d) % n
-        if not items[idx].is_separator:
+        if items[idx].is_selectable:
             return idx
     return idx
 
@@ -178,7 +182,6 @@ def about_menu() -> None:
         try:
             latest = get_latest_version()
         except Exception:
-            # Update check is non-critical; if it fails, skip "Force update" option.
             latest = None
 
         items: list[MenuItem] = [MenuItem("Open GitHub page")]

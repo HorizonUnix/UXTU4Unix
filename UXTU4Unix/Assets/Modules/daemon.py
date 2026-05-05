@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import shlex
 import signal
 import subprocess
@@ -23,6 +24,24 @@ from Assets.Modules import config as cfg
 cfg.load()
 
 _AC_TYPES = frozenset({"Mains", "USB", "USB_C", "USB_PD", "USB_PD_DRP", "USB_C_DRP"})
+
+_DMI_ALLOWED_TYPES = frozenset({
+    "bios", "system", "baseboard", "chassis", "processor",
+    "memory", "cache", "connector", "slot",
+    *(str(i) for i in range(42)),
+})
+
+_RYZENADJ_TOKEN_RE = re.compile(
+    r'^--[a-z][a-z0-9]+(-[a-z0-9]+)*(=\d+(\.\d+)?)?$'
+)
+
+
+def _validate_ryzenadj_payload(tokens: list[str]) -> list[str]:
+    safe    = [t for t in tokens if _RYZENADJ_TOKEN_RE.match(t)]
+    dropped = [t for t in tokens if not _RYZENADJ_TOKEN_RE.match(t)]
+    if dropped:
+        logging.warning("Stripped unsafe ryzenadj tokens: %s", dropped)
+    return safe
 
 
 def _run_cmd(command: str) -> str:
@@ -72,7 +91,8 @@ def _on_ac() -> bool:
 
 
 def _run_ryzenadj(args: str, mode: str) -> str:
-    payload = mode.split() if args == "Custom" else args.split()
+    raw_payload = mode.split() if args == "Custom" else args.split()
+    payload     = _validate_ryzenadj_payload(raw_payload)
     result = subprocess.run(
         [cfg.RYZENADJ] + payload,
         stdout=subprocess.PIPE,
@@ -112,6 +132,28 @@ class PowerDaemon:
         self._running_loop     = False
         self._last_logged_mode = ""
 
+        self._dispatch = {
+            "ping":        self._cmd_ping,
+            "apply":       self._cmd_apply,
+            "apply_loop":  self._cmd_apply_loop,
+            "stop_loop":   self._cmd_stop_loop,
+            "status":      self._cmd_status,
+            "apply_saved": self._cmd_apply_saved,
+            "shutdown":    self._cmd_shutdown,
+            "dmidecode":   self._cmd_dmidecode,
+        }
+
+
+    def _effective_mode_args(
+        self, base_mode: str, base_args: str, dynamic: bool
+    ) -> tuple[str, str]:
+        if not dynamic:
+            return base_mode, base_args
+        presets = _load_presets()
+        mode    = "Extreme" if _on_ac() else "Eco"
+        args    = presets.get(mode, base_args)
+        return mode, args
+
     def _apply_once(self, args: str, mode: str, *, log: bool = False) -> str:
         output = _run_ryzenadj(args, mode)
         with self._lock:
@@ -125,22 +167,14 @@ class PowerDaemon:
     def _loop_body(self, args: str, mode: str, interval: int, dynamic: bool) -> None:
         self._stop_evt.clear()
         while not self._stop_evt.wait(interval):
-            eff_mode = mode
-            eff_args = args
-            if dynamic:
-                try:
-                    presets  = _load_presets()
-                    eff_mode = "Extreme" if _on_ac() else "Eco"
-                    eff_args = presets.get(eff_mode, args)
-                except Exception as exc:
-                    logging.warning("Could not resolve dynamic preset: %s", exc)
             try:
+                eff_mode, eff_args = self._effective_mode_args(mode, args, dynamic)
                 changed = eff_mode != self._last_logged_mode
                 self._apply_once(eff_args, eff_mode, log=changed)
                 if changed:
                     self._last_logged_mode = eff_mode
             except Exception as exc:
-                logging.warning("Failed to apply preset: %s", exc)
+                logging.warning("Failed to apply preset in loop: %s", exc)
         with self._lock:
             self._running_loop = False
 
@@ -176,12 +210,7 @@ class PowerDaemon:
             self._running_loop = True
 
         try:
-            eff_mode = mode
-            eff_args = args
-            if dynamic:
-                presets  = _load_presets()
-                eff_mode = "Extreme" if _on_ac() else "Eco"
-                eff_args = presets.get(eff_mode, args)
+            eff_mode, eff_args = self._effective_mode_args(mode, args, dynamic)
             self._apply_once(eff_args, eff_mode, log=True)
             self._last_logged_mode = eff_mode
         except Exception as exc:
@@ -261,30 +290,21 @@ class PowerDaemon:
         dmi_type = msg.get("type", "")
         if not dmi_type:
             return {"ok": False, "error": "missing 'type'"}
+        if dmi_type not in _DMI_ALLOWED_TYPES:
+            return {"ok": False, "error": f"disallowed dmidecode type: {dmi_type!r}"}
         try:
             out = _run_cmd(f"{cfg.DMIDECODE} -t {dmi_type}")
             return {"ok": True, "output": out}
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
 
-    _DISPATCH = {
-        "ping":        "_cmd_ping",
-        "apply":       "_cmd_apply",
-        "apply_loop":  "_cmd_apply_loop",
-        "stop_loop":   "_cmd_stop_loop",
-        "status":      "_cmd_status",
-        "apply_saved": "_cmd_apply_saved",
-        "shutdown":    "_cmd_shutdown",
-        "dmidecode":   "_cmd_dmidecode",
-    }
-
     def handle(self, raw: str) -> str:
         try:
-            msg    = json.loads(raw)
-            cmd    = msg.get("cmd", "")
-            method = self._DISPATCH.get(cmd)
-            if method:
-                resp = getattr(self, method)(msg)
+            msg  = json.loads(raw)
+            cmd  = msg.get("cmd", "")
+            func = self._dispatch.get(cmd)
+            if func:
+                resp = func(msg)
             else:
                 resp = {"ok": False, "error": f"unknown command: {cmd!r}"}
         except Exception as exc:

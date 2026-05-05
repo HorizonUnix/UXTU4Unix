@@ -3,7 +3,7 @@ settings.py
 """
 
 from __future__ import annotations
-import subprocess
+
 from . import config as cfg
 from .ui import menu, clear, ask, pause, confirm, MenuItem
 
@@ -31,7 +31,7 @@ def _do_toggle(idx: int, items: list) -> None:
 
 
 def _settings_items() -> list[MenuItem]:
-    from .setup import service_running
+    from .service import service_running
     running = service_running()
     return [
         MenuItem("Daemon service",               "Running" if running else "Stopped"),
@@ -46,7 +46,7 @@ def _settings_items() -> list[MenuItem]:
 
 
 def settings_menu() -> None:
-    from .setup import daemon_menu
+    from .service import daemon_menu
 
     last_idx = 0
     while True:
@@ -108,17 +108,11 @@ def preset_cfg() -> None:
 
 
 def sleep_cfg() -> None:
+    from .power import update_reapply_interval
     clear()
     current = cfg.get("Settings", "Time", "3")
     val = ask("Reapply interval in seconds", default=current)
-    if val.isdigit():
-        cfg.set("Settings", "Time", val)
-        cfg.save()
-        from .ipc import get_client
-        client = get_client()
-        if client.ping():
-            client.apply_saved()
-    else:
+    if not update_reapply_interval(val):
         print("\n  Must be a whole number.")
         pause()
 
