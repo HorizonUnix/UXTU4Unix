@@ -436,7 +436,7 @@ def main() -> None:
         sys.exit(1)
     cfg.DMIDECODE = dmi
 
-    logging.info("UXTU4Linux daemon v%s", cfg.LOCAL_VERSION, cfg.LOCAL_BUILD)
+    logging.info("UXTU4Linux daemon v%s", cfg.LOCAL_VERSION)
 
     daemon = PowerDaemon()
 
