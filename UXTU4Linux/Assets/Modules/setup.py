@@ -139,7 +139,7 @@ def check_integrity() -> None:
             for section, keys in required_value.items():
                 if not isinstance(section, str):
                     print("  Warning: ignoring invalid cfg.REQUIRED section name (must be str).")
-                    return {}
+                    continue
                 if keys is None:
                     normalized[section] = ()
                     continue
@@ -148,13 +148,13 @@ def check_integrity() -> None:
                         print(
                             f"  Warning: ignoring invalid cfg.REQUIRED keys for section '{section}' (must be str)."
                         )
-                        return {}
+                        continue
                     normalized[section] = tuple(keys)
                     continue
                 print(
                     f"  Warning: ignoring invalid cfg.REQUIRED keys container for section '{section}'."
                 )
-                return {}
+                continue
             return normalized
 
         if isinstance(required_value, (list, tuple, set)):
