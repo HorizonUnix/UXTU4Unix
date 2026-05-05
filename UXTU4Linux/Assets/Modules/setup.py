@@ -27,12 +27,12 @@ DEFAULT_SETTINGS_DEBUG = "1"
 
 
 def ensure_binaries_executable() -> None:
-    for path in [cfg.RYZENADJ]:
-        if path and os.path.isfile(path) and not os.access(path, os.X_OK):
-            try:
-                subprocess.run(["chmod", "+x", path], check=True)
-            except subprocess.CalledProcessError as exc:
-                print(f"  Warning: could not mark '{path}' as executable: {exc}")
+    path = cfg.RYZENADJ
+    if path and os.path.isfile(path) and not os.access(path, os.X_OK):
+        try:
+            subprocess.run(["chmod", "+x", path], check=True)
+        except subprocess.CalledProcessError as exc:
+            print(f"  Warning: could not mark '{path}' as executable: {exc}")
 
 
 def _apply_defaults() -> None:
