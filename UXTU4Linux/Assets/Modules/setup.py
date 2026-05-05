@@ -112,11 +112,13 @@ def check_integrity() -> None:
 
     cfg.load()
 
+    required = cfg.REQUIRED if isinstance(cfg.REQUIRED, dict) else {s: () for s in cfg.REQUIRED}
+
     broken = (
-        any(not cfg.instance().has_section(s) for s in cfg.REQUIRED)
+        any(not cfg.instance().has_section(s) for s in required)
         or any(
             k not in cfg.instance()[s]
-            for s, keys in cfg.REQUIRED.items()
+            for s, keys in required.items()
             if cfg.instance().has_section(s)
             for k in keys
         )
