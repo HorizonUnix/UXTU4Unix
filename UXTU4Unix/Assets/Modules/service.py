@@ -31,14 +31,19 @@ def _ensure_venv() -> bool:
         return subprocess.run(["sudo", *args]).returncode
 
     if not os.path.isfile(venv_python):
-        print(f"  Creating venv at {venv_dir}...")
+        print(f"  Creating venv at {venv_dir} ...")
+        print(f"    (to recreate manually: sudo {sys.executable} -m venv --without-pip {venv_dir})")
         _sudo("mkdir", "-p", venv_dir)
         if _sudo(sys.executable, "-m", "venv", "--without-pip", venv_dir) != 0:
-            print("  Failed to create venv.")
+            print(f"\n  Failed to create venv at {venv_dir}.")
+            print(f"  Try running manually:")
+            print(f"    sudo {sys.executable} -m venv --without-pip {venv_dir}")
             pause()
             return False
         if _sudo(venv_python, "-m", "ensurepip", "--upgrade") != 0:
-            print("  Failed to bootstrap pip.")
+            print(f"\n  Failed to bootstrap pip inside {venv_dir}.")
+            print(f"  Try running manually:")
+            print(f"    sudo {venv_python} -m ensurepip --upgrade")
             pause()
             return False
 
@@ -47,9 +52,12 @@ def _ensure_venv() -> bool:
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )
     if probe.returncode != 0:
-        print("  Installing pyzmq...")
+        print(f"  Installing pyzmq into {venv_dir} ...")
+        print(f"    (to install manually: sudo {venv_python} -m pip install pyzmq)")
         if _sudo(venv_python, "-m", "pip", "install", "pyzmq", "--quiet") != 0:
-            print("  Failed to install pyzmq.")
+            print(f"\n  Failed to install pyzmq.")
+            print(f"  Try running manually:")
+            print(f"    sudo {venv_python} -m pip install pyzmq")
             pause()
             return False
 
@@ -119,7 +127,6 @@ def wait_for_daemon(timeout: float = 10.0, interval: float = 0.3) -> bool:
 
 
 def wait_for_daemon_or_warn(context: str = "") -> bool:
-    """Print progress, wait for daemon, and emit a contextual warning on timeout."""
     print("  Waiting for daemon...", end="", flush=True)
     ok = wait_for_daemon()
     if ok:

@@ -37,11 +37,10 @@ _RYZENADJ_TOKEN_RE = re.compile(
 
 
 def _validate_ryzenadj_payload(tokens: list[str]) -> list[str]:
-    safe    = [t for t in tokens if _RYZENADJ_TOKEN_RE.match(t)]
-    dropped = [t for t in tokens if not _RYZENADJ_TOKEN_RE.match(t)]
-    if dropped:
-        logging.warning("Stripped unsafe ryzenadj tokens: %s", dropped)
-    return safe
+    invalid = [t for t in tokens if not _RYZENADJ_TOKEN_RE.match(t)]
+    if invalid:
+        raise ValueError(f"invalid ryzenadj arguments: {invalid}")
+    return tokens
 
 
 def _run_cmd(command: str) -> str:
@@ -90,9 +89,19 @@ def _on_ac() -> bool:
     return not battery_discharging
 
 
+def _load_presets() -> dict:
+    from Assets.Modules.power import get_presets
+    return get_presets()
+
+
 def _run_ryzenadj(args: str, mode: str) -> str:
     raw_payload = mode.split() if args == "Custom" else args.split()
-    payload     = _validate_ryzenadj_payload(raw_payload)
+    try:
+        payload = _validate_ryzenadj_payload(raw_payload)
+    except ValueError as exc:
+        logging.error("%s", exc)
+        return ""
+
     result = subprocess.run(
         [cfg.RYZENADJ] + payload,
         stdout=subprocess.PIPE,
@@ -104,19 +113,23 @@ def _run_ryzenadj(args: str, mode: str) -> str:
     return out.strip()
 
 
-def _load_presets() -> dict:
-    from Assets.Modules.power import _preset_module_name, _strip_cpu_name
-    import importlib
+def _load_saved_preset() -> tuple[str, str, bool, bool, int] | None:
+    cfg.load()
+    user_mode = cfg.get("User", "Mode")
+    presets   = _load_presets()
 
-    raw_cpu   = cfg.get("Info", "CPU")
-    family    = cfg.get("Info", "Family")
-    cpu_type  = cfg.get("Info", "Type")
-    cpu_model = _strip_cpu_name(raw_cpu)
-    mod_name  = _preset_module_name(cpu_type, family, cpu_model, raw_cpu)
-    full_mod  = f"Assets.Presets.{mod_name}"
-    module    = importlib.import_module(full_mod)
-    cfg.set_loaded_preset(full_mod)
-    return module.PRESETS
+    if user_mode == "Custom":
+        args = cfg.get("User", "CustomArgs")
+    elif user_mode in presets:
+        args = presets[user_mode]
+    else:
+        logging.warning("Saved preset %r not found.", user_mode)
+        return None
+
+    reapply  = cfg.get("Settings", "ReApply",     "0") == "1"
+    dynamic  = cfg.get("Settings", "DynamicMode", "0") == "1"
+    interval = int(float(cfg.get("Settings", "Time", "3")))
+    return user_mode, args, reapply, dynamic, interval
 
 
 class PowerDaemon:
@@ -142,7 +155,6 @@ class PowerDaemon:
             "shutdown":    self._cmd_shutdown,
             "dmidecode":   self._cmd_dmidecode,
         }
-
 
     def _effective_mode_args(
         self, base_mode: str, base_args: str, dynamic: bool
@@ -253,24 +265,14 @@ class PowerDaemon:
             }
 
     def _cmd_apply_saved(self, _msg: dict) -> dict:
-        cfg.load()
-        user_mode = cfg.get("User", "Mode")
         try:
-            presets = _load_presets()
+            result = _load_saved_preset()
         except Exception as exc:
             return {"ok": False, "error": f"Could not load presets: {exc}"}
+        if result is None:
+            return {"ok": False, "error": "Saved preset not found"}
 
-        if user_mode == "Custom":
-            args = cfg.get("User", "CustomArgs")
-        elif user_mode in presets:
-            args = presets[user_mode]
-        else:
-            return {"ok": False, "error": f"Preset {user_mode!r} not found"}
-
-        reapply  = cfg.get("Settings", "ReApply",     "0") == "1"
-        dynamic  = cfg.get("Settings", "DynamicMode", "0") == "1"
-        interval = int(float(cfg.get("Settings", "Time", "3")))
-
+        user_mode, args, reapply, dynamic, interval = result
         self._stop_loop()
 
         if reapply or dynamic:
@@ -361,24 +363,15 @@ class PowerDaemon:
 
 
 def _apply_on_start(daemon: PowerDaemon) -> None:
-    user_mode = cfg.get("User", "Mode")
     try:
-        presets = _load_presets()
+        result = _load_saved_preset()
     except Exception as exc:
         logging.warning("Could not load presets: %s", exc)
         return
-
-    if user_mode == "Custom":
-        args = cfg.get("User", "CustomArgs")
-    elif user_mode in presets:
-        args = presets[user_mode]
-    else:
-        logging.warning("Saved preset %r not found.", user_mode)
+    if result is None:
         return
 
-    reapply  = cfg.get("Settings", "ReApply",     "0") == "1"
-    dynamic  = cfg.get("Settings", "DynamicMode", "0") == "1"
-    interval = int(float(cfg.get("Settings", "Time", "3")))
+    user_mode, args, reapply, dynamic, interval = result
 
     if reapply or dynamic:
         daemon._cmd_apply_loop({

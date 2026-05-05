@@ -144,6 +144,19 @@ def load_power_state() -> PowerState:
     return PowerState(mode=mode, dynamic=dynamic, loop=loop, interval=interval)
 
 
+def _refresh_state_from_daemon(state: PowerState, client) -> PowerState:
+    try:
+        s = client.status()
+        return PowerState(
+            mode     = "Dynamic" if state.dynamic else (s.get("mode") or state.mode),
+            dynamic  = state.dynamic,
+            loop     = s.get("running_loop", state.loop),
+            interval = state.interval,
+        )
+    except Exception:
+        return state
+
+
 def build_menu_items(state: PowerState) -> list[MenuItem]:
     items: list[MenuItem] = [
         MenuItem("Select preset",    state.mode),
@@ -172,44 +185,38 @@ def set_current_preset(name: str, args: str) -> None:
     apply_smu(args, name, save_to_config=False)
 
 
-def _toggle_dynamic_state(state: PowerState) -> PowerState:
+def _toggle_dynamic_state(state: PowerState, client, presets: dict) -> PowerState:
     new_dynamic = not state.dynamic
     cfg.set("Settings", "DynamicMode", "1" if new_dynamic else "0")
+    cfg.set("Settings", "ReApply",     "1" if new_dynamic else cfg.get("Settings", "ReApply", "0"))
     cfg.save()
-
-    from .ipc import get_client
-    client = get_client()
 
     if not client.ping():
         cfg.set("Settings", "DynamicMode", "1" if state.dynamic else "0")
+        cfg.set("Settings", "ReApply",     "1" if state.loop    else "0")
         cfg.save()
         clear()
         print("  Daemon is not running — cannot change dynamic mode.")
         print("  sudo systemctl enable --now uxtu4unix.service")
         pause()
-        return PowerState(
-            mode     = state.mode,
-            dynamic  = state.dynamic,
-            loop     = state.loop,
-            interval = state.interval,
-        )
+        return state
 
     if new_dynamic:
-        cfg.set("Settings", "ReApply", "1")
-        cfg.save()
-        presets = get_presets()
         apply_smu(presets.get("Balance", ""), "Balance", save_to_config=False)
         client.apply_saved()
         return PowerState(mode="Dynamic", dynamic=True, loop=True, interval=state.interval)
     else:
         client.apply_saved()
-        return load_power_state()
+        return PowerState(
+            mode     = state.mode,
+            dynamic  = False,
+            loop     = state.loop,
+            interval = state.interval,
+        )
 
 
-def _daemon_status_screen() -> None:
-    from .ipc import get_client
+def _daemon_status_screen(client) -> None:
     clear()
-    client = get_client()
     if not client.ping():
         print("  Daemon is not running.")
         print("  sudo systemctl enable --now uxtu4unix.service")
@@ -227,31 +234,46 @@ def _daemon_status_screen() -> None:
     pause()
 
 
-def _stop_loop_screen() -> None:
-    from .ipc import get_client
-    client = get_client()
+def _stop_loop_screen(state: PowerState, client) -> PowerState:
     if client.ping():
         client.stop_loop()
-        cfg.set("Settings", "ReApply", "0")
-        cfg.save()
+    cfg.set("Settings", "ReApply", "0")
+    cfg.save()
+    return PowerState(
+        mode     = state.mode,
+        dynamic  = state.dynamic,
+        loop     = False,
+        interval = state.interval,
+    )
 
 
-def _start_loop_screen() -> None:
-    from .ipc import get_client
+def _start_loop_screen(state: PowerState, client) -> PowerState:
     cfg.set("Settings", "ReApply", "1")
     cfg.save()
-    client = get_client()
     if client.ping():
         client.apply_saved()
+    return PowerState(
+        mode     = state.mode,
+        dynamic  = state.dynamic,
+        loop     = True,
+        interval = state.interval,
+    )
 
 
-def _reapply_interval_menu() -> None:
+def _reapply_interval_menu(state: PowerState, client) -> PowerState:
     clear()
-    current = cfg.get("Settings", "Time", "3")
+    current = cfg.get("Settings", "Time", str(state.interval))
     val = ask("Reapply interval in seconds", default=current)
     if not update_reapply_interval(val):
         print("\n  Must be a whole number.")
         pause()
+        return state
+    return PowerState(
+        mode     = state.mode,
+        dynamic  = state.dynamic,
+        loop     = state.loop,
+        interval = int(val),
+    )
 
 
 def _select_preset_menu(presets: dict, names: list, current: str) -> None:
@@ -263,19 +285,28 @@ def _select_preset_menu(presets: dict, names: list, current: str) -> None:
     set_current_preset(names[choice], presets[names[choice]])
 
 
-def _custom_args_menu() -> None:
+def _custom_args_menu(state: PowerState, client) -> PowerState:
     clear()
     args = ask("ryzenadj arguments")
     if args:
         cfg.set("Settings", "DynamicMode", "0")
         cfg.save()
         apply_smu(args, "Custom", save_to_config=True)
+    return PowerState(
+        mode     = "Custom" if args else state.mode,
+        dynamic  = False    if args else state.dynamic,
+        loop     = state.loop,
+        interval = state.interval,
+    )
 
 
 def preset_menu() -> None:
+    from .ipc import get_client
+
     presets  = get_presets()
     names    = list(presets.keys())
     last_idx = 0
+    client   = get_client()
     state    = load_power_state()
 
     while True:
@@ -294,20 +325,17 @@ def preset_menu() -> None:
             return
         elif item.label == "Select preset":
             _select_preset_menu(presets, names, state.mode)
-            state = load_power_state()
         elif item.label == "Dynamic mode":
-            state = _toggle_dynamic_state(state)
+            state = _toggle_dynamic_state(state, client, presets)
         elif item.label == "Custom arguments":
-            _custom_args_menu()
-            state = load_power_state()
+            state = _custom_args_menu(state, client)
         elif item.label == "Reapply interval":
-            _reapply_interval_menu()
-            state = load_power_state()
+            state = _reapply_interval_menu(state, client)
         elif item.label == "Stop reapply" and not item.is_disabled:
-            _stop_loop_screen()
-            state = load_power_state()
+            state = _stop_loop_screen(state, client)
         elif item.label == "Start reapply":
-            _start_loop_screen()
-            state = load_power_state()
+            state = _start_loop_screen(state, client)
         elif item.label == "Daemon status":
-            _daemon_status_screen()
+            _daemon_status_screen(client)
+
+        state = _refresh_state_from_daemon(state, client)

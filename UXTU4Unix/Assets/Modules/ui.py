@@ -125,6 +125,50 @@ def render_menu(title: str, subtitle: str, items: list[MenuItem], idx: int) -> l
     return lines
 
 
+def _simple_menu(
+    title:    str,
+    items:    list[MenuItem],
+    *,
+    subtitle: str = "",
+    selected: int = 0,
+    on_toggle      = None,
+) -> int:
+    while True:
+        clear()
+        print(f"  {_B}{title}{_R}")
+        if subtitle:
+            for line in subtitle.split("\n"):
+                print(f"  {_D}{line}{_R}")
+        print()
+        numbered: list[int] = []
+        for i, item in enumerate(items):
+            if item.is_separator:
+                print(f"  {_D}{'-' * 40}{_R}")
+                continue
+            if item.is_disabled:
+                continue
+            n = len(numbered) + 1
+            numbered.append(i)
+            hint = f"  {_D}{item.hint}{_R}" if item.hint else ""
+            print(f"  {n}. {item.label}{hint}")
+        print()
+        try:
+            raw = input("  Select option (or Enter to go back): ").strip()
+        except EOFError:
+            return -1
+        if not raw:
+            return -1
+        if not raw.isdigit():
+            continue
+        n = int(raw)
+        if 1 <= n <= len(numbered):
+            i = numbered[n - 1]
+            if on_toggle and items[i].is_toggle:
+                on_toggle(i, items)
+                continue
+            return i
+
+
 def menu(
     title:    str,
     items:    list[MenuItem],
@@ -134,10 +178,10 @@ def menu(
     on_toggle      = None,
 ) -> int:
     if not termui.is_tty():
-        raise RuntimeError(
-            "UXTU4Unix requires an interactive terminal (TTY).\n"
-            "Do not pipe input or run from a non-interactive shell."
+        return _simple_menu(
+            title, items, subtitle=subtitle, selected=selected, on_toggle=on_toggle,
         )
+
     clear()
     sys.stdout.write(termui.HIDE_CURSOR)
     sys.stdout.flush()
