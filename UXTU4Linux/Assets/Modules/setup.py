@@ -39,12 +39,18 @@ def _apply_defaults() -> None:
     cfg.ensure_sections("User", "Settings", "Info")
     if not cfg.get("User", "Mode"):
         cfg.set("User", "Mode", "Balance")
-    cfg.set("Settings", "Time",           DEFAULT_SETTINGS_TIME)
-    cfg.set("Settings", "SoftwareUpdate", DEFAULT_SETTINGS_SOFTWARE_UPDATE)
-    cfg.set("Settings", "ReApply",        DEFAULT_SETTINGS_REAPPLY)
-    cfg.set("Settings", "ApplyOnStart",   DEFAULT_SETTINGS_APPLY_ON_START)
-    cfg.set("Settings", "DynamicMode",    DEFAULT_SETTINGS_DYNAMIC_MODE)
-    cfg.set("Settings", "Debug",          DEFAULT_SETTINGS_DEBUG)
+    if not cfg.get("Settings", "Time"):
+        cfg.set("Settings", "Time", DEFAULT_SETTINGS_TIME)
+    if not cfg.get("Settings", "SoftwareUpdate"):
+        cfg.set("Settings", "SoftwareUpdate", DEFAULT_SETTINGS_SOFTWARE_UPDATE)
+    if not cfg.get("Settings", "ReApply"):
+        cfg.set("Settings", "ReApply", DEFAULT_SETTINGS_REAPPLY)
+    if not cfg.get("Settings", "ApplyOnStart"):
+        cfg.set("Settings", "ApplyOnStart", DEFAULT_SETTINGS_APPLY_ON_START)
+    if not cfg.get("Settings", "DynamicMode"):
+        cfg.set("Settings", "DynamicMode", DEFAULT_SETTINGS_DYNAMIC_MODE)
+    if not cfg.get("Settings", "Debug"):
+        cfg.set("Settings", "Debug", DEFAULT_SETTINGS_DEBUG)
 
 
 def _step(n: int, total: int, title: str) -> None:
