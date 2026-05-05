@@ -181,7 +181,7 @@ def check_integrity() -> None:
     if broken:
         print("  Warning: configuration integrity check failed.")
         print("  Resetting will remove the current configuration and recreate defaults.")
-        if confirm("  Do you want to reset the configuration now?", default=False):
+        if confirm("Do you want to reset the configuration now?", default=False):
             reset_all()
         else:
             print("  Keeping existing configuration unchanged.")
