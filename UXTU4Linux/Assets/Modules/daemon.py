@@ -35,6 +35,7 @@ _DMI_ALLOWED_TYPES = frozenset({
 
 MIN_INTERVAL_SECONDS: int = 1
 MAX_INTERVAL_SECONDS: int = 3600
+COMMAND_TIMEOUT_SECONDS: int = 10
 
 _RYZENADJ_TOKEN_RE = re.compile(
     r'^--?[a-zA-Z][a-zA-Z0-9_-]*(=\S+)?$'
@@ -61,11 +62,11 @@ def _run_cmd(command: str) -> str:
         logging.warning("Failed to start command %r: %s", command, exc)
         return ""
     try:
-        stdout, _ = proc.communicate(timeout=10)
+        stdout, _ = proc.communicate(timeout=COMMAND_TIMEOUT_SECONDS)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.communicate()
-        logging.warning("Command timed out after 10s: %r", command)
+        logging.warning("Command timed out after %ss: %r", COMMAND_TIMEOUT_SECONDS, command)
         return ""
     if proc.returncode != 0:
         logging.debug("Command exited with non-zero status %s: %r", proc.returncode, command)
@@ -409,20 +410,19 @@ class PowerDaemon:
 
         logging.info("Listening on %s", cfg.ZMQ_SOCKET_ADDR)
 
-        stop_requested = False
+        stop_requested = threading.Event()
         # Poll every 500ms so shutdown signals are handled within at most ~0.5s
         # while avoiding a tight loop that would wake the CPU too frequently.
         poll_timeout_ms = 500
 
         def _sig_handler(*_):
-            nonlocal stop_requested
-            stop_requested = True
+            stop_requested.set()
 
         signal.signal(signal.SIGTERM, _sig_handler)
         signal.signal(signal.SIGINT,  _sig_handler)
 
         while True:
-            if stop_requested:
+            if stop_requested.is_set():
                 logging.info("Shutting down.")
                 self._stop_loop()
                 break
