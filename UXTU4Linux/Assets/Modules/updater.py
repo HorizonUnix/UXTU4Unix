@@ -24,8 +24,11 @@ def _ver_tuple(v: str) -> tuple:
 
 
 def get_latest_version() -> str:
-    url = urllib.request.urlopen(cfg.LATEST_VER_URL).geturl()
-    return url.rstrip("/").split("/")[-1]
+    try:
+        url = urllib.request.urlopen(cfg.LATEST_VER_URL).geturl()
+        return url.rstrip("/").split("/")[-1]
+    except urllib.error.URLError:
+        return "v0.0.0"
 
 
 def get_changelog() -> str:
@@ -58,7 +61,10 @@ def _do_update() -> None:
             shutil.copy2(cfg.CONFIG_PATH, config_bak)
 
         print("Downloading update...")
-        urllib.request.urlretrieve(url, zip_path)
+        try:
+            urllib.request.urlretrieve(url, zip_path)
+        except urllib.error.URLError as e:
+            raise ConnectionError(f"Download failed: could not retrieve update from {url}") from e
 
         print("Extracting...")
         with zipfile.ZipFile(zip_path, "r") as zf:
@@ -71,7 +77,8 @@ def _do_update() -> None:
         if _sudo("mv", inner, src_dir) != 0:
             raise PermissionError(f"Could not move new release into {src_dir}")
 
-        _sudo("rm", "-rf", new_folder)
+        if _sudo("rm", "-rf", new_folder) != 0:
+            print(f"Warning: Could not remove temporary folder: {new_folder}")
 
         launch = os.path.join(src_dir, "UXTU4Linux.py")
         ryzen  = os.path.join(src_dir, "Assets", "Linux", "ryzenadj")
@@ -92,7 +99,10 @@ def _do_update() -> None:
             restart_service()
 
         print("Update complete. Relaunching - please close this window.")
-        subprocess.Popen([sys.executable, launch])
+        python_exec = os.path.realpath(sys.executable or "")
+        if not python_exec or not os.path.isabs(python_exec) or not os.path.isfile(python_exec) or not os.access(python_exec, os.X_OK):
+            raise RuntimeError(f"Refusing to relaunch with untrusted interpreter path: {sys.executable!r}")
+        subprocess.Popen([python_exec, launch])
         return
 
     except Exception as e:
