@@ -172,7 +172,23 @@ def _do_update() -> None:
         json.JSONDecodeError,
     ) as e:
         err_type = type(e).__name__
-        print(f"Update failed ({err_type}): {e}")
+        if isinstance(e, urllib.error.URLError):
+            print(f"Update failed ({err_type}): Network error while downloading update: {e}")
+            print("Please check your internet connection, DNS, or firewall settings and try again.")
+        elif isinstance(e, PermissionError):
+            print(f"Update failed ({err_type}): Insufficient permissions: {e}")
+            print("Please rerun the updater with the required privileges.")
+        elif isinstance(e, zipfile.BadZipFile):
+            print(f"Update failed ({err_type}): Downloaded update archive is corrupted: {e}")
+            print("Please retry the update; the download may have been incomplete.")
+        elif isinstance(e, subprocess.SubprocessError):
+            print(f"Update failed ({err_type}): A system command failed during update: {e}")
+            print("Please review system state/permissions and try again.")
+        elif isinstance(e, json.JSONDecodeError):
+            print(f"Update failed ({err_type}): Received invalid release metadata: {e}")
+            print("Please try again later.")
+        else:
+            print(f"Update failed ({err_type}): {e}")
         pause()
         
 
