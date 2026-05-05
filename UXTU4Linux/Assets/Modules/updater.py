@@ -67,8 +67,22 @@ def _do_update() -> None:
             raise ConnectionError(f"Download failed: could not retrieve update from {url}") from e
 
         print("Extracting...")
+
+        def _safe_extract_zip(zf: zipfile.ZipFile, dest_dir: str) -> None:
+            dest_root = os.path.realpath(dest_dir)
+            for member in zf.infolist():
+                member_name = member.filename
+                if os.path.isabs(member_name):
+                    raise RuntimeError(f"Unsafe absolute path in zip entry: {member_name}")
+
+                target_path = os.path.realpath(os.path.join(dest_root, member_name))
+                if os.path.commonpath([dest_root, target_path]) != dest_root:
+                    raise RuntimeError(f"Unsafe path traversal in zip entry: {member_name}")
+
+                zf.extract(member, dest_root)
+
         with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(new_folder)
+            _safe_extract_zip(zf, new_folder)
 
         if _sudo("rm", "-rf", src_dir) != 0:
             raise PermissionError(f"Could not remove {src_dir}; the privileged remove command failed (possible permission issue or directory in use)")
