@@ -286,7 +286,7 @@ class PowerDaemon:
         args = msg.get("args", "")
         mode = msg.get("mode", "Unknown")
 
-        cfg_default = int(cfg.get("Settings", "Time", "3"))
+        cfg_default = _parse_interval(cfg.get("Settings", "Time", "3"), 3)
         interval    = _parse_interval(msg.get("interval", cfg_default), cfg_default)
 
         dynamic = bool(msg.get("dynamic", False))
