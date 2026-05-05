@@ -1,26 +1,20 @@
 """
 setup.py
 """
+
 from __future__ import annotations
 
 import os
 import subprocess
-import sys
 
 from . import config as cfg
 from .hardware import detect as detect_hardware
 from .ui import clear, confirm, pause
 
 from .service import (
-    SERVICE_FILE,
-    SERVICE_NAME,
-    daemon_menu,
     install_service,
     restart_service,
-    service_enabled,
     service_running,
-    show_logs,
-    verify_service_path,
     wait_for_daemon_or_warn,
 )
 

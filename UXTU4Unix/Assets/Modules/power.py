@@ -309,15 +309,22 @@ def preset_menu() -> None:
     client   = get_client()
     state    = load_power_state()
 
+    def _do_select_preset(s: PowerState) -> PowerState:
+        _select_preset_menu(presets, names, s.mode)
+        return s
+
+    def _do_daemon_status(s: PowerState) -> PowerState:
+        _daemon_status_screen(client)
+        return s
 
     handlers = {
-        "select_preset":    lambda s: (_select_preset_menu(presets, names, s.mode), s)[1],
+        "select_preset":    _do_select_preset,
         "toggle_dynamic":   lambda s: _toggle_dynamic_state(s, client, presets),
         "custom_args":      lambda s: _custom_args_menu(s, client),
         "reapply_interval": lambda s: _reapply_interval_menu(s, client),
         "stop_reapply":     lambda s: _stop_loop_screen(s, client),
         "start_reapply":    lambda s: _start_loop_screen(s, client),
-        "daemon_status":    lambda s: (_daemon_status_screen(client), s)[1],
+        "daemon_status":    _do_daemon_status,
     }
 
     while True:
