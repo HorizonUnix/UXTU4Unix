@@ -293,7 +293,8 @@ class PowerDaemon:
             mode   = msg.get("mode", "Unknown")
             args   = msg.get("args", "")
             output = self._apply_once(args, mode, log=True)
-            self._last_logged_mode = mode
+            with self._lock:
+                self._last_logged_mode = mode
             return {"ok": True, "output": output}
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
