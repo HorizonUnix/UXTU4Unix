@@ -72,7 +72,8 @@ def _do_update() -> None:
         ryzen  = os.path.join(src_dir, "Assets", "Linux", "ryzenadj")
         for path in (launch, ryzen):
             if os.path.exists(path):
-                subprocess.run(["chmod", "+x", path], check=True)
+                if _sudo("chmod", "+x", path) != 0:
+                    raise PermissionError(f"Could not set executable permission on {path}")
 
         new_config = os.path.join(src_dir, "Assets", "config.toml")
         if os.path.exists(config_bak):
