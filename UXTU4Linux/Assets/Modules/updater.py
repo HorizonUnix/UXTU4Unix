@@ -49,6 +49,17 @@ def _do_update() -> None:
     src_dir     = os.path.dirname(assets_dir)
     install_dir = os.path.dirname(src_dir)
 
+    expected_structure = (
+        os.path.basename(script_dir) == "Modules"
+        and os.path.basename(assets_dir) == "Assets"
+        and os.path.isdir(os.path.join(install_dir, "Assets"))
+        and os.path.isfile(os.path.join(install_dir, "main.py"))
+    )
+    if not expected_structure:
+        raise RuntimeError(
+            "Unexpected installation layout detected; aborting update to avoid writing to incorrect paths."
+        )
+
     zip_path   = os.path.join(install_dir, "UXTU4Linux.zip")
     new_folder = os.path.join(install_dir, "UXTU4Linux_new")
     config_bak = os.path.join(install_dir, "config.toml.bak")
