@@ -66,6 +66,11 @@ def _do_update() -> None:
     config_bak = os.path.join(install_dir, "config.toml.bak")
 
     def _sudo(*args: str) -> int:
+        """Run a restricted sudo command.
+
+        Note: callers must pass trusted, canonicalized paths. This helper enforces
+        a strict command/flag policy to reduce misuse risk.
+        """
         if not args:
             raise ValueError("No command provided for sudo execution")
 
@@ -74,9 +79,41 @@ def _do_update() -> None:
         if cmd not in allowed_commands:
             raise ValueError(f"Disallowed sudo command: {cmd}")
 
+        forbidden_chars = set(";&|`$><")
         for arg in args:
-            if "\x00" in arg or "\n" in arg or "\r" in arg:
+            if any(ch in arg for ch in ("\x00", "\n", "\r")):
                 raise ValueError("Invalid control characters in sudo arguments")
+            if any(ch in forbidden_chars for ch in arg):
+                raise ValueError("Invalid metacharacters in sudo arguments")
+
+        cmd_args = list(args[1:])
+
+        def _validate_args(allowed_flags: set, min_paths: int) -> None:
+            nonlocal cmd_args
+            paths = []
+            for a in cmd_args:
+                if a.startswith("-"):
+                    if a not in allowed_flags:
+                        raise ValueError(f"Disallowed option for {cmd}: {a}")
+                else:
+                    if not a.strip():
+                        raise ValueError("Empty path/value argument is not allowed")
+                    paths.append(a)
+            if len(paths) < min_paths:
+                raise ValueError(f"Insufficient path/value arguments for {cmd}")
+
+        if cmd == "rm":
+            _validate_args({"-f", "-r", "-rf", "-fr"}, 1)
+        elif cmd == "cp":
+            _validate_args({"-r", "-f", "-a"}, 2)
+        elif cmd == "mv":
+            _validate_args({"-f", "-n"}, 2)
+        elif cmd == "chmod":
+            _validate_args({"-R"}, 2)
+        elif cmd == "chown":
+            _validate_args({"-R"}, 2)
+        elif cmd == "mkdir":
+            _validate_args({"-p"}, 1)
 
         return subprocess.run(["sudo", *args], check=False).returncode
 
@@ -167,7 +204,10 @@ def _do_update() -> None:
             restart_service()
 
         print("Update complete. Relaunching - please close this window.")
-        python_exec = os.path.realpath(sys.executable or "")
+        raw_executable = sys.executable
+        if not raw_executable:
+            raise RuntimeError("Refusing to relaunch: sys.executable is not set")
+        python_exec = os.path.realpath(raw_executable)
         if not python_exec or not os.path.isabs(python_exec) or not os.path.isfile(python_exec) or not os.access(python_exec, os.X_OK):
             raise RuntimeError(f"Refusing to relaunch with untrusted interpreter path: {python_exec!r}")
         subprocess.Popen([python_exec, launch])
@@ -175,6 +215,8 @@ def _do_update() -> None:
 
     except (
         OSError,
+        PermissionError,
+        ConnectionError,
         RuntimeError,
         ValueError,
         subprocess.SubprocessError,
@@ -201,7 +243,7 @@ def _do_update() -> None:
         else:
             print(f"Update failed ({err_type}): {e}")
         pause()
-        
+
 
 def show_updater() -> None:
     while True:
