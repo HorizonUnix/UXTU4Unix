@@ -19,7 +19,7 @@ warn() { echo -e "${_Y}  !${_R} $*"; }
 die()  { echo -e "${_E}  ✗${_R} $*"; exit 1; }
 hr()   { echo -e "  $(printf '─%.0s' {1..58})"; }
 
-trap 'rm -rf "$TMP_DIR"' EXIT
+trap '[[ -n "$TMP_DIR" && ( "$TMP_DIR" == /tmp/* || "$TMP_DIR" == /var/tmp/* ) ]] && rm -rf -- "$TMP_DIR"' EXIT
 
 [[ $EUID -eq 0 ]] && die "Do not run as root. Run as your normal user:  bash install.sh"
 
