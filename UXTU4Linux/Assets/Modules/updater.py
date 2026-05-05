@@ -215,8 +215,14 @@ def _do_update() -> None:
 
         print("Update complete. Relaunching - please close this window.")
         raw_executable = sys.executable
-        if not launch or not os.path.isabs(launch) or not os.path.isfile(launch) or not os.access(launch, os.R_OK):
-            raise RuntimeError(f"Refusing to relaunch with invalid launch target: {launch!r}")
+        if not launch:
+            raise RuntimeError("Refusing to relaunch: launch target is not set")
+        if not os.path.isabs(launch):
+            raise RuntimeError(f"Refusing to relaunch: launch target is not an absolute path: {launch!r}")
+        if not os.path.isfile(launch):
+            raise RuntimeError(f"Refusing to relaunch: launch target does not exist or is not a file: {launch!r}")
+        if not os.access(launch, os.R_OK):
+            raise RuntimeError(f"Refusing to relaunch: launch target is not readable: {launch!r}")
         try:
             subprocess.Popen([python_exec, launch])
         except (OSError, PermissionError, subprocess.SubprocessError) as e:
