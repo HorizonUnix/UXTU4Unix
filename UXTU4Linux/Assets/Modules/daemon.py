@@ -12,6 +12,7 @@ import signal
 import subprocess
 import sys
 import threading
+import time
 import zmq
 from dataclasses import dataclass
 
@@ -206,7 +207,16 @@ class PowerDaemon:
 
     def _loop_body(self, args: str, mode: str, interval: int, dynamic: bool) -> None:
         self._stop_evt.clear()
-        while not self._stop_evt.wait(interval):
+        max_wait_step = 1.0
+        while not self._stop_evt.is_set():
+            deadline = time.monotonic() + interval
+            while not self._stop_evt.is_set():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                self._stop_evt.wait(min(remaining, max_wait_step))
+            if self._stop_evt.is_set():
+                break
             try:
                 eff_mode, eff_args = self._effective_mode_args(mode, args, dynamic)
                 changed = eff_mode != self._last_logged_mode
@@ -221,7 +231,9 @@ class PowerDaemon:
     def _stop_loop(self) -> None:
         self._stop_evt.set()
         if self._loop_thread and self._loop_thread.is_alive():
-            self._loop_thread.join(timeout=self._interval + 2)
+            self._loop_thread.join(timeout=10)
+            if self._loop_thread.is_alive():
+                logging.warning("Loop thread did not terminate within 10 seconds")
 
     def apply_preset_state_once(self, state: PresetState) -> str:
         return self._apply_once(state.args, state.mode, log=True)
@@ -370,7 +382,7 @@ class PowerDaemon:
             return
 
         if os.path.exists(cfg.ZMQ_SOCKET_PATH):
-            os.chmod(cfg.ZMQ_SOCKET_PATH, 0o666)
+            os.chmod(cfg.ZMQ_SOCKET_PATH, 0o660)
 
         logging.info("Listening on %s", cfg.ZMQ_SOCKET_ADDR)
 
@@ -388,9 +400,9 @@ class PowerDaemon:
 
         while True:
             raw  = sock.recv_string()
-            resp = self.handle(raw)
+            resp, is_shutdown = self.handle(raw)
             sock.send_string(resp)
-            if json.loads(raw).get("cmd") == "shutdown":
+            if is_shutdown:
                 logging.info("Shutdown command received.")
                 break
 
