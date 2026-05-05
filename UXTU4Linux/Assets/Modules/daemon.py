@@ -117,9 +117,9 @@ def _run_ryzenadj(args: str, mode: str) -> str:
     return out.strip()
 
 
-def _parse_interval(raw, default: int) -> int:
+def _parse_interval(raw_interval, default: int) -> int:
     try:
-        value = int(raw)
+        value = int(raw_interval)
     except (TypeError, ValueError):
         value = default
     return max(MIN_INTERVAL_SECONDS, min(MAX_INTERVAL_SECONDS, value))
