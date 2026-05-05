@@ -174,11 +174,6 @@ def _do_update() -> None:
                 except ValueError as e:
                     raise RuntimeError(f"Unsafe path traversal in zip entry: {member_name}") from e
                 if common_root != dest_root:
-                try:
-                    common_root = os.path.commonpath([dest_root, target_path])
-                except ValueError as e:
-                    raise RuntimeError(f"Unsafe path traversal in zip entry: {member_name}") from e
-                if common_root != dest_root:
                     raise RuntimeError(f"Unsafe path traversal in zip entry: {member_name}")
 
                 zf.extract(member, dest_root)
