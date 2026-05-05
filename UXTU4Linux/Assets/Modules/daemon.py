@@ -137,7 +137,7 @@ def _run_ryzenadj(args: str, mode: str) -> str:
     return out.strip()
 
 
-def _parse_interval(raw_interval, default: int) -> int:
+def _parse_interval(raw_interval: int | str | None, default: int) -> int:
     try:
         value = int(raw_interval)
     except (TypeError, ValueError):
