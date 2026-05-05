@@ -12,17 +12,11 @@ import signal
 import subprocess
 import sys
 import threading
-import time
 import zmq
 from dataclasses import dataclass
 
 _HERE = os.path.dirname(os.path.realpath(__file__))
 _ROOT = os.path.dirname(os.path.dirname(_HERE))
-
-AC_PRESET_NAME = "Extreme"
-BATTERY_PRESET_NAME = "Eco"
-THREAD_JOIN_TIMEOUT_SECONDS = 10
-ZMQ_POLL_TIMEOUT_MS = 500
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
@@ -30,11 +24,7 @@ from Assets.Modules import config as cfg
 
 cfg.load()
 
-# Traditional AC/mains power-supply types.
-_AC_TYPES = frozenset({"Mains"})
-# USB-derived power supplies are treated as external power for policy decisions.
-_USB_POWER_TYPES = frozenset({"USB", "USB_C", "USB_PD", "USB_PD_DRP", "USB_C_DRP"})
-_EXTERNAL_POWER_TYPES = _AC_TYPES | _USB_POWER_TYPES
+_AC_TYPES = frozenset({"Mains", "USB", "USB_C", "USB_PD", "USB_PD_DRP", "USB_C_DRP"})
 
 _DMI_ALLOWED_TYPES = frozenset({
     "bios", "system", "baseboard", "chassis", "processor",
@@ -44,10 +34,9 @@ _DMI_ALLOWED_TYPES = frozenset({
 
 MIN_INTERVAL_SECONDS: int = 1
 MAX_INTERVAL_SECONDS: int = 3600
-COMMAND_TIMEOUT_SECONDS: int = 10
 
 _RYZENADJ_TOKEN_RE = re.compile(
-    r'^--?[a-zA-Z][a-zA-Z0-9_-]*(=[A-Za-z0-9.-]+)?$'
+    r'^--?[a-zA-Z][a-zA-Z0-9_-]*(=\S+)?$'
 )
 
 def _validate_ryzenadj_payload(tokens: list[str]) -> list[str]:
@@ -60,31 +49,18 @@ def _validate_ryzenadj_payload(tokens: list[str]) -> list[str]:
 def _run_cmd(command: str) -> str:
     try:
         args = shlex.split(command)
-    except ValueError as exc:
-        logging.warning("Failed to parse command %r: %s", command, exc)
+    except ValueError:
         return ""
-    try:
-        proc = subprocess.Popen(
-            args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        )
-    except OSError as exc:
-        logging.warning("Failed to start command %r: %s", command, exc)
-        return ""
-    try:
-        stdout, _ = proc.communicate(timeout=COMMAND_TIMEOUT_SECONDS)
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        proc.communicate()
-        logging.warning("Command timed out after %ss: %r", COMMAND_TIMEOUT_SECONDS, command)
-        return ""
-    if proc.returncode != 0:
-        logging.debug("Command exited with non-zero status %s: %r", proc.returncode, command)
+    proc = subprocess.Popen(
+        args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    stdout, _ = proc.communicate()
     return stdout.decode("utf-8", errors="replace").strip()
 
 
 def _on_ac() -> bool:
-    ac_online = False
-    found_ac = False
+    ac_online           = False
+    found_ac            = False
     battery_discharging = False
     try:
         for entry in os.listdir("/sys/class/power_supply"):
@@ -94,7 +70,7 @@ def _on_ac() -> bool:
                     ptype = f.read().strip()
             except OSError:
                 continue
-            if ptype in _EXTERNAL_POWER_TYPES:
+            if ptype in _AC_TYPES:
                 found_ac = True
                 try:
                     with open(f"{base}/online") as f:
@@ -129,26 +105,20 @@ def _run_ryzenadj(args: str, mode: str) -> str:
         logging.error("%s", exc)
         return ""
 
-    try:
-        result = subprocess.run(
-            [cfg.RYZENADJ] + payload,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=COMMAND_TIMEOUT_SECONDS,
-        )
-    except subprocess.TimeoutExpired:
-        logging.error("ryzenadj timed out")
-        return ""
-
+    result = subprocess.run(
+        [cfg.RYZENADJ] + payload,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
     out = result.stdout.decode(errors="replace")
     if cfg.is_debug() and result.stderr:
         out += result.stderr.decode(errors="replace")
     return out.strip()
 
 
-def _parse_interval(raw_interval: int | str | None, default: int) -> int:
+def _parse_interval(raw, default: int) -> int:
     try:
-        value = int(raw_interval)
+        value = int(raw)
     except (TypeError, ValueError):
         value = default
     return max(MIN_INTERVAL_SECONDS, min(MAX_INTERVAL_SECONDS, value))
@@ -169,11 +139,7 @@ def _load_saved_preset() -> PresetState | None:
     presets   = _load_presets()
 
     if user_mode == "Custom":
-        custom_args = cfg.get("User", "CustomArgs")
-        if not isinstance(custom_args, str) or not custom_args.strip():
-            logging.warning("Saved custom preset has no valid CustomArgs.")
-            return None
-        args = custom_args.strip()
+        args = cfg.get("User", "CustomArgs")
     elif user_mode in presets:
         args = presets[user_mode]
     else:
@@ -182,8 +148,8 @@ def _load_saved_preset() -> PresetState | None:
 
     reapply  = cfg.get("Settings", "ReApply",     "0") == "1"
     dynamic  = cfg.get("Settings", "DynamicMode", "0") == "1"
-    cfg_default = _parse_interval(cfg.get("Settings", "Time", "3"), 3)
-    interval = cfg_default
+    cfg_default = int(cfg.get("Settings", "Time", "3"))
+    interval = _parse_interval(cfg.get("Settings", "Time", str(cfg_default)), cfg_default)
 
     return PresetState(
         mode=user_mode,
@@ -205,8 +171,7 @@ class PowerDaemon:
         self._interval         = 3
         self._last_output      = ""
         self._running_loop     = False
-        with self._lock:
-            self._last_logged_mode = ""
+        self._last_logged_mode = ""
 
         self._dispatch = {
             "ping":        self._cmd_ping,
@@ -225,7 +190,7 @@ class PowerDaemon:
         if not dynamic:
             return base_mode, base_args
         presets = _load_presets()
-        mode    = AC_PRESET_NAME if _on_ac() else BATTERY_PRESET_NAME
+        mode    = "Extreme" if _on_ac() else "Eco"
         args    = presets.get(mode, base_args)
         return mode, args
 
@@ -240,39 +205,23 @@ class PowerDaemon:
         return output
 
     def _loop_body(self, args: str, mode: str, interval: int, dynamic: bool) -> None:
-        max_wait_step = 1.0
-        while not self._stop_evt.is_set():
-            deadline = time.monotonic() + interval
-            while not self._stop_evt.is_set():
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    break
-                self._stop_evt.wait(min(remaining, max_wait_step))
-            if self._stop_evt.is_set():
-                break
-            eff_mode = mode
+        self._stop_evt.clear()
+        while not self._stop_evt.wait(interval):
             try:
                 eff_mode, eff_args = self._effective_mode_args(mode, args, dynamic)
-                with self._lock:
-                    changed = eff_mode != self._last_logged_mode
+                changed = eff_mode != self._last_logged_mode
                 self._apply_once(eff_args, eff_mode, log=changed)
                 if changed:
-                    with self._lock:
-                        self._last_logged_mode = eff_mode
+                    self._last_logged_mode = eff_mode
             except Exception as exc:
-                logging.warning("Failed to apply preset '%s' in loop: %s", eff_mode, exc)
+                logging.warning("Failed to apply preset in loop: %s", exc)
         with self._lock:
             self._running_loop = False
 
     def _stop_loop(self) -> None:
         self._stop_evt.set()
         if self._loop_thread and self._loop_thread.is_alive():
-            self._loop_thread.join(timeout=THREAD_JOIN_TIMEOUT_SECONDS)
-            if self._loop_thread.is_alive():
-                logging.warning(
-                    "Loop thread did not terminate within %s seconds",
-                    THREAD_JOIN_TIMEOUT_SECONDS,
-                )
+            self._loop_thread.join(timeout=self._interval + 2)
 
     def apply_preset_state_once(self, state: PresetState) -> str:
         return self._apply_once(state.args, state.mode, log=True)
@@ -293,8 +242,7 @@ class PowerDaemon:
             mode   = msg.get("mode", "Unknown")
             args   = msg.get("args", "")
             output = self._apply_once(args, mode, log=True)
-            with self._lock:
-                self._last_logged_mode = mode
+            self._last_logged_mode = mode
             return {"ok": True, "output": output}
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
@@ -303,7 +251,7 @@ class PowerDaemon:
         args = msg.get("args", "")
         mode = msg.get("mode", "Unknown")
 
-        cfg_default = _parse_interval(cfg.get("Settings", "Time", "3"), 3)
+        cfg_default = int(cfg.get("Settings", "Time", "3"))
         interval    = _parse_interval(msg.get("interval", cfg_default), cfg_default)
 
         dynamic = bool(msg.get("dynamic", False))
@@ -318,8 +266,7 @@ class PowerDaemon:
         try:
             eff_mode, eff_args = self._effective_mode_args(mode, args, dynamic)
             self._apply_once(eff_args, eff_mode, log=True)
-            with self._lock:
-                self._last_logged_mode = eff_mode
+            self._last_logged_mode = eff_mode
         except Exception as exc:
             with self._lock:
                 self._running_loop = False
@@ -386,7 +333,7 @@ class PowerDaemon:
         if dmi_type not in _DMI_ALLOWED_TYPES:
             return {"ok": False, "error": f"disallowed dmidecode type: {dmi_type!r}"}
         try:
-            out = _run_cmd(f"{cfg.DMIDECODE} -t {shlex.quote(dmi_type)}")
+            out = _run_cmd(f"{cfg.DMIDECODE} -t {dmi_type}")
             return {"ok": True, "output": out}
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
@@ -403,10 +350,6 @@ class PowerDaemon:
         except Exception as exc:
             resp = {"ok": False, "error": str(exc)}
         return json.dumps(resp)
-
-    @staticmethod
-    def _sig_handler(stop_requested: threading.Event, *_: object) -> None:
-        stop_requested.set()
 
     def run(self) -> None:
         if os.path.exists(cfg.ZMQ_SOCKET_PATH):
@@ -427,38 +370,27 @@ class PowerDaemon:
             return
 
         if os.path.exists(cfg.ZMQ_SOCKET_PATH):
-            os.chmod(cfg.ZMQ_SOCKET_PATH, 0o660)
+            os.chmod(cfg.ZMQ_SOCKET_PATH, 0o666)
 
         logging.info("Listening on %s", cfg.ZMQ_SOCKET_ADDR)
 
-        stop_requested = threading.Event()
-        # Poll every 500ms so shutdown signals are handled within at most ~0.5s
-        # while avoiding a tight loop that would wake the CPU too frequently.
-        poll_timeout_ms = ZMQ_POLL_TIMEOUT_MS
+        def _sig_handler(*_):
+            logging.info("Shutting down.")
+            self._stop_loop()
+            if os.path.exists(cfg.ZMQ_SOCKET_PATH):
+                os.unlink(cfg.ZMQ_SOCKET_PATH)
+            sock.close()
+            ctx.term()
+            sys.exit(0)
 
-        signal.signal(signal.SIGTERM, lambda *args: self._sig_handler(stop_requested, *args))
-        signal.signal(signal.SIGINT,  lambda *args: self._sig_handler(stop_requested, *args))
+        signal.signal(signal.SIGTERM, _sig_handler)
+        signal.signal(signal.SIGINT,  _sig_handler)
 
         while True:
-            if stop_requested.is_set():
-                logging.info("Shutting down.")
-                self._stop_loop()
-                break
-
-            if not sock.poll(poll_timeout_ms):
-                continue
-
             raw  = sock.recv_string()
             resp = self.handle(raw)
-            is_shutdown = False
-            try:
-                payload = json.loads(resp)
-                if isinstance(payload, dict):
-                    is_shutdown = bool(payload.get("shutdown", False))
-            except (TypeError, ValueError):
-                is_shutdown = False
             sock.send_string(resp)
-            if is_shutdown:
+            if json.loads(raw).get("cmd") == "shutdown":
                 logging.info("Shutdown command received.")
                 break
 

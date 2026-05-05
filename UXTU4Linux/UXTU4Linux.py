@@ -68,7 +68,7 @@ def main() -> None:
     items: list[MenuItem] = [
         MenuItem("Power Management"),
         MenuItem("Settings"),
-        MenuItem("Hardware information"),
+        MenuItem("Hardware Information"),
         MenuItem("About"),
         MenuItem("Quit"),
     ]
