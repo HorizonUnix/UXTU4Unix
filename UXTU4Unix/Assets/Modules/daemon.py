@@ -13,6 +13,7 @@ import subprocess
 import sys
 import threading
 import zmq
+from dataclasses import dataclass
 
 _HERE = os.path.dirname(os.path.realpath(__file__))
 _ROOT = os.path.dirname(os.path.dirname(_HERE))
@@ -31,10 +32,12 @@ _DMI_ALLOWED_TYPES = frozenset({
     *(str(i) for i in range(42)),
 })
 
-_RYZENADJ_TOKEN_RE = re.compile(
-    r'^--[a-z][a-z0-9]+(-[a-z0-9]+)*(=\d+(\.\d+)?)?$'
-)
+MIN_INTERVAL_SECONDS: int = 1
+MAX_INTERVAL_SECONDS: int = 3600
 
+_RYZENADJ_TOKEN_RE = re.compile(
+    r'^--?[a-zA-Z][a-zA-Z0-9_-]*(=\S+)?$'
+)
 
 def _validate_ryzenadj_payload(tokens: list[str]) -> list[str]:
     invalid = [t for t in tokens if not _RYZENADJ_TOKEN_RE.match(t)]
@@ -113,7 +116,24 @@ def _run_ryzenadj(args: str, mode: str) -> str:
     return out.strip()
 
 
-def _load_saved_preset() -> tuple[str, str, bool, bool, int] | None:
+def _parse_interval(raw, default: int) -> int:
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        value = default
+    return max(MIN_INTERVAL_SECONDS, min(MAX_INTERVAL_SECONDS, value))
+
+
+@dataclass
+class PresetState:
+    mode:     str
+    args:     str
+    dynamic:  bool
+    interval: int
+    reapply:  bool
+
+
+def _load_saved_preset() -> PresetState | None:
     cfg.load()
     user_mode = cfg.get("User", "Mode")
     presets   = _load_presets()
@@ -128,8 +148,16 @@ def _load_saved_preset() -> tuple[str, str, bool, bool, int] | None:
 
     reapply  = cfg.get("Settings", "ReApply",     "0") == "1"
     dynamic  = cfg.get("Settings", "DynamicMode", "0") == "1"
-    interval = int(float(cfg.get("Settings", "Time", "3")))
-    return user_mode, args, reapply, dynamic, interval
+    cfg_default = int(cfg.get("Settings", "Time", "3"))
+    interval = _parse_interval(cfg.get("Settings", "Time", str(cfg_default)), cfg_default)
+
+    return PresetState(
+        mode=user_mode,
+        args=args,
+        dynamic=dynamic,
+        interval=interval,
+        reapply=reapply,
+    )
 
 
 class PowerDaemon:
@@ -195,6 +223,17 @@ class PowerDaemon:
         if self._loop_thread and self._loop_thread.is_alive():
             self._loop_thread.join(timeout=self._interval + 2)
 
+    def apply_preset_state_once(self, state: PresetState) -> str:
+        return self._apply_once(state.args, state.mode, log=True)
+
+    def start_auto_reapply(self, state: PresetState) -> dict:
+        return self._cmd_apply_loop({
+            "args":     state.args,
+            "mode":     state.mode,
+            "interval": state.interval,
+            "dynamic":  state.dynamic,
+        })
+
     def _cmd_ping(self, _msg: dict) -> dict:
         return {"ok": True, "version": cfg.LOCAL_VERSION}
 
@@ -209,10 +248,13 @@ class PowerDaemon:
             return {"ok": False, "error": str(exc)}
 
     def _cmd_apply_loop(self, msg: dict) -> dict:
-        args     = msg.get("args", "")
-        mode     = msg.get("mode", "Unknown")
-        interval = int(msg.get("interval", cfg.get("Settings", "Time", "3")))
-        dynamic  = bool(msg.get("dynamic", False))
+        args = msg.get("args", "")
+        mode = msg.get("mode", "Unknown")
+
+        cfg_default = int(cfg.get("Settings", "Time", "3"))
+        interval    = _parse_interval(msg.get("interval", cfg_default), cfg_default)
+
+        dynamic = bool(msg.get("dynamic", False))
 
         self._stop_loop()
 
@@ -266,23 +308,19 @@ class PowerDaemon:
 
     def _cmd_apply_saved(self, _msg: dict) -> dict:
         try:
-            result = _load_saved_preset()
+            state = _load_saved_preset()
         except Exception as exc:
             return {"ok": False, "error": f"Could not load presets: {exc}"}
-        if result is None:
+        if state is None:
             return {"ok": False, "error": "Saved preset not found"}
 
-        user_mode, args, reapply, dynamic, interval = result
         self._stop_loop()
 
-        if reapply or dynamic:
-            return self._cmd_apply_loop({
-                "args":     args,
-                "mode":     user_mode,
-                "interval": interval,
-                "dynamic":  dynamic,
-            })
-        return self._cmd_apply({"args": args, "mode": user_mode})
+        if state.reapply or state.dynamic:
+            return self.start_auto_reapply(state)
+
+        output = self.apply_preset_state_once(state)
+        return {"ok": True, "output": output}
 
     def _cmd_shutdown(self, _msg: dict) -> dict:
         self._stop_loop()
@@ -364,28 +402,21 @@ class PowerDaemon:
 
 def _apply_on_start(daemon: PowerDaemon) -> None:
     try:
-        result = _load_saved_preset()
+        state = _load_saved_preset()
     except Exception as exc:
         logging.warning("Could not load presets: %s", exc)
         return
-    if result is None:
+    if state is None:
         return
 
-    user_mode, args, reapply, dynamic, interval = result
-
-    if reapply or dynamic:
-        daemon._cmd_apply_loop({
-            "args":     args,
-            "mode":     user_mode,
-            "interval": interval,
-            "dynamic":  dynamic,
-        })
+    if state.reapply or state.dynamic:
+        daemon.start_auto_reapply(state)
         logging.info(
             "Started: %s (every %ds%s)",
-            user_mode, interval, ", dynamic" if dynamic else "",
+            state.mode, state.interval, ", dynamic" if state.dynamic else "",
         )
     else:
-        daemon._apply_once(args, user_mode, log=True)
+        daemon.apply_preset_state_once(state)
 
 
 def main() -> None:

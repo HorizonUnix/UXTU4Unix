@@ -11,17 +11,14 @@ cfg.load()
 from Assets.Modules.hardware  import check_binaries, check_system_compat, show_info as hardware_info
 from Assets.Modules.power     import apply_smu, get_presets, preset_menu
 from Assets.Modules.settings  import settings_menu
-from Assets.Modules.setup     import (
-    check_integrity, ensure_binaries_executable,
-    run_welcome, verify_service_path,
-)
+from Assets.Modules.setup     import check_integrity, ensure_binaries_executable, run_welcome
+from Assets.Modules.service   import verify_service_path, daemon_menu
 from Assets.Modules.updater   import check_updates
 from Assets.Modules.ui        import clear, pause, quit_app, menu, about_menu, MenuItem
 
 
 def _require_daemon() -> None:
-    from Assets.Modules.ipc   import get_client
-    from Assets.Modules.setup import daemon_menu
+    from Assets.Modules.ipc import get_client
 
     client = get_client()
     if client.ping():

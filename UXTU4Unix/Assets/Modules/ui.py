@@ -1,10 +1,9 @@
 """
 ui.py
 """
-
 from __future__ import annotations
 import subprocess, sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 from . import config as cfg
 from . import termui
@@ -30,6 +29,11 @@ class MenuItem:
     label: str
     hint:  str  = ""
     kind:  Kind = "action"
+    key:   str | None = None
+
+    def __post_init__(self) -> None:
+        if self.key is None:
+            self.key = self.label.lower().replace(" ", "_")
 
     @property
     def is_separator(self) -> bool:
@@ -130,7 +134,6 @@ def _simple_menu(
     items:    list[MenuItem],
     *,
     subtitle: str = "",
-    selected: int = 0,
     on_toggle      = None,
 ) -> int:
     while True:
@@ -179,7 +182,7 @@ def menu(
 ) -> int:
     if not termui.is_tty():
         return _simple_menu(
-            title, items, subtitle=subtitle, selected=selected, on_toggle=on_toggle,
+            title, items, subtitle=subtitle, on_toggle=on_toggle,
         )
 
     clear()
@@ -228,18 +231,24 @@ def about_menu() -> None:
         except Exception:
             latest = None
 
-        items: list[MenuItem] = [MenuItem("Open GitHub page")]
+        items: list[MenuItem] = [
+            MenuItem("Open GitHub page", key="open_github"),
+        ]
         if latest:
-            items.append(MenuItem("Force update", hint=f"→ {latest}"))
-        items.append(MenuItem("Back"))
+            items.append(MenuItem("Force update", hint=f"→ {latest}", key="force_update"))
+        items.append(MenuItem("Back", key="back"))
 
         subtitle = "Maintainer: oxGorou\nAdvisor: NotchApple1703"
         choice   = menu("About UXTU4Unix", items, subtitle=subtitle)
 
-        if choice == -1 or items[choice].label == "Back":
+        if choice == -1:
             return
-        elif items[choice].label == "Open GitHub page":
+
+        item = items[choice]
+        if item.key == "back":
+            return
+        elif item.key == "open_github":
             webbrowser.open("https://www.github.com/HorizonUnix/UXTU4Unix")
-        elif items[choice].label.startswith("Force update") and latest:
+        elif item.key == "force_update" and latest:
             show_updater()
             return

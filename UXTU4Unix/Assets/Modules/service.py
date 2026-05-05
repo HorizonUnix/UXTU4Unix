@@ -1,6 +1,7 @@
 """
 service.py
 """
+
 from __future__ import annotations
 
 import os
@@ -228,30 +229,30 @@ def daemon_menu() -> None:
             f"{'Enabled on boot' if enabled else 'Not enabled'}"
         )
         items: list[MenuItem] = [
-            MenuItem("Install & enable"),
-            MenuItem("Uninstall"),
-            MenuItem("Restart"),
-            MenuItem("View logs", hint="last 50 lines"),
-            MenuItem("Back"),
+            MenuItem("Install & enable", key="install"),
+            MenuItem("Uninstall",        key="uninstall"),
+            MenuItem("Restart",          key="restart"),
+            MenuItem("View logs",        hint="last 50 lines", key="view_logs"),
+            MenuItem("Back",             key="back"),
         ]
         choice = menu("Daemon Service", items, subtitle=subtitle)
-        if choice == -1 or items[choice].label == "Back":
+        if choice == -1 or items[choice].key == "back":
             return
 
-        lbl = items[choice].label
+        key = items[choice].key
         clear()
-        if lbl == "Install & enable":
+        if key == "install":
             install_service()
             wait_for_daemon_or_warn()
             pause()
-        elif lbl == "Uninstall":
+        elif key == "uninstall":
             uninstall_service()
             print("  Service removed.")
             pause()
-        elif lbl == "Restart":
+        elif key == "restart":
             restart_service()
             print("  Service restarted.")
             pause()
-        elif lbl == "View logs":
+        elif key == "view_logs":
             show_logs()
             pause()

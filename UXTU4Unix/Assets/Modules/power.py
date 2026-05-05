@@ -159,21 +159,21 @@ def _refresh_state_from_daemon(state: PowerState, client) -> PowerState:
 
 def build_menu_items(state: PowerState) -> list[MenuItem]:
     items: list[MenuItem] = [
-        MenuItem("Select preset",    state.mode),
-        MenuItem("Dynamic mode",     "ON" if state.dynamic else "OFF", "toggle"),
-        MenuItem("Custom arguments"),
+        MenuItem("Select preset",    state.mode,                    key="select_preset"),
+        MenuItem("Dynamic mode",     "ON" if state.dynamic else "OFF", kind="toggle", key="toggle_dynamic"),
+        MenuItem("Custom arguments",                                key="custom_args"),
         MenuItem("─", kind="separator"),
     ]
     if state.loop:
         kind = "disabled" if state.dynamic else "action"
         hint = "[dynamic]" if state.dynamic else ""
-        items.append(MenuItem("Stop reapply", hint, kind))
-        items.append(MenuItem("Reapply interval", f"{state.interval}s"))
+        items.append(MenuItem("Stop reapply",    hint, kind,       key="stop_reapply"))
+        items.append(MenuItem("Reapply interval", f"{state.interval}s", key="reapply_interval"))
     else:
-        items.append(MenuItem("Start reapply"))
+        items.append(MenuItem("Start reapply",                     key="start_reapply"))
     items += [
-        MenuItem("Daemon status"),
-        MenuItem("Back"),
+        MenuItem("Daemon status",                                   key="daemon_status"),
+        MenuItem("Back",                                            key="back"),
     ]
     return items
 
@@ -280,7 +280,7 @@ def _select_preset_menu(presets: dict, names: list, current: str) -> None:
     items = [MenuItem(n, "← current" if n == current else "") for n in names]
     items.append(MenuItem("Back"))
     choice = menu("Select Preset", items)
-    if choice == -1 or items[choice].label == "Back":
+    if choice == -1 or items[choice].key == "back":
         return
     set_current_preset(names[choice], presets[names[choice]])
 
@@ -309,6 +309,17 @@ def preset_menu() -> None:
     client   = get_client()
     state    = load_power_state()
 
+
+    handlers = {
+        "select_preset":    lambda s: (_select_preset_menu(presets, names, s.mode), s)[1],
+        "toggle_dynamic":   lambda s: _toggle_dynamic_state(s, client, presets),
+        "custom_args":      lambda s: _custom_args_menu(s, client),
+        "reapply_interval": lambda s: _reapply_interval_menu(s, client),
+        "stop_reapply":     lambda s: _stop_loop_screen(s, client),
+        "start_reapply":    lambda s: _start_loop_screen(s, client),
+        "daemon_status":    lambda s: (_daemon_status_screen(client), s)[1],
+    }
+
     while True:
         items  = build_menu_items(state)
         choice = menu(
@@ -319,23 +330,17 @@ def preset_menu() -> None:
             return
 
         last_idx = choice
-        item = items[choice]
+        item     = items[choice]
 
-        if item.label == "Back":
+        if item.key == "back":
             return
-        elif item.label == "Select preset":
-            _select_preset_menu(presets, names, state.mode)
-        elif item.label == "Dynamic mode":
-            state = _toggle_dynamic_state(state, client, presets)
-        elif item.label == "Custom arguments":
-            state = _custom_args_menu(state, client)
-        elif item.label == "Reapply interval":
-            state = _reapply_interval_menu(state, client)
-        elif item.label == "Stop reapply" and not item.is_disabled:
-            state = _stop_loop_screen(state, client)
-        elif item.label == "Start reapply":
-            state = _start_loop_screen(state, client)
-        elif item.label == "Daemon status":
-            _daemon_status_screen(client)
 
+        handler = handlers.get(item.key)
+        if handler is None:
+            continue
+
+        if item.is_disabled:
+            continue
+
+        state = handler(state)
         state = _refresh_state_from_daemon(state, client)

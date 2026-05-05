@@ -12,7 +12,7 @@ import zipfile
 
 from . import config as cfg
 from .ui import clear, pause
-from .setup import restart_service, service_running
+from .service import restart_service, service_running
 
 
 def _ver_tuple(v: str) -> tuple:
