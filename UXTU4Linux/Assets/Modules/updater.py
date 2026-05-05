@@ -66,7 +66,7 @@ def _do_update() -> None:
     new_folder = os.path.join(install_dir, "UXTU4Linux_new")
     config_bak = os.path.join(install_dir, "config.toml.bak")
 
-    def _sudo(*args: str) -> int:
+    def _sudo(install_root: str, *args: str) -> int:
         """Run a restricted sudo command.
 
         Note: callers must pass trusted, canonicalized paths. This helper enforces
@@ -85,7 +85,6 @@ def _do_update() -> None:
                 raise ValueError(f"Invalid character detected in argument: {arg!r}")
         cmd_args = list(args[1:])
 
-        install_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
         path_args = [a for a in cmd_args if not a.startswith("-")]
 
         def _validate_args(cmd_args: list, path_args: list, allowed_flags: set, min_paths: int) -> None:
