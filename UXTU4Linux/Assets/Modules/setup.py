@@ -18,6 +18,13 @@ from .service import (
     wait_for_daemon_or_warn,
 )
 
+DEFAULT_SETTINGS_TIME = "3"
+DEFAULT_SETTINGS_SOFTWARE_UPDATE = "1"
+DEFAULT_SETTINGS_REAPPLY = "0"
+DEFAULT_SETTINGS_APPLY_ON_START = "1"
+DEFAULT_SETTINGS_DYNAMIC_MODE = "0"
+DEFAULT_SETTINGS_DEBUG = "1"
+
 
 def ensure_binaries_executable() -> None:
     for path in [cfg.RYZENADJ]:
@@ -32,12 +39,12 @@ def _apply_defaults() -> None:
     cfg.ensure_sections("User", "Settings", "Info")
     if not cfg.get("User", "Mode"):
         cfg.set("User", "Mode", "Balance")
-    cfg.set("Settings", "Time",           "3")
-    cfg.set("Settings", "SoftwareUpdate", "1")
-    cfg.set("Settings", "ReApply",        "0")
-    cfg.set("Settings", "ApplyOnStart",   "1")
-    cfg.set("Settings", "DynamicMode",    "0")
-    cfg.set("Settings", "Debug",          "1")
+    cfg.set("Settings", "Time",           DEFAULT_SETTINGS_TIME)
+    cfg.set("Settings", "SoftwareUpdate", DEFAULT_SETTINGS_SOFTWARE_UPDATE)
+    cfg.set("Settings", "ReApply",        DEFAULT_SETTINGS_REAPPLY)
+    cfg.set("Settings", "ApplyOnStart",   DEFAULT_SETTINGS_APPLY_ON_START)
+    cfg.set("Settings", "DynamicMode",    DEFAULT_SETTINGS_DYNAMIC_MODE)
+    cfg.set("Settings", "Debug",          DEFAULT_SETTINGS_DEBUG)
 
 
 def _step(n: int, total: int, title: str) -> None:
@@ -52,14 +59,14 @@ def run_welcome() -> None:
         return
 
     cfg.ensure_sections("User", "Settings", "Info")
-    TOTAL = 3
+    total_steps = 3
 
-    _step(1, TOTAL, "Welcome")
+    _step(1, total_steps, "Welcome")
     print("  UXTU4Linux — AMD Zen power management for Linux")
     print("  Built on RyzenAdj — inspired by UXTU\n")
     pause()
 
-    _step(2, TOTAL, "Daemon service")
+    _step(2, total_steps, "Daemon service")
     _apply_defaults()
     ensure_binaries_executable()
     cfg.save()
@@ -77,7 +84,7 @@ def run_welcome() -> None:
         return
     pause()
 
-    _step(3, TOTAL, "Hardware detection")
+    _step(3, total_steps, "Hardware detection")
     print("  Detecting hardware...\n")
     detect_hardware()
 
@@ -87,10 +94,10 @@ def run_welcome() -> None:
     cpu_type = cfg.get("Info", "Type")
     sig      = cfg.get("Info", "Signature")
 
-    W = 14
+    label_width = 14
 
     def row(label: str, value: str) -> None:
-        print(f"  \033[2m{label:<{W}}\033[0m  {value}")
+        print(f"  \033[2m{label:<{label_width}}\033[0m  {value}")
 
     row("CPU",       cpu      or "Not detected")
     row("Family",    family   or "Unknown")
@@ -112,11 +119,13 @@ def check_integrity() -> None:
 
     cfg.load()
 
+    required = cfg.REQUIRED if isinstance(cfg.REQUIRED, dict) else {s: () for s in cfg.REQUIRED}
+
     broken = (
-        any(not cfg.instance().has_section(s) for s in cfg.REQUIRED)
+        any(not cfg.instance().has_section(s) for s in required)
         or any(
             k not in cfg.instance()[s]
-            for s, keys in cfg.REQUIRED.items()
+            for s, keys in required.items()
             if cfg.instance().has_section(s)
             for k in keys
         )
