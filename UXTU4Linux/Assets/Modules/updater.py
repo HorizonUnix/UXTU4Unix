@@ -3,6 +3,7 @@ updater.py
 """
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -79,12 +80,10 @@ def _do_update() -> None:
         if cmd not in allowed_commands:
             raise ValueError(f"Disallowed sudo command: {cmd}")
 
-        forbidden_chars = set(";&|`$><")
+        safe_value_re = re.compile(r"^[A-Za-z0-9._/\-]+$")
         for arg in args:
             if any(ch in arg for ch in ("\x00", "\n", "\r")):
                 raise ValueError("Invalid control characters in sudo arguments")
-            if any(ch in forbidden_chars for ch in arg):
-                raise ValueError("Invalid metacharacters in sudo arguments")
 
         cmd_args = list(args[1:])
 
@@ -98,6 +97,8 @@ def _do_update() -> None:
                 else:
                     if not a.strip():
                         raise ValueError("Empty path/value argument is not allowed")
+                    if not safe_value_re.fullmatch(a):
+                        raise ValueError(f"Invalid characters in sudo argument for {cmd}: {a}")
                     paths.append(a)
             if len(paths) < min_paths:
                 raise ValueError(f"Insufficient path/value arguments for {cmd}")
@@ -143,7 +144,11 @@ def _do_update() -> None:
                     raise RuntimeError(f"Unsafe absolute path in zip entry: {member_name}")
 
                 target_path = os.path.realpath(os.path.join(dest_root, member_name))
-                if os.path.commonpath([dest_root, target_path]) != dest_root:
+                try:
+                    common_root = os.path.commonpath([dest_root, target_path])
+                except ValueError as e:
+                    raise RuntimeError(f"Unsafe path traversal in zip entry: {member_name}") from e
+                if common_root != dest_root:
                     raise RuntimeError(f"Unsafe path traversal in zip entry: {member_name}")
 
                 zf.extract(member, dest_root)
@@ -210,7 +215,14 @@ def _do_update() -> None:
         python_exec = os.path.realpath(raw_executable)
         if not python_exec or not os.path.isabs(python_exec) or not os.path.isfile(python_exec) or not os.access(python_exec, os.X_OK):
             raise RuntimeError(f"Refusing to relaunch with untrusted interpreter path: {python_exec!r}")
-        subprocess.Popen([python_exec, launch])
+        if not launch or not os.path.isabs(launch) or not os.path.isfile(launch) or not os.access(launch, os.R_OK):
+            raise RuntimeError(f"Refusing to relaunch with invalid launch target: {launch!r}")
+        try:
+            subprocess.Popen([python_exec, launch])
+        except (OSError, PermissionError, subprocess.SubprocessError) as e:
+            raise RuntimeError(
+                f"Failed to relaunch updater using interpreter {python_exec!r} and script {launch!r}: {e}"
+            ) from e
         return
 
     except (
