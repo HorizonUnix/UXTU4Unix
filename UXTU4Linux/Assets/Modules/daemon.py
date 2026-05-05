@@ -241,7 +241,7 @@ class PowerDaemon:
                 self._running_loop = False
             return
         max_wait_step = 1.0
-        while not self._stop_evt.is_set():
+        while True:
             deadline = time.monotonic() + interval
             while not self._stop_evt.is_set():
                 remaining = deadline - time.monotonic()
