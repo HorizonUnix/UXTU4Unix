@@ -191,7 +191,7 @@ def _do_update() -> None:
 
         inner = _resolve_inner_extracted_dir(new_folder)
 
-        if _sudo("mv", inner, src_dir) != 0:
+        if _sudo(install_root, "mv", inner, src_dir) != 0:
             raise PermissionError(f"Could not move new release into {src_dir}")
 
         if _sudo(install_root, "rm", "-rf", new_folder) != 0:
