@@ -230,7 +230,10 @@ class PowerDaemon:
         return output
 
     def _loop_body(self, args: str, mode: str, interval: int, dynamic: bool) -> None:
-        self._stop_evt.clear()
+        if self._stop_evt.is_set():
+            with self._lock:
+                self._running_loop = False
+            return
         max_wait_step = 1.0
         while not self._stop_evt.is_set():
             deadline = time.monotonic() + interval
