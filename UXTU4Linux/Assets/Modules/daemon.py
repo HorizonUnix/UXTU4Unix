@@ -44,7 +44,7 @@ MAX_INTERVAL_SECONDS: int = 3600
 COMMAND_TIMEOUT_SECONDS: int = 10
 
 _RYZENADJ_TOKEN_RE = re.compile(
-    r'^--?[a-zA-Z][a-zA-Z0-9_-]*(=\S+)?$'
+    r'^--?[a-zA-Z][a-zA-Z0-9_-]*(=[A-Za-z0-9.-]+)?$'
 )
 
 def _validate_ryzenadj_payload(tokens: list[str]) -> list[str]:
