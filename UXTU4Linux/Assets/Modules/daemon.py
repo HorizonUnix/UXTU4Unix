@@ -74,8 +74,8 @@ def _run_cmd(command: str) -> str:
 
 
 def _on_ac() -> bool:
-    ac_online           = False
-    found_ac            = False
+    ac_online = False
+    found_ac = False
     battery_discharging = False
     try:
         for entry in os.listdir("/sys/class/power_supply"):
