@@ -88,6 +88,15 @@ def _do_update() -> None:
 
         install_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
         def _validate_args(allowed_flags: set, min_paths: int) -> None:
+            nonlocal cmd_args
+            for a in cmd_args:
+                if a.startswith("-") and a not in allowed_flags:
+                    raise ValueError(f"Disallowed flag for {cmd}: {a}")
+            path_args = [a for a in cmd_args if not a.startswith("-")]
+            if len(path_args) < min_paths:
+                raise ValueError(f"Insufficient path arguments for {cmd}")
+            _assert_paths_within_install_root(path_args)
+
         def _is_within_install_root(path_value: str) -> bool:
             real_target = os.path.realpath(path_value)
             try:
@@ -99,8 +108,6 @@ def _do_update() -> None:
             for p in paths:
                 if not _is_within_install_root(p):
                     raise ValueError(f"Path escapes installation directory: {p}")
-
-            nonlocal cmd_args
             paths = []
             for a in cmd_args:
                 if a.startswith("-"):
