@@ -40,28 +40,11 @@ def _require_daemon() -> None:
         sys.exit(1)
 
 
-def _apply_on_start() -> None:
+def _apply_if_idle() -> None:
     from Assets.Modules.ipc import get_client
-
     client = get_client()
-    if not client.ping():
-        return
-
-    if client.status().get("running_loop"):
-        return
-
-    presets   = get_presets()
-    user_mode = cfg.get("User", "Mode")
-
-    if user_mode == "Custom":
-        apply_smu(cfg.get("User", "CustomArgs"), "Custom")
-    elif user_mode in presets:
-        apply_smu(presets[user_mode], user_mode)
-    else:
-        clear()
-        print("  Saved preset not found — running setup.")
-        pause()
-        run_welcome()
+    if not client.status().get("mode"):
+        client.apply_saved()
 
 
 def main() -> None:
@@ -77,13 +60,13 @@ def main() -> None:
 
     if cfg.get("Settings", "SoftwareUpdate", "0") == "1":
         check_updates()
-        
+
     try:
         get_presets()
     except Exception as exc:
         print(f"  Warning: failed to preload presets: {exc}")
 
-    _apply_on_start()
+    _apply_if_idle()
 
     items: list[MenuItem] = [
         MenuItem("Power Management"),

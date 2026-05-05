@@ -5,7 +5,6 @@ settings.py
 from __future__ import annotations
 import subprocess
 from . import config as cfg
-from .power import _daemon_apply_saved
 from .ui import menu, clear, ask, pause, confirm, MenuItem
 
 
@@ -14,9 +13,9 @@ def _tog(section: str, key: str, default: str = "0") -> str:
 
 
 _TOGGLE_MAP = {
-    "Apply preset on daemon start": ("Settings", "ApplyOnStart",   "1", False),
-    "Software update":              ("Settings", "SoftwareUpdate", "1", False),
-    "Debug":                        ("Settings", "Debug",          "1", False),
+    "Apply preset on daemon start": ("Settings", "ApplyOnStart",   "1"),
+    "Software update":              ("Settings", "SoftwareUpdate", "1"),
+    "Debug":                        ("Settings", "Debug",          "1"),
 }
 
 
@@ -24,13 +23,11 @@ def _do_toggle(idx: int, items: list) -> None:
     lbl = items[idx].label
     if lbl not in _TOGGLE_MAP:
         return
-    section, key, default, notify = _TOGGLE_MAP[lbl]
+    section, key, default = _TOGGLE_MAP[lbl]
     was_on = cfg.get(section, key, default) == "1"
     cfg.set(section, key, "0" if was_on else "1")
     cfg.save()
     items[idx] = MenuItem(lbl, "OFF" if was_on else "ON", "toggle")
-    if notify:
-        _daemon_apply_saved()
 
 
 def _settings_items() -> list[MenuItem]:
@@ -117,7 +114,10 @@ def sleep_cfg() -> None:
     if val.isdigit():
         cfg.set("Settings", "Time", val)
         cfg.save()
-        _daemon_apply_saved()
+        from .ipc import get_client
+        client = get_client()
+        if client.ping():
+            client.apply_saved()
     else:
         print("\n  Must be a whole number.")
         pause()

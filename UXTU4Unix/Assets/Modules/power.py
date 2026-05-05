@@ -169,10 +169,16 @@ def _toggle_dynamic_state(state: PowerState) -> PowerState:
     client = get_client()
 
     if not client.ping():
+        cfg.set("Settings", "DynamicMode", "1" if state.dynamic else "0")
+        cfg.save()
+        clear()
+        print("  Daemon is not running — cannot change dynamic mode.")
+        print("  sudo systemctl enable --now uxtu4unix.service")
+        pause()
         return PowerState(
-            mode     = "Dynamic" if new_dynamic else cfg.get("User", "Mode"),
-            dynamic  = new_dynamic,
-            loop     = cfg.get("Settings", "ReApply", "0") == "1",
+            mode     = state.mode,
+            dynamic  = state.dynamic,
+            loop     = state.loop,
             interval = state.interval,
         )
 
@@ -300,14 +306,3 @@ def preset_menu() -> None:
             state = load_power_state()
         elif item.label == "Daemon status":
             _daemon_status_screen()
-
-
-def _daemon_apply_saved() -> None:
-    try:
-        from .ipc import get_client
-        client = get_client()
-        if client.ping():
-            client.apply_saved()
-    except Exception:
-        # Best-effort daemon sync: ignore IPC/import failures and continue.
-        pass
