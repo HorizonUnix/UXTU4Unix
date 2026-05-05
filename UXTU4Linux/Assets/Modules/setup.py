@@ -102,14 +102,14 @@ def run_welcome() -> None:
 
     label_width = 14
 
-    def row(label: str, value: str) -> None:
-        print(f"  \033[2m{label:<{label_width}}\033[0m  {value}")
+    def row(label: str, value: str, width: int) -> None:
+        print(f"  \033[2m{label:<{width}}\033[0m  {value}")
 
-    row("CPU",       cpu      or "Not detected")
-    row("Family",    family   or "Unknown")
-    row("Arch",      arch     or "Unknown")
-    row("Type",      cpu_type or "Unknown")
-    row("Signature", sig      or "Unknown")
+    row("CPU",       cpu      or "Not detected", label_width)
+    row("Family",    family   or "Unknown",      label_width)
+    row("Arch",      arch     or "Unknown",      label_width)
+    row("Type",      cpu_type or "Unknown",      label_width)
+    row("Signature", sig      or "Unknown",      label_width)
     print()
     pause()
 
