@@ -88,8 +88,7 @@ def _do_update() -> None:
         install_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
         path_args = [a for a in cmd_args if not a.startswith("-")]
 
-        def _validate_args(allowed_flags: set, min_paths: int) -> None:
-            nonlocal cmd_args
+        def _validate_args(cmd_args: list, path_args: list, allowed_flags: set, min_paths: int) -> None:
             for a in cmd_args:
                 if a.startswith("-"):
                     if a not in allowed_flags:
@@ -117,18 +116,18 @@ def _do_update() -> None:
 
 
         if cmd == "rm":
-            _validate_args({"-f", "-r", "-rf", "-fr"}, 1)
+            _validate_args(cmd_args, path_args, {"-f", "-r", "-rf", "-fr"}, 1)
         elif cmd == "cp":
-            _validate_args({"-r", "-f", "-a"}, 2)
+            _validate_args(cmd_args, path_args, {"-r", "-f", "-a"}, 2)
         elif cmd == "mv":
-            _validate_args({"-f", "-n"}, 2)
+            _validate_args(cmd_args, path_args, {"-f", "-n"}, 2)
         elif cmd == "chmod":
-            _validate_args({"-R"}, 2)
+            _validate_args(cmd_args, path_args, {"-R"}, 2)
         elif cmd == "chown":
-            _validate_args({"-R"}, 2)
+            _validate_args(cmd_args, path_args, {"-R"}, 2)
         elif cmd == "mkdir":
             _assert_paths_within_install_root(path_args)
-            _validate_args({"-p"}, 1)
+            _validate_args(cmd_args, path_args, {"-p"}, 1)
 
         return subprocess.run(["sudo", *args], check=False).returncode
 
