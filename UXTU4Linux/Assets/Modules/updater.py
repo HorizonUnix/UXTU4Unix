@@ -27,7 +27,8 @@ def get_latest_version() -> str:
     try:
         url = urllib.request.urlopen(cfg.LATEST_VER_URL, timeout=10).geturl()
         return url.rstrip("/").split("/")[-1]
-    except urllib.error.URLError:
+    except urllib.error.URLError as e:
+        print(f"Failed to fetch latest version from {cfg.LATEST_VER_URL}: {e}")
         return "v0.0.0"
 
 
@@ -48,6 +49,17 @@ def _do_update() -> None:
     assets_dir  = os.path.dirname(script_dir)
     src_dir     = os.path.dirname(assets_dir)
     install_dir = os.path.dirname(src_dir)
+
+    expected_structure = (
+        os.path.basename(script_dir) == "Modules"
+        and os.path.basename(assets_dir) == "Assets"
+        and os.path.isdir(os.path.join(install_dir, "Assets"))
+        and os.path.isfile(os.path.join(install_dir, "main.py"))
+    )
+    if not expected_structure:
+        raise RuntimeError(
+            "Unexpected installation layout detected; aborting update to avoid writing to incorrect paths."
+        )
 
     zip_path   = os.path.join(install_dir, "UXTU4Linux.zip")
     new_folder = os.path.join(install_dir, "UXTU4Linux_new")
@@ -159,7 +171,8 @@ def _do_update() -> None:
         zipfile.BadZipFile,
         json.JSONDecodeError,
     ) as e:
-        print(f"Update failed: {e}")
+        err_type = type(e).__name__
+        print(f"Update failed ({err_type}): {e}")
         pause()
         
 
