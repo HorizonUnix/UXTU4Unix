@@ -24,7 +24,7 @@ UXTU4Linux is a power management tool for **AMD Ryzen APUs and CPUs** on Linux (
 | macOS 11 -> 26 | ⚠️ Deprecated as of v0.5.22 [Wiki](https://github.com/HorizonUnix/UXTU4Linux/wiki/macOS-Installation-and-Troubleshooting) |
  
 > [!IMPORTANT]
-> **systemd is required.** Distros using OpenRC, runit, or other init systems are not supported.
+> **systemd is required.** Distros using OpenRC, runit, or other init systems are partially supported.
  
 ---
  
