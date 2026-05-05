@@ -316,7 +316,8 @@ class PowerDaemon:
         try:
             eff_mode, eff_args = self._effective_mode_args(mode, args, dynamic)
             self._apply_once(eff_args, eff_mode, log=True)
-            self._last_logged_mode = eff_mode
+            with self._lock:
+                self._last_logged_mode = eff_mode
         except Exception as exc:
             with self._lock:
                 self._running_loop = False
