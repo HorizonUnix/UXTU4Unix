@@ -58,7 +58,10 @@ def _do_update() -> None:
             shutil.copy2(cfg.CONFIG_PATH, config_bak)
 
         print("Downloading update...")
-        urllib.request.urlretrieve(url, zip_path)
+        try:
+            urllib.request.urlretrieve(url, zip_path)
+        except urllib.error.URLError as e:
+            raise ConnectionError(f"Download failed: could not retrieve update from {url}") from e
 
         print("Extracting...")
         with zipfile.ZipFile(zip_path, "r") as zf:
