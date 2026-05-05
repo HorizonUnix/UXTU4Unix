@@ -239,12 +239,8 @@ class PowerDaemon:
         return output
 
     def _loop_body(self, args: str, mode: str, interval: int, dynamic: bool) -> None:
-        if self._stop_evt.is_set():
-            with self._lock:
-                self._running_loop = False
-            return
         max_wait_step = 1.0
-        while True:
+        while not self._stop_evt.is_set():
             deadline = time.monotonic() + interval
             while not self._stop_evt.is_set():
                 remaining = deadline - time.monotonic()
@@ -256,10 +252,12 @@ class PowerDaemon:
             eff_mode = mode
             try:
                 eff_mode, eff_args = self._effective_mode_args(mode, args, dynamic)
-                changed = eff_mode != self._last_logged_mode
+                with self._lock:
+                    changed = eff_mode != self._last_logged_mode
                 self._apply_once(eff_args, eff_mode, log=changed)
                 if changed:
-                    self._last_logged_mode = eff_mode
+                    with self._lock:
+                        self._last_logged_mode = eff_mode
             except Exception as exc:
                 logging.warning("Failed to apply preset '%s' in loop: %s", eff_mode, exc)
         with self._lock:
