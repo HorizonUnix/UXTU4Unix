@@ -87,10 +87,10 @@ def run_welcome() -> None:
     cpu_type = cfg.get("Info", "Type")
     sig      = cfg.get("Info", "Signature")
 
-    W = 14
+    label_width = 14
 
     def row(label: str, value: str) -> None:
-        print(f"  \033[2m{label:<{W}}\033[0m  {value}")
+        print(f"  \033[2m{label:<{label_width}}\033[0m  {value}")
 
     row("CPU",       cpu      or "Not detected")
     row("Family",    family   or "Unknown")
