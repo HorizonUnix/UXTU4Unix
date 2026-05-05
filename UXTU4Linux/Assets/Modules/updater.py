@@ -66,7 +66,7 @@ def _do_update() -> None:
     new_folder = os.path.join(install_dir, "UXTU4Linux_new")
     config_bak = os.path.join(install_dir, "config.toml.bak")
 
-    def _sudo(install_root: str, *args: str) -> int:
+    def _sudo(*args: str) -> int:
         """Run a restricted sudo command.
 
         Note: callers must pass trusted, canonicalized paths. This helper enforces
@@ -168,7 +168,7 @@ def _do_update() -> None:
         with zipfile.ZipFile(zip_path, "r") as zf:
             _safe_extract_zip(zf, new_folder)
 
-        if _sudo("rm", "-rf", src_dir) != 0:
+        if _sudo(install_root, "rm", "-rf", src_dir) != 0:
             raise PermissionError(f"Could not remove {src_dir}; the privileged remove command failed (possible permission issue or directory in use)")
 
         def _resolve_inner_extracted_dir(base_folder: str) -> str:
@@ -191,17 +191,17 @@ def _do_update() -> None:
 
         inner = _resolve_inner_extracted_dir(new_folder)
 
-        if _sudo("mv", inner, src_dir) != 0:
+        if _sudo(install_root, "mv", inner, src_dir) != 0:
             raise PermissionError(f"Could not move new release into {src_dir}")
 
-        if _sudo("rm", "-rf", new_folder) != 0:
+        if _sudo(install_root, "rm", "-rf", new_folder) != 0:
             print(f"Warning: Could not remove temporary folder: {new_folder}")
 
         launch = os.path.join(src_dir, "UXTU4Linux.py")
         ryzen  = os.path.join(src_dir, "Assets", "Linux", "ryzenadj")
         for path in (launch, ryzen):
             if os.path.exists(path):
-                if _sudo("chmod", "+x", path) != 0:
+                if _sudo(src_dir, "chmod", "+x", path) != 0:
                     raise RuntimeError(f"Could not set executable permission on {path}")
 
         new_config = os.path.join(src_dir, "Assets", "config.toml")
