@@ -53,7 +53,8 @@ def check_binaries() -> None:
 def secure_boot_enabled() -> bool:
     for path in glob.glob("/sys/firmware/efi/efivars/SecureBoot-*"):
         try:
-            data = open(path, "rb").read()
+            with open(path, "rb") as f:
+                data = f.read()
             if len(data) >= 5 and data[4] == 1:
                 return True
         except OSError:
@@ -297,7 +298,6 @@ def detect() -> None:
     for key, field in {"CPU": "Version", "Signature": "Signature"}.items():
         cfg.set("Info", key, _dmi(field))
     _compute_codename()
-
     cfg.save()
 
 
@@ -351,7 +351,6 @@ def show_info() -> None:
     row("L1 cache",   l1)
     row("L2 cache",   l2)
     row("L3 cache",   l3)
-
 
     mem = _parse_memory()
     section("Memory")

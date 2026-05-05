@@ -4,6 +4,7 @@ power.py
 
 from __future__ import annotations
 import importlib
+from dataclasses import dataclass
 from . import config as cfg
 from .hardware import RYZEN_FAMILY
 from .ui import menu, clear, ask, pause
@@ -109,6 +110,89 @@ def apply_smu(args: str, user_mode: str, *, save_to_config: bool = True) -> None
         client.apply(args=args, mode=user_mode)
 
 
+@dataclass
+class PowerState:
+    mode:     str  
+    dynamic:  bool
+    loop:     bool
+    interval: int 
+
+
+def load_power_state() -> PowerState:
+    dynamic  = cfg.get("Settings", "DynamicMode", "0") == "1"
+    interval = int(float(cfg.get("Settings", "Time", "3")))
+    try:
+        from .ipc import get_client
+        s    = get_client().status()
+        mode = "Dynamic" if dynamic else (s.get("mode") or cfg.get("User", "Mode"))
+        loop = s.get("running_loop", False)
+    except Exception:
+        mode = "Dynamic" if dynamic else cfg.get("User", "Mode")
+        loop = cfg.get("Settings", "ReApply", "0") == "1"
+    return PowerState(mode=mode, dynamic=dynamic, loop=loop, interval=interval)
+
+
+def build_menu_items(state: PowerState) -> list:
+    items: list = [
+        ("Select preset",    state.mode),
+        ("Dynamic mode",     "ON" if state.dynamic else "OFF", "toggle"),
+        ("Custom arguments", ""),
+        ("─", "", "sep"),
+    ]
+    if state.loop:
+        stop_row = ("Stop reapply", "[dynamic]", "disabled") if state.dynamic \
+                   else ("Stop reapply", "")
+        items.append(stop_row)
+        items.append(("Reapply interval", f"{state.interval}s"))
+    else:
+        items.append(("Start reapply", ""))
+    items += [
+        ("Daemon status", ""),
+        ("Back",          ""),
+    ]
+    return items
+
+
+def set_current_preset(name: str, args: str) -> None:
+    cfg.set("User", "Mode", name)
+    cfg.set("Settings", "DynamicMode", "0")
+    cfg.save()
+    apply_smu(args, name, save_to_config=False)
+
+
+def _toggle_dynamic_state(state: PowerState) -> PowerState:
+    new_dynamic = not state.dynamic
+    cfg.set("Settings", "DynamicMode", "1" if new_dynamic else "0")
+    cfg.save()
+
+    from .ipc import get_client
+    client = get_client()
+
+    if not client.ping():
+        return PowerState(
+            mode="Dynamic" if new_dynamic else cfg.get("User", "Mode"),
+            dynamic=new_dynamic,
+            loop=cfg.get("Settings", "ReApply", "0") == "1",
+            interval=state.interval,
+        )
+
+    if new_dynamic:
+        cfg.set("Settings", "ReApply", "1")
+        cfg.save()
+        presets = get_presets()
+        apply_smu(presets.get("Balance", ""), "Balance", save_to_config=False)
+        client.apply_saved()
+        return PowerState(
+            mode="Dynamic",
+            dynamic=True,
+            loop=True,
+            interval=state.interval,
+        )
+    else:
+        client.apply_saved()
+        return load_power_state()
+
+
 def _daemon_status_screen() -> None:
     from .ipc import get_client
     clear()
@@ -164,127 +248,12 @@ def _reapply_interval_menu() -> None:
         pause()
 
 
-def _toggle_dynamic_item(idx: int, items: list) -> None:
-    on = cfg.get("Settings", "DynamicMode", "0") == "1"
-    cfg.set("Settings", "DynamicMode", "0" if on else "1")
-    cfg.save()
-    items[idx] = ("Dynamic mode", "OFF" if on else "ON", "toggle")
-
-    new_mode = cfg.get("User", "Mode") if on else "Dynamic"
-    items[0] = ("Select preset", new_mode)
-
-    if not on:
-        cfg.set("Settings", "ReApply", "1")
-        cfg.save()
-        interval = cfg.get("Settings", "Time", "3")
-        for i, item in enumerate(items):
-            lbl = item[0] if isinstance(item, (tuple, list)) else item
-            if lbl == "Start reapply":
-                items[i] = ("Stop reapply", "[dynamic]", "disabled")
-                items.insert(i + 1, ("Reapply interval", f"{interval}s"))
-                break
-            elif lbl == "Stop reapply":
-                items[i] = ("Stop reapply", "[dynamic]", "disabled")
-                break
-    else:
-        loop = cfg.get("Settings", "ReApply", "0") == "1"
-        for i, item in enumerate(items):
-            lbl = item[0] if isinstance(item, (tuple, list)) else item
-            if lbl == "Stop reapply":
-                if loop:
-                    items[i] = ("Stop reapply", "")
-                else:
-                    items[i] = ("Start reapply", "")
-                    if i + 1 < len(items) and items[i + 1][0] == "Reapply interval":
-                        items.pop(i + 1)
-                break
-
-    from .ipc import get_client
-    client = get_client()
-    if not client.ping():
-        return
-
-    if on:
-        client.apply_saved()
-    else:
-        presets = get_presets()
-        apply_smu(presets.get("Balance", ""), "Balance", save_to_config=False)
-
-
-def preset_menu() -> None:
-    presets  = get_presets()
-    names    = list(presets.keys())
-    last_idx = 0
-
-    while True:
-        dynamic  = cfg.get("Settings", "DynamicMode", "0") == "1"
-        interval = cfg.get("Settings", "Time", "3")
-        try:
-            from .ipc import get_client
-            s    = get_client().status()
-            mode = "Dynamic" if dynamic else (s.get("mode") or cfg.get("User", "Mode"))
-            loop = s.get("running_loop", False)
-        except Exception:
-            mode = "Dynamic" if dynamic else cfg.get("User", "Mode")
-            loop = cfg.get("Settings", "ReApply", "0") == "1"
-
-        items: list = [
-            ("Select preset",    mode),
-            ("Dynamic mode",     "ON" if dynamic else "OFF", "toggle"),
-            ("Custom arguments", ""),
-            ("─", "", "sep"),
-        ]
-        if loop:
-            stop_row = ("Stop reapply", "[dynamic]", "disabled") if dynamic else ("Stop reapply", "")
-            items.append(stop_row)
-            items.append(("Reapply interval", f"{interval}s"))
-        else:
-            items.append(("Start reapply", ""))
-        items += [
-            ("Daemon status", ""),
-            ("Back",          ""),
-        ]
-
-        choice = menu(
-            "Power Management", items,
-            selected=min(last_idx, len(items) - 1),
-            on_toggle=_toggle_dynamic_item,
-        )
-        if choice == -1:
-            return
-
-        last_idx = choice
-        lbl = items[choice][0]
-        tag = items[choice][2] if len(items[choice]) > 2 else ""
-
-        if lbl == "Back":
-            return
-        elif lbl == "Select preset":
-            _select_preset_menu(presets, names, mode)
-        elif lbl == "Dynamic mode":
-            _toggle_dynamic_item(choice, items)
-        elif lbl == "Custom arguments":
-            _custom_args_menu()
-        elif lbl == "Reapply interval":
-            _reapply_interval_menu()
-        elif lbl == "Stop reapply" and tag != "disabled":
-            _stop_loop_screen()
-        elif lbl == "Start reapply":
-            _start_loop_screen()
-        elif lbl == "Daemon status":
-            _daemon_status_screen()
-
-
 def _select_preset_menu(presets: dict, names: list, current: str) -> None:
     items = [(n, "← current" if n == current else "") for n in names] + [("Back", "")]
     choice = menu("Select Preset", items)
     if choice == -1 or items[choice][0] == "Back":
         return
-    selected = names[choice]
-    cfg.set("User",     "Mode",        selected)
-    cfg.set("Settings", "DynamicMode", "0")
-    cfg.save()
-    apply_smu(presets[selected], selected, save_to_config=False)
+    set_current_preset(names[choice], presets[names[choice]])
 
 
 def _custom_args_menu() -> None:
@@ -294,6 +263,49 @@ def _custom_args_menu() -> None:
         cfg.set("Settings", "DynamicMode", "0")
         cfg.save()
         apply_smu(args, "Custom", save_to_config=True)
+
+
+def preset_menu() -> None:
+    presets  = get_presets()
+    names    = list(presets.keys())
+    last_idx = 0
+    state    = load_power_state()
+
+    while True:
+        items  = build_menu_items(state)
+        choice = menu(
+            "Power Management", items,
+            selected=min(last_idx, len(items) - 1),
+        )
+        if choice == -1:
+            return
+
+        last_idx = choice
+        item = items[choice]
+        lbl  = item[0] if isinstance(item, tuple) else item
+        tag  = item[2] if isinstance(item, tuple) and len(item) > 2 else ""
+
+        if lbl == "Back":
+            return
+        elif lbl == "Select preset":
+            _select_preset_menu(presets, names, state.mode)
+            state = load_power_state()
+        elif lbl == "Dynamic mode":
+            state = _toggle_dynamic_state(state)
+        elif lbl == "Custom arguments":
+            _custom_args_menu()
+            state = load_power_state()
+        elif lbl == "Reapply interval":
+            _reapply_interval_menu()
+            state = load_power_state()
+        elif lbl == "Stop reapply" and tag != "disabled":
+            _stop_loop_screen()
+            state = load_power_state()
+        elif lbl == "Start reapply":
+            _start_loop_screen()
+            state = load_power_state()
+        elif lbl == "Daemon status":
+            _daemon_status_screen()
 
 
 def _daemon_apply_saved() -> None:

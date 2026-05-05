@@ -14,6 +14,7 @@ from . import config as cfg
 from .ui import clear, pause
 from .setup import restart_service, service_running
 
+
 def _ver_tuple(v: str) -> tuple:
     try:
         return tuple(int(x) for x in v.strip().lstrip("v").split("."))
@@ -33,16 +34,16 @@ def get_changelog() -> str:
 
 
 def _do_update() -> None:
-    url        = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest/download/UXTU4Unix.zip"
+    url = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest/download/UXTU4Unix.zip"
 
     script_dir  = os.path.dirname(os.path.realpath(__file__))
     assets_dir  = os.path.dirname(script_dir)
     src_dir     = os.path.dirname(assets_dir)
     install_dir = os.path.dirname(src_dir)
 
-    zip_path    = os.path.join(install_dir, "UXTU4Unix.zip")
-    new_folder  = os.path.join(install_dir, "UXTU4Unix_new")
-    config_bak  = os.path.join(install_dir, "config.toml.bak")
+    zip_path   = os.path.join(install_dir, "UXTU4Unix.zip")
+    new_folder = os.path.join(install_dir, "UXTU4Unix_new")
+    config_bak = os.path.join(install_dir, "config.toml.bak")
 
     try:
         if os.path.exists(cfg.CONFIG_PATH):
@@ -72,9 +73,11 @@ def _do_update() -> None:
 
         if os.path.exists(zip_path):
             os.remove(zip_path)
+
         print("Restarting daemon...")
         if service_running():
             restart_service()
+
         print("Update complete. Relaunching - please close this window.")
         os.execv(sys.executable, [sys.executable, launch])
 

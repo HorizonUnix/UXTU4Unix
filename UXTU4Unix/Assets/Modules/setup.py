@@ -6,13 +6,13 @@ from __future__ import annotations
 import os, re, subprocess, sys, tempfile, time
 from . import config as cfg
 from .hardware import detect as detect_hardware
-from .ui import clear, pause, confirm, menu
+from .ui import clear, pause, confirm, menu, MenuItem
 
 SERVICE_NAME = "uxtu4unix.service"
 SERVICE_FILE = f"/etc/systemd/system/{SERVICE_NAME}"
 
 
-def _ensure_venv() -> None:
+def _ensure_venv() -> bool:
     venv_dir    = cfg.VENV_DIR
     venv_python = cfg.VENV_PYTHON
 
@@ -25,11 +25,11 @@ def _ensure_venv() -> None:
         if _sudo(sys.executable, "-m", "venv", "--without-pip", venv_dir) != 0:
             print("  Failed to create venv.")
             pause()
-            return
+            return False
         if _sudo(venv_python, "-m", "ensurepip", "--upgrade") != 0:
             print("  Failed to bootstrap pip.")
             pause()
-            return
+            return False
 
     probe = subprocess.run(
         [venv_python, "-c", "import zmq"],
@@ -40,7 +40,9 @@ def _ensure_venv() -> None:
         if _sudo(venv_python, "-m", "pip", "install", "pyzmq", "--quiet") != 0:
             print("  Failed to install pyzmq.")
             pause()
-            return
+            return False
+
+    return True
 
 
 def _daemon_script() -> str:
@@ -102,7 +104,9 @@ def _wait_for_daemon(timeout: float = 10.0, interval: float = 0.3) -> bool:
 
 
 def install_service() -> None:
-    _ensure_venv()
+    if not _ensure_venv():
+        print("  Aborting service installation due to venv errors.")
+        return
     if not _sudo_write(SERVICE_FILE, _render_unit()):
         print("  Failed to write service file.")
         return
@@ -145,7 +149,8 @@ def verify_service_path() -> None:
         return
     current = _daemon_script()
     try:
-        content = open(SERVICE_FILE).read()
+        with open(SERVICE_FILE) as f:
+            content = f.read()
     except OSError:
         return
     for line in content.splitlines():
@@ -183,18 +188,18 @@ def daemon_menu() -> None:
             f"Status: {'Running' if running else 'Stopped'}\n"
             f"{'Enabled on boot' if enabled else 'Not enabled'}"
         )
-        items = [
-            ("Install & enable", ""),
-            ("Uninstall",        ""),
-            ("Restart",          ""),
-            ("View logs",        "last 50 lines"),
-            ("Back",             ""),
+        items: list[MenuItem] = [
+            MenuItem("Install & enable"),
+            MenuItem("Uninstall"),
+            MenuItem("Restart"),
+            MenuItem("View logs", hint="last 50 lines"),
+            MenuItem("Back"),
         ]
         choice = menu("Daemon Service", items, subtitle=subtitle)
-        if choice == -1 or items[choice][0] == "Back":
+        if choice == -1 or items[choice].label == "Back":
             return
 
-        lbl = items[choice][0]
+        lbl = items[choice].label
         clear()
         if lbl == "Install & enable":
             install_service()
@@ -276,7 +281,6 @@ def run_welcome() -> None:
         print("\n  Daemon is required. Exiting setup.")
         pause()
         return
-        
     pause()
 
     _step(3, TOTAL, "Hardware detection")
@@ -293,12 +297,11 @@ def run_welcome() -> None:
     def row(label: str, value: str) -> None:
         print(f"  \033[2m{label:<{W}}\033[0m  {value}")
 
-    row("CPU",      cpu      or "Not detected")
-    row("Family",   family   or "Unknown")
-    row("Arch",     arch     or "Unknown")
-    row("Type",     cpu_type or "Unknown")
-    row("Signature",sig      or "Unknown")
-    
+    row("CPU",       cpu      or "Not detected")
+    row("Family",    family   or "Unknown")
+    row("Arch",      arch     or "Unknown")
+    row("Type",      cpu_type or "Unknown")
+    row("Signature", sig      or "Unknown")
     print()
     pause()
 

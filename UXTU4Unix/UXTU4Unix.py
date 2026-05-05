@@ -16,7 +16,7 @@ from Assets.Modules.setup     import (
     run_welcome, verify_service_path,
 )
 from Assets.Modules.updater   import check_updates
-from Assets.Modules.ui        import clear, pause, quit_app, menu, about_menu
+from Assets.Modules.ui        import clear, pause, quit_app, menu, about_menu, MenuItem
 
 
 def _require_daemon() -> None:
@@ -72,12 +72,12 @@ def main() -> None:
     ensure_binaries_executable()
     check_system_compat()
 
-    if cfg.get("Settings", "SoftwareUpdate", "0") == "1":
-        check_updates()
-
     verify_service_path()
     _require_daemon()
 
+    if cfg.get("Settings", "SoftwareUpdate", "0") == "1":
+        check_updates()
+        
     try:
         get_presets()
     except Exception as exc:
@@ -85,12 +85,12 @@ def main() -> None:
 
     _apply_on_start()
 
-    items = [
-        ("Power Management",    ""),
-        ("Settings",            ""),
-        ("Hardware information",""),
-        ("About",               ""),
-        ("Quit",                ""),
+    items: list[MenuItem] = [
+        MenuItem("Power Management"),
+        MenuItem("Settings"),
+        MenuItem("Hardware information"),
+        MenuItem("About"),
+        MenuItem("Quit"),
     ]
 
     actions = [preset_menu, settings_menu, hardware_info, about_menu, quit_app]

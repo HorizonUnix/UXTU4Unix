@@ -4,6 +4,8 @@ ui.py
 
 from __future__ import annotations
 import os, select, subprocess, sys, termios, tty
+from dataclasses import dataclass
+from typing import Literal
 from . import config as cfg
 
 BANNER = """
@@ -25,6 +27,14 @@ UP    = b"\x1b[A"
 DOWN  = b"\x1b[B"
 ENTER = b"\r"
 ESC   = b"\x1b"
+
+Kind = Literal["action", "toggle", "separator"]
+
+@dataclass
+class MenuItem:
+    label: str
+    hint:  str  = ""
+    kind:  Kind = "action"
 
 
 def _getch() -> bytes:
@@ -85,6 +95,74 @@ def quit_app() -> None:
     sys.exit(f"\n  Thanks for using UXTU4Unix\n  Have a nice day!\n")
 
 
+def _label(item) -> str:
+    if isinstance(item, MenuItem):
+        return item.label
+    return item[0] if isinstance(item, (tuple, list)) else str(item)
+
+
+def _hint(item) -> str:
+    if isinstance(item, MenuItem):
+        return item.hint
+    return item[1] if isinstance(item, (tuple, list)) and len(item) > 1 else ""
+
+
+def _tag(item) -> str:
+    if isinstance(item, MenuItem):
+        return item.kind if item.kind in ("toggle", "separator") else ""
+    return item[2] if isinstance(item, (tuple, list)) and len(item) > 2 else ""
+
+
+def _is_sep(item) -> bool:
+    if isinstance(item, MenuItem):
+        return item.kind == "separator"
+    return _tag(item) == "sep" or _label(item).startswith("─")
+
+
+def _clamp_skip(idx: int, items: list) -> int:
+    n = len(items)
+    if n == 0:
+        return 0
+    idx = max(0, min(idx, n - 1))
+    for delta in range(n):
+        i = (idx + delta) % n
+        if not _is_sep(items[i]):
+            return i
+    return idx
+
+
+def _step(idx: int, d: int, items: list) -> int:
+    n = len(items)
+    for _ in range(n):
+        idx = (idx + d) % n
+        if not _is_sep(items[idx]):
+            return idx
+    return idx
+
+
+def render_menu(title: str, subtitle: str, items: list, idx: int) -> list[str]:
+    lines: list[str] = []
+    lines.append(f"  {_B}{title}{_R}")
+    if subtitle:
+        for sub_line in subtitle.split("\n"):
+            lines.append(f"  {_D}{sub_line}{_R}")
+    lines.append("")
+    for i, item in enumerate(items):
+        if _is_sep(item):
+            lines.append(f"  {_D}{'─' * 40}{_R}")
+            continue
+        lbl  = _label(item)
+        hint = _hint(item)
+        h    = f"  {_D}{hint}{_R}" if hint else ""
+        if i == idx:
+            lines.append(f"  {_C}▶{_R} {_B}{lbl}{_R}{h}")
+        else:
+            lines.append(f"    {_D}{lbl}{_R}{h}")
+    lines.append("")
+    lines.append(f"  {_D}↑/↓ to navigate, Enter to select, Esc to go back{_R}")
+    return lines
+
+
 def menu(
     title:     str,
     items:     list,
@@ -100,7 +178,7 @@ def menu(
     prev = 0
     try:
         while True:
-            lines = _build(title, subtitle, items, idx)
+            lines = render_menu(title, subtitle, items, idx)
             prev  = _draw(lines, prev)
             key   = _getch()
             if key == b"\x03":
@@ -128,66 +206,6 @@ def menu(
         sys.stdout.flush()
 
 
-def _label(item) -> str:
-    return item[0] if isinstance(item, (tuple, list)) else item
-
-
-def _hint(item) -> str:
-    return item[1] if isinstance(item, (tuple, list)) and len(item) > 1 else ""
-
-
-def _tag(item) -> str:
-    return item[2] if isinstance(item, (tuple, list)) and len(item) > 2 else ""
-
-
-def _is_sep(item) -> bool:
-    return _tag(item) == "sep" or _label(item).startswith("─")
-
-
-def _clamp_skip(idx: int, items: list) -> int:
-    n = len(items)
-    if n == 0:
-        return 0
-    idx = max(0, min(idx, n - 1))
-    for delta in range(n):
-        i = (idx + delta) % n
-        if not _is_sep(items[i]):
-            return i
-    return idx
-
-
-def _step(idx: int, d: int, items: list) -> int:
-    n = len(items)
-    for _ in range(n):
-        idx = (idx + d) % n
-        if not _is_sep(items[idx]):
-            return idx
-    return idx
-
-
-def _build(title: str, subtitle: str, items: list, idx: int) -> list[str]:
-    lines: list[str] = []
-    lines.append(f"  {_B}{title}{_R}")
-    if subtitle:
-        for sub_line in subtitle.split("\n"):
-            lines.append(f"  {_D}{sub_line}{_R}")
-    lines.append("")
-    for i, item in enumerate(items):
-        if _is_sep(item):
-            lines.append(f"  {_D}{'─' * 40}{_R}")
-            continue
-        lbl  = _label(item)
-        hint = _hint(item)
-        h    = f"  {_D}{hint}{_R}" if hint else ""
-        if i == idx:
-            lines.append(f"  {_C}▶{_R} {_B}{lbl}{_R}{h}")
-        else:
-            lines.append(f"    {_D}{lbl}{_R}{h}")
-    lines.append("")
-    lines.append(f"  {_D}↑/↓ to navigate, Enter to select, Esc to go back{_R}")
-    return lines
-
-
 def about_menu() -> None:
     import webbrowser
     from .updater import get_latest_version, show_updater
@@ -199,18 +217,18 @@ def about_menu() -> None:
         except Exception:
             pass
 
-        items: list = [("Open GitHub page")]
+        items: list[MenuItem] = [MenuItem("Open GitHub page")]
         if latest:
-            items.append(("Force update", f"→ {latest}"))
-        items.append(("Back", ""))
+            items.append(MenuItem("Force update", hint=f"→ {latest}"))
+        items.append(MenuItem("Back"))
 
         subtitle = "Maintainer: oxGorou\nAdvisor: NotchApple1703"
         choice   = menu("About UXTU4Unix", items, subtitle=subtitle)
 
-        if choice == -1 or _label(items[choice]) == "Back":
+        if choice == -1 or items[choice].label == "Back":
             return
-        elif _label(items[choice]) == "Open GitHub page":
+        elif items[choice].label == "Open GitHub page":
             webbrowser.open("https://www.github.com/HorizonUnix/UXTU4Unix")
-        elif _label(items[choice]).startswith("Force update") and latest:
+        elif items[choice].label.startswith("Force update") and latest:
             show_updater()
             return
