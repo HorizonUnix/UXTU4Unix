@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, subprocess, sys
+import os, sys
 
 _ROOT = os.path.dirname(os.path.realpath(__file__))
 if _ROOT not in sys.path:
