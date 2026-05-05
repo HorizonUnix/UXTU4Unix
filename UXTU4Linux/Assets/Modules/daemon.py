@@ -400,7 +400,14 @@ class PowerDaemon:
 
         while True:
             raw  = sock.recv_string()
-            resp, is_shutdown = self.handle(raw)
+            resp = self.handle(raw)
+            is_shutdown = False
+            try:
+                payload = json.loads(resp)
+                if isinstance(payload, dict):
+                    is_shutdown = bool(payload.get("shutdown", False))
+            except (TypeError, ValueError):
+                is_shutdown = False
             sock.send_string(resp)
             if is_shutdown:
                 logging.info("Shutdown command received.")
