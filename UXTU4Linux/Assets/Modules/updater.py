@@ -73,38 +73,25 @@ def _do_update() -> None:
         if _sudo("rm", "-rf", src_dir) != 0:
             raise PermissionError(f"Could not remove {src_dir}; the privileged remove command failed (possible permission issue or directory in use)")
 
-        expected_inner = os.path.join(new_folder, "UXTU4Linux")
-        if os.path.isdir(expected_inner):
-            inner = expected_inner
-        else:
-            extracted_dirs = [
-                os.path.join(new_folder, name)
-                for name in os.listdir(new_folder)
-                if os.path.isdir(os.path.join(new_folder, name))
-            ]
-            if len(extracted_dirs) == 1:
-                inner = extracted_dirs[0]
-            else:
-                raise RuntimeError(
-                    f"Unexpected update archive structure in {new_folder}. "
-                    f"Expected directory 'UXTU4Linux', found: {[os.path.basename(d) for d in extracted_dirs]}"
-                )
+        def _resolve_inner_extracted_dir(base_folder: str) -> str:
+            expected_inner = os.path.join(base_folder, "UXTU4Linux")
+            if os.path.isdir(expected_inner):
+                return expected_inner
 
-        if os.path.isdir(expected_inner):
-            inner = expected_inner
-        else:
             extracted_dirs = [
-                os.path.join(new_folder, name)
-                for name in os.listdir(new_folder)
-                if os.path.isdir(os.path.join(new_folder, name))
+                os.path.join(base_folder, name)
+                for name in os.listdir(base_folder)
+                if os.path.isdir(os.path.join(base_folder, name))
             ]
             if len(extracted_dirs) == 1:
-                inner = extracted_dirs[0]
-            else:
-                raise RuntimeError(
-                    f"Unexpected update archive structure in {new_folder}. "
-                    f"Expected directory 'UXTU4Linux', found: {[os.path.basename(d) for d in extracted_dirs]}"
-                )
+                return extracted_dirs[0]
+
+            raise RuntimeError(
+                f"Unexpected update archive structure in {base_folder}. "
+                f"Expected directory 'UXTU4Linux', found: {[os.path.basename(d) for d in extracted_dirs]}"
+            )
+
+        inner = _resolve_inner_extracted_dir(new_folder)
 
         if _sudo("mv", inner, src_dir) != 0:
             raise PermissionError(f"Could not move new release into {src_dir}")
