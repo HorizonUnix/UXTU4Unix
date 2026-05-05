@@ -20,6 +20,12 @@ from .service import (
 
 DEFAULT_SETTINGS_TIME = "3"
 DEFAULT_SETTINGS_SOFTWARE_UPDATE = "1"
+
+
+class InvalidRequiredError(ValueError):
+    """Raised when cfg.REQUIRED has an invalid format or content."""
+
+    pass
 DEFAULT_SETTINGS_REAPPLY = "0"
 DEFAULT_SETTINGS_APPLY_ON_START = "1"
 DEFAULT_SETTINGS_DYNAMIC_MODE = "0"
@@ -139,29 +145,29 @@ def check_integrity() -> None:
                 normalized: dict[str, tuple[str, ...]] = {}
                 for section, keys in required_value.items():
                     if not isinstance(section, str):
-                        raise InvalidRequiredError("  Warning: ignoring invalid cfg.REQUIRED section name (must be str).")
+                        raise ValueError("  Warning: ignoring invalid cfg.REQUIRED section name (must be str).")
                     if keys is None:
                         normalized[section] = ()
                         continue
                     if isinstance(keys, (list, tuple, set)):
                         if any(not isinstance(key, str) for key in keys):
-                            raise InvalidRequiredError(
+                            raise ValueError(
                                 f"  Warning: ignoring invalid cfg.REQUIRED keys for section '{section}' (must be str)."
                             )
                         normalized[section] = tuple(keys)
                         continue
-                    raise InvalidRequiredError(
+                    raise ValueError(
                         f"  Warning: ignoring invalid cfg.REQUIRED keys container for section '{section}'."
                     )
                 return normalized
 
             if isinstance(required_value, (list, tuple, set)):
                 if any(not isinstance(section, str) for section in required_value):
-                    raise InvalidRequiredError("  Warning: ignoring invalid cfg.REQUIRED sections (must be str).")
+                    raise ValueError("  Warning: ignoring invalid cfg.REQUIRED sections (must be str).")
                 return {section: () for section in required_value}
 
             if required_value is not None:
-                raise InvalidRequiredError("  Warning: ignoring invalid cfg.REQUIRED format.")
+                raise ValueError("  Warning: ignoring invalid cfg.REQUIRED format.")
             return {}
         except ValueError as error:
             print(error)
