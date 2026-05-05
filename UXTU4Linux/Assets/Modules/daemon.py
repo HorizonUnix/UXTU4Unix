@@ -172,8 +172,8 @@ def _load_saved_preset() -> PresetState | None:
 
     reapply  = cfg.get("Settings", "ReApply",     "0") == "1"
     dynamic  = cfg.get("Settings", "DynamicMode", "0") == "1"
-    cfg_default = int(cfg.get("Settings", "Time", "3"))
-    interval = _parse_interval(cfg.get("Settings", "Time", str(cfg_default)), cfg_default)
+    cfg_default = _parse_interval(cfg.get("Settings", "Time", "3"), 3)
+    interval = _parse_interval(cfg.get("Settings", "Time", "3"), cfg_default)
 
     return PresetState(
         mode=user_mode,
