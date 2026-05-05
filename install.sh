@@ -12,7 +12,6 @@ RELEASE_URL="https://github.com/HorizonUnix/UXTU4Linux/releases/latest/download/
 TMP_DIR="$(mktemp -d)"
 
 _R='\033[0m'; _C='\033[0;96m'; _G='\033[0;32m'; _Y='\033[1;33m'; _E='\033[0;31m'
-
 info() { echo -e "${_C}  ·${_R} $*"; }
 ok()   { echo -e "${_G}  ✓${_R} $*"; }
 warn() { echo -e "${_Y}  !${_R} $*"; }
