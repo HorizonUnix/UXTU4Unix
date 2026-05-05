@@ -175,6 +175,8 @@ def _do_update() -> None:
 
     except (
         OSError,
+        PermissionError,
+        ConnectionError,
         RuntimeError,
         ValueError,
         subprocess.SubprocessError,
