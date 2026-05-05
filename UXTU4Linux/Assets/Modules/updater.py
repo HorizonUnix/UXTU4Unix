@@ -82,7 +82,13 @@ def _do_update() -> None:
 
     try:
         if os.path.exists(cfg.CONFIG_PATH):
-            shutil.copy2(cfg.CONFIG_PATH, config_bak)
+            try:
+                shutil.copy2(cfg.CONFIG_PATH, config_bak)
+            except OSError as e:
+                raise RuntimeError(
+                    f"Configuration backup failed: could not copy {cfg.CONFIG_PATH} to {config_bak}. "
+                    "Aborting update to avoid potential configuration loss."
+                ) from e
 
         print("Downloading update...")
         try:
@@ -146,7 +152,12 @@ def _do_update() -> None:
 
         new_config = os.path.join(src_dir, "Assets", "config.toml")
         if os.path.exists(config_bak):
-            shutil.move(config_bak, new_config)
+            try:
+                shutil.move(config_bak, new_config)
+            except OSError as e:
+                raise RuntimeError(
+                    f"Failed to restore configuration from {config_bak!r} to {new_config!r}: {e}"
+                ) from e
 
         if os.path.exists(zip_path):
             os.remove(zip_path)
@@ -172,7 +183,23 @@ def _do_update() -> None:
         json.JSONDecodeError,
     ) as e:
         err_type = type(e).__name__
-        print(f"Update failed ({err_type}): {e}")
+        if isinstance(e, urllib.error.URLError):
+            print(f"Update failed ({err_type}): Network error while downloading update: {e}")
+            print("Please check your internet connection, DNS, or firewall settings and try again.")
+        elif isinstance(e, PermissionError):
+            print(f"Update failed ({err_type}): Insufficient permissions: {e}")
+            print("Please rerun the updater with the required privileges.")
+        elif isinstance(e, zipfile.BadZipFile):
+            print(f"Update failed ({err_type}): Downloaded update archive is corrupted: {e}")
+            print("Please retry the update; the download may have been incomplete.")
+        elif isinstance(e, subprocess.SubprocessError):
+            print(f"Update failed ({err_type}): A system command failed during update: {e}")
+            print("Please review system state/permissions and try again.")
+        elif isinstance(e, json.JSONDecodeError):
+            print(f"Update failed ({err_type}): Received invalid release metadata: {e}")
+            print("Please try again later.")
+        else:
+            print(f"Update failed ({err_type}): {e}")
         pause()
         
 
@@ -203,6 +230,7 @@ def show_updater() -> None:
 
 def check_updates() -> None:
     MAX_RETRIES = 10
+    RETRY_DELAY_SECONDS = 5
     clear()
     latest = None
     for attempt in range(1, MAX_RETRIES + 1):
@@ -212,7 +240,7 @@ def check_updates() -> None:
         except Exception as e:
             print(f"Could not fetch version (attempt {attempt}/{MAX_RETRIES}): {e}")
             if attempt < MAX_RETRIES:
-                time.sleep(5)
+                time.sleep(RETRY_DELAY_SECONDS)
 
     if latest is None:
         clear()
