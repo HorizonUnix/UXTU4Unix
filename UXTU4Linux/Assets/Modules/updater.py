@@ -66,7 +66,7 @@ def _do_update() -> None:
     new_folder = os.path.join(install_dir, "UXTU4Linux_new")
     config_bak = os.path.join(install_dir, "config.toml.bak")
 
-    def _sudo(install_root: str, *args: str) -> int:
+    def _sudo(*args: str) -> int:
         """Run a restricted sudo command.
 
         Note: callers must pass trusted, canonicalized paths. This helper enforces
