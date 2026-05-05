@@ -25,7 +25,7 @@ def _ver_tuple(v: str) -> tuple:
 
 def get_latest_version() -> str:
     try:
-        url = urllib.request.urlopen(cfg.LATEST_VER_URL).geturl()
+        url = urllib.request.urlopen(cfg.LATEST_VER_URL, timeout=10).geturl()
         return url.rstrip("/").split("/")[-1]
     except urllib.error.URLError:
         return "v0.0.0"
@@ -34,7 +34,7 @@ def get_latest_version() -> str:
 def get_changelog() -> str:
     req = urllib.request.Request(cfg.GITHUB_API_URL)
     try:
-        raw = urllib.request.urlopen(req).read()
+        raw = urllib.request.urlopen(req, timeout=10).read()
         data = json.loads(raw)
         return data.get("body", "No changelog available.")
     except (urllib.error.URLError, json.JSONDecodeError, UnicodeDecodeError):
@@ -67,8 +67,22 @@ def _do_update() -> None:
             raise ConnectionError(f"Download failed: could not retrieve update from {url}") from e
 
         print("Extracting...")
+
+        def _safe_extract_zip(zf: zipfile.ZipFile, dest_dir: str) -> None:
+            dest_root = os.path.realpath(dest_dir)
+            for member in zf.infolist():
+                member_name = member.filename
+                if os.path.isabs(member_name):
+                    raise RuntimeError(f"Unsafe absolute path in zip entry: {member_name}")
+
+                target_path = os.path.realpath(os.path.join(dest_root, member_name))
+                if os.path.commonpath([dest_root, target_path]) != dest_root:
+                    raise RuntimeError(f"Unsafe path traversal in zip entry: {member_name}")
+
+                zf.extract(member, dest_root)
+
         with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(new_folder)
+            _safe_extract_zip(zf, new_folder)
 
         if _sudo("rm", "-rf", src_dir) != 0:
             raise PermissionError(f"Could not remove {src_dir}; the privileged remove command failed (possible permission issue or directory in use)")
