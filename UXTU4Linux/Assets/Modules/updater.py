@@ -25,7 +25,7 @@ def _ver_tuple(v: str) -> tuple:
 
 def get_latest_version() -> str:
     try:
-        url = urllib.request.urlopen(cfg.LATEST_VER_URL).geturl()
+        url = urllib.request.urlopen(cfg.LATEST_VER_URL, timeout=10).geturl()
         return url.rstrip("/").split("/")[-1]
     except urllib.error.URLError:
         return "v0.0.0"
