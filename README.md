@@ -41,12 +41,12 @@ For full details, troubleshooting, and manual steps see the **[Wiki](../../wiki)
 ## Preview
  
 <p align="left">
-  <img src="/Img/main_menu.png"/>
-  <img src="/Img/apply_preset.png"/>
-  <img src="/Img/preset.png"/>
-  <img src="/Img/preset_setting.png"/>
-  <img src="/Img/hardware_info.png"/>
+  <img src="/Img/menu.png"/>
+  <img src="/Img/power.png"/>
+  <img src="/Img/power_status.png"/>
   <img src="/Img/settings.png"/>
+  <img src="/Img/daemon.png"/>
+  <img src="/Img/hardware.png"/>
 </p>
  
 ## Acknowledgments
