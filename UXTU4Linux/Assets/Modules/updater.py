@@ -4,7 +4,6 @@ updater.py
 import json
 import os
 import re
-import re
 import shutil
 import subprocess
 import sys
