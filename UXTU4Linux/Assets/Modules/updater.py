@@ -54,7 +54,19 @@ def _do_update() -> None:
     config_bak = os.path.join(install_dir, "config.toml.bak")
 
     def _sudo(*args: str) -> int:
-        return subprocess.run(["sudo", *args]).returncode
+        if not args:
+            raise ValueError("No command provided for sudo execution")
+
+        allowed_commands = {"rm", "cp", "mv", "chmod", "chown", "mkdir"}
+        cmd = args[0]
+        if cmd not in allowed_commands:
+            raise ValueError(f"Disallowed sudo command: {cmd}")
+
+        for arg in args:
+            if "\x00" in arg or "\n" in arg or "\r" in arg:
+                raise ValueError("Invalid control characters in sudo arguments")
+
+        return subprocess.run(["sudo", *args], check=False).returncode
 
     try:
         if os.path.exists(cfg.CONFIG_PATH):
@@ -138,7 +150,15 @@ def _do_update() -> None:
         subprocess.Popen([python_exec, launch])
         return
 
-    except Exception as e:
+    except (
+        OSError,
+        RuntimeError,
+        ValueError,
+        subprocess.SubprocessError,
+        urllib.error.URLError,
+        zipfile.BadZipFile,
+        json.JSONDecodeError,
+    ) as e:
         print(f"Update failed: {e}")
         pause()
         
