@@ -181,7 +181,7 @@ install_files() {
     sudo mkdir -p "$INSTALL_DIR"
     sudo chown "$CURRENT_USER:$CURRENT_GROUP" "$INSTALL_DIR"
 
-    rm -rf "$SRC_DIR"
+    sudo rm -rf "$SRC_DIR"
     cp -r "$src" "$SRC_DIR"
     ok "Installed to $SRC_DIR"
 }
