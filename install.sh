@@ -46,7 +46,7 @@ detect_pm() {
     elif command -v yum     &>/dev/null; then echo "yum"
     elif command -v pacman  &>/dev/null; then echo "pacman"
     elif command -v zypper  &>/dev/null; then echo "zypper"
-    else die "Unsupported distro — https://github.com/HorizonUnix/UXTU4Unix/wiki/Linux-Installation#manual-installation"
+    else die "Unsupported distro — https://github.com/HorizonUnix/UXTU4Linux/wiki/Linux-Installation#manual-installation"
     fi
 }
 
