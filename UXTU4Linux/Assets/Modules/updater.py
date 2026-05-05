@@ -138,7 +138,15 @@ def _do_update() -> None:
         subprocess.Popen([python_exec, launch])
         return
 
-    except Exception as e:
+    except (
+        OSError,
+        RuntimeError,
+        ValueError,
+        subprocess.SubprocessError,
+        urllib.error.URLError,
+        zipfile.BadZipFile,
+        json.JSONDecodeError,
+    ) as e:
         print(f"Update failed: {e}")
         pause()
         
