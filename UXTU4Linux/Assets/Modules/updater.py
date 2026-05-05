@@ -86,9 +86,10 @@ def _do_update() -> None:
         cmd_args = list(args[1:])
 
         install_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        path_args = [a for a in cmd_args if not a.startswith("-")]
+
         def _validate_args(allowed_flags: set, min_paths: int) -> None:
             nonlocal cmd_args
-            path_args = []
             for a in cmd_args:
                 if a.startswith("-"):
                     if a not in allowed_flags:
@@ -98,7 +99,6 @@ def _do_update() -> None:
                         raise ValueError("Empty path/value argument is not allowed")
                     if not safe_value_re.fullmatch(a):
                         raise ValueError(f"Invalid characters in sudo argument for {cmd}: {a}")
-                    path_args.append(a)
             if len(path_args) < min_paths:
                 raise ValueError(f"Insufficient path arguments for {cmd}")
             _assert_paths_within_install_root(path_args)
@@ -114,7 +114,6 @@ def _do_update() -> None:
             for p in paths:
                 if not _is_within_install_root(p):
                     raise ValueError(f"Path escapes installation directory: {p}")
-        path_args = [a for a in cmd_args if not a.startswith("-")]
 
 
         if cmd == "rm":
