@@ -119,12 +119,45 @@ def check_integrity() -> None:
 
     cfg.load()
 
-    if isinstance(cfg.REQUIRED, dict):
-        required = cfg.REQUIRED
-    elif isinstance(cfg.REQUIRED, (list, tuple, set)):
-        required = {s: () for s in cfg.REQUIRED}
-    else:
-        required = {}
+    def normalize_required(required_value: object) -> dict[str, tuple[str, ...]]:
+        """
+        Normalize cfg.REQUIRED into:
+            {section_name: (required_key_1, required_key_2, ...)}
+
+        Accepted formats:
+        - dict[str, iterable[str]]
+        - iterable[str] (legacy: section names only, no required keys)
+        """
+        if isinstance(required_value, dict):
+            normalized: dict[str, tuple[str, ...]] = {}
+            for section, keys in required_value.items():
+                if not isinstance(section, str):
+                    print("  Warning: ignoring invalid cfg.REQUIRED section name (must be str).")
+                    return {}
+                if keys is None:
+                    normalized[section] = ()
+                    continue
+                if isinstance(keys, (list, tuple, set)):
+                    if any(not isinstance(key, str) for key in keys):
+                        print(f"  Warning: ignoring invalid cfg.REQUIRED keys for section '{section}' (must be str).")
+                        return {}
+                    normalized[section] = tuple(keys)
+                    continue
+                print(f"  Warning: ignoring invalid cfg.REQUIRED keys container for section '{section}'.")
+                return {}
+            return normalized
+
+        if isinstance(required_value, (list, tuple, set)):
+            if any(not isinstance(section, str) for section in required_value):
+                print("  Warning: ignoring invalid cfg.REQUIRED sections (must be str).")
+                return {}
+            return {section: () for section in required_value}
+
+        if required_value is not None:
+            print("  Warning: ignoring invalid cfg.REQUIRED format.")
+        return {}
+
+    required = normalize_required(cfg.REQUIRED)
 
     def has_all_sections() -> bool:
         return all(cfg.instance().has_section(section) for section in required)
