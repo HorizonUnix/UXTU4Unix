@@ -12,6 +12,7 @@ import signal
 import subprocess
 import sys
 import threading
+import time
 import zmq
 from dataclasses import dataclass
 
@@ -206,7 +207,16 @@ class PowerDaemon:
 
     def _loop_body(self, args: str, mode: str, interval: int, dynamic: bool) -> None:
         self._stop_evt.clear()
-        while not self._stop_evt.wait(interval):
+        max_wait_step = 1.0
+        while not self._stop_evt.is_set():
+            deadline = time.monotonic() + interval
+            while not self._stop_evt.is_set():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                self._stop_evt.wait(min(remaining, max_wait_step))
+            if self._stop_evt.is_set():
+                break
             try:
                 eff_mode, eff_args = self._effective_mode_args(mode, args, dynamic)
                 changed = eff_mode != self._last_logged_mode
