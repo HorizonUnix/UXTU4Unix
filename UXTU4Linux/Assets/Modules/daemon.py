@@ -388,9 +388,9 @@ class PowerDaemon:
 
         while True:
             raw  = sock.recv_string()
-            resp = self.handle(raw)
+            resp, is_shutdown = self.handle(raw)
             sock.send_string(resp)
-            if json.loads(raw).get("cmd") == "shutdown":
+            if is_shutdown:
                 logging.info("Shutdown command received.")
                 break
 
