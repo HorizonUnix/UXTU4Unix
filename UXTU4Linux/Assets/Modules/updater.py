@@ -88,10 +88,17 @@ def _do_update() -> None:
         install_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
         def _validate_args(allowed_flags: set, min_paths: int) -> None:
             nonlocal cmd_args
+            path_args = []
             for a in cmd_args:
-                if a.startswith("-") and a not in allowed_flags:
-                    raise ValueError(f"Disallowed flag for {cmd}: {a}")
-            path_args = [a for a in cmd_args if not a.startswith("-")]
+                if a.startswith("-"):
+                    if a not in allowed_flags:
+                        raise ValueError(f"Disallowed flag for {cmd}: {a}")
+                else:
+                    if not a.strip():
+                        raise ValueError("Empty path/value argument is not allowed")
+                    if not safe_value_re.fullmatch(a):
+                        raise ValueError(f"Invalid characters in sudo argument for {cmd}: {a}")
+                    path_args.append(a)
             if len(path_args) < min_paths:
                 raise ValueError(f"Insufficient path arguments for {cmd}")
             _assert_paths_within_install_root(path_args)
@@ -107,36 +114,18 @@ def _do_update() -> None:
             for p in paths:
                 if not _is_within_install_root(p):
                     raise ValueError(f"Path escapes installation directory: {p}")
-            paths = []
-            for a in cmd_args:
-                if a.startswith("-"):
-                    if a not in allowed_flags:
-                        raise ValueError(f"Disallowed option for {cmd}: {a}")
-                else:
-                    if not a.strip():
-                        raise ValueError("Empty path/value argument is not allowed")
-                    if not safe_value_re.fullmatch(a):
-                        raise ValueError(f"Invalid characters in sudo argument for {cmd}: {a}")
-                    paths.append(a)
-            if len(paths) < min_paths:
-                raise ValueError(f"Insufficient path/value arguments for {cmd}")
         path_args = [a for a in cmd_args if not a.startswith("-")]
 
 
         if cmd == "rm":
-            _assert_paths_within_install_root(path_args)
             _validate_args({"-f", "-r", "-rf", "-fr"}, 1)
         elif cmd == "cp":
-            _assert_paths_within_install_root(path_args)
             _validate_args({"-r", "-f", "-a"}, 2)
         elif cmd == "mv":
-            _assert_paths_within_install_root(path_args)
             _validate_args({"-f", "-n"}, 2)
         elif cmd == "chmod":
-            _assert_paths_within_install_root(path_args[1:])
             _validate_args({"-R"}, 2)
         elif cmd == "chown":
-            _assert_paths_within_install_root(path_args[1:])
             _validate_args({"-R"}, 2)
         elif cmd == "mkdir":
             _assert_paths_within_install_root(path_args)
