@@ -381,7 +381,7 @@ class PowerDaemon:
         if dmi_type not in _DMI_ALLOWED_TYPES:
             return {"ok": False, "error": f"disallowed dmidecode type: {dmi_type!r}"}
         try:
-            out = _run_cmd(f"{cfg.DMIDECODE} -t {dmi_type}")
+            out = _run_cmd([cfg.DMIDECODE, "-t", dmi_type])
             return {"ok": True, "output": out}
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
