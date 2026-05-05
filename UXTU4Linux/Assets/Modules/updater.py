@@ -168,7 +168,7 @@ def _do_update() -> None:
         with zipfile.ZipFile(zip_path, "r") as zf:
             _safe_extract_zip(zf, new_folder)
 
-        if _sudo("rm", "-rf", src_dir) != 0:
+        if _sudo(install_root, "rm", "-rf", src_dir) != 0:
             raise PermissionError(f"Could not remove {src_dir}; the privileged remove command failed (possible permission issue or directory in use)")
 
         def _resolve_inner_extracted_dir(base_folder: str) -> str:
