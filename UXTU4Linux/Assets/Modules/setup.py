@@ -134,9 +134,6 @@ def check_integrity() -> None:
         - dict[str, iterable[str]]
         - iterable[str] (legacy: section names only, no required keys)
         """
-        class InvalidRequiredError(Exception):
-            pass
-
         try:
             if isinstance(required_value, dict):
                 normalized: dict[str, tuple[str, ...]] = {}
@@ -166,7 +163,7 @@ def check_integrity() -> None:
             if required_value is not None:
                 raise InvalidRequiredError("  Warning: ignoring invalid cfg.REQUIRED format.")
             return {}
-        except InvalidRequiredError as error:
+        except ValueError as error:
             print(error)
             return {}
 
