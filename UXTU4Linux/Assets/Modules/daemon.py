@@ -50,12 +50,25 @@ def _validate_ryzenadj_payload(tokens: list[str]) -> list[str]:
 def _run_cmd(command: str) -> str:
     try:
         args = shlex.split(command)
-    except ValueError:
+    except ValueError as exc:
+        logging.warning("Failed to parse command %r: %s", command, exc)
         return ""
-    proc = subprocess.Popen(
-        args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-    )
-    stdout, _ = proc.communicate()
+    try:
+        proc = subprocess.Popen(
+            args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+    except OSError as exc:
+        logging.warning("Failed to start command %r: %s", command, exc)
+        return ""
+    try:
+        stdout, _ = proc.communicate(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.communicate()
+        logging.warning("Command timed out after 10s: %r", command)
+        return ""
+    if proc.returncode != 0:
+        logging.debug("Command exited with non-zero status %s: %r", proc.returncode, command)
     return stdout.decode("utf-8", errors="replace").strip()
 
 
@@ -106,11 +119,17 @@ def _run_ryzenadj(args: str, mode: str) -> str:
         logging.error("%s", exc)
         return ""
 
-    result = subprocess.run(
-        [cfg.RYZENADJ] + payload,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    try:
+        result = subprocess.run(
+            [cfg.RYZENADJ] + payload,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=10,
+        )
+    except subprocess.TimeoutExpired:
+        logging.error("ryzenadj timed out")
+        return ""
+
     out = result.stdout.decode(errors="replace")
     if cfg.is_debug() and result.stderr:
         out += result.stderr.decode(errors="replace")
@@ -140,7 +159,11 @@ def _load_saved_preset() -> PresetState | None:
     presets   = _load_presets()
 
     if user_mode == "Custom":
-        args = cfg.get("User", "CustomArgs")
+        custom_args = cfg.get("User", "CustomArgs")
+        if not isinstance(custom_args, str) or not custom_args.strip():
+            logging.warning("Saved custom preset has no valid CustomArgs.")
+            return None
+        args = custom_args.strip()
     elif user_mode in presets:
         args = presets[user_mode]
     else:
@@ -386,19 +409,24 @@ class PowerDaemon:
 
         logging.info("Listening on %s", cfg.ZMQ_SOCKET_ADDR)
 
+        stop_requested = False
+
         def _sig_handler(*_):
-            logging.info("Shutting down.")
-            self._stop_loop()
-            if os.path.exists(cfg.ZMQ_SOCKET_PATH):
-                os.unlink(cfg.ZMQ_SOCKET_PATH)
-            sock.close()
-            ctx.term()
-            sys.exit(0)
+            nonlocal stop_requested
+            stop_requested = True
 
         signal.signal(signal.SIGTERM, _sig_handler)
         signal.signal(signal.SIGINT,  _sig_handler)
 
         while True:
+            if stop_requested:
+                logging.info("Shutting down.")
+                self._stop_loop()
+                break
+
+            if not sock.poll(500):
+                continue
+
             raw  = sock.recv_string()
             resp = self.handle(raw)
             is_shutdown = False
