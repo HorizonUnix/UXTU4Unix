@@ -8,6 +8,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+import urllib.error
 import zipfile
 
 from . import config as cfg
@@ -28,9 +29,13 @@ def get_latest_version() -> str:
 
 
 def get_changelog() -> str:
-    req  = urllib.request.Request(cfg.GITHUB_API_URL)
-    data = json.loads(urllib.request.urlopen(req).read())
-    return data.get("body", "No changelog available.")
+    req = urllib.request.Request(cfg.GITHUB_API_URL)
+    try:
+        raw = urllib.request.urlopen(req).read()
+        data = json.loads(raw)
+        return data.get("body", "No changelog available.")
+    except (urllib.error.URLError, json.JSONDecodeError, UnicodeDecodeError):
+        return "No changelog available."
 
 
 def _do_update() -> None:
@@ -72,7 +77,8 @@ def _do_update() -> None:
         ryzen  = os.path.join(src_dir, "Assets", "Linux", "ryzenadj")
         for path in (launch, ryzen):
             if os.path.exists(path):
-                subprocess.run(["chmod", "+x", path], check=True)
+                if _sudo("chmod", "+x", path) != 0:
+                    raise PermissionError(f"Could not set executable permission on {path}")
 
         new_config = os.path.join(src_dir, "Assets", "config.toml")
         if os.path.exists(config_bak):
@@ -86,7 +92,8 @@ def _do_update() -> None:
             restart_service()
 
         print("Update complete. Relaunching - please close this window.")
-        os.execv(sys.executable, [sys.executable, launch])
+        subprocess.Popen([sys.executable, launch])
+        return
 
     except Exception as e:
         print(f"Update failed: {e}")
