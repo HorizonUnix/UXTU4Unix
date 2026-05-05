@@ -71,7 +71,7 @@ def _do_update() -> None:
             zf.extractall(new_folder)
 
         if _sudo("rm", "-rf", src_dir) != 0:
-            raise PermissionError(f"Could not remove {src_dir} — try running with sudo")
+            raise PermissionError(f"Could not remove {src_dir}; the privileged remove command failed (possible permission issue or directory in use)")
 
         expected_inner = os.path.join(new_folder, "UXTU4Linux")
         if os.path.isdir(expected_inner):
