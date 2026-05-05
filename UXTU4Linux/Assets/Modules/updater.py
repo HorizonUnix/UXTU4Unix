@@ -146,7 +146,12 @@ def _do_update() -> None:
 
         new_config = os.path.join(src_dir, "Assets", "config.toml")
         if os.path.exists(config_bak):
-            shutil.move(config_bak, new_config)
+            try:
+                shutil.move(config_bak, new_config)
+            except OSError as e:
+                raise RuntimeError(
+                    f"Failed to restore configuration from {config_bak!r} to {new_config!r}: {e}"
+                ) from e
 
         if os.path.exists(zip_path):
             os.remove(zip_path)
