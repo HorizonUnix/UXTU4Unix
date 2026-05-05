@@ -128,7 +128,8 @@ def check_integrity() -> None:
         for section, keys in required.items():
             if not cfg.instance().has_section(section):
                 continue
-            if any(key not in cfg.instance()[section] for key in keys):
+            section_data = cfg.instance()[section]
+            if any(key not in section_data for key in keys):
                 return False
         return True
 
