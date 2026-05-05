@@ -128,33 +128,33 @@ def check_integrity() -> None:
         - dict[str, iterable[str]]
         - iterable[str] (legacy: section names only, no required keys)
         """
+        def fail(message: str) -> dict[str, tuple[str, ...]]:
+            print(message)
+            return {}
+
         if isinstance(required_value, dict):
             normalized: dict[str, tuple[str, ...]] = {}
             for section, keys in required_value.items():
                 if not isinstance(section, str):
-                    print("  Warning: ignoring invalid cfg.REQUIRED section name (must be str).")
-                    return {}
+                    return fail("  Warning: ignoring invalid cfg.REQUIRED section name (must be str).")
                 if keys is None:
                     normalized[section] = ()
                     continue
                 if isinstance(keys, (list, tuple, set)):
                     if any(not isinstance(key, str) for key in keys):
-                        print(f"  Warning: ignoring invalid cfg.REQUIRED keys for section '{section}' (must be str).")
-                        return {}
+                        return fail(f"  Warning: ignoring invalid cfg.REQUIRED keys for section '{section}' (must be str).")
                     normalized[section] = tuple(keys)
                     continue
-                print(f"  Warning: ignoring invalid cfg.REQUIRED keys container for section '{section}'.")
-                return {}
+                return fail(f"  Warning: ignoring invalid cfg.REQUIRED keys container for section '{section}'.")
             return normalized
 
         if isinstance(required_value, (list, tuple, set)):
             if any(not isinstance(section, str) for section in required_value):
-                print("  Warning: ignoring invalid cfg.REQUIRED sections (must be str).")
-                return {}
+                return fail("  Warning: ignoring invalid cfg.REQUIRED sections (must be str).")
             return {section: () for section in required_value}
 
         if required_value is not None:
-            print("  Warning: ignoring invalid cfg.REQUIRED format.")
+            return fail("  Warning: ignoring invalid cfg.REQUIRED format.")
         return {}
 
     required = normalize_required(cfg.REQUIRED)
