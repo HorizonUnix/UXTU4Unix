@@ -370,7 +370,7 @@ class PowerDaemon:
             return
 
         if os.path.exists(cfg.ZMQ_SOCKET_PATH):
-            os.chmod(cfg.ZMQ_SOCKET_PATH, 0o666)
+            os.chmod(cfg.ZMQ_SOCKET_PATH, 0o660)
 
         logging.info("Listening on %s", cfg.ZMQ_SOCKET_ADDR)
 
