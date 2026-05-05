@@ -250,6 +250,7 @@ class PowerDaemon:
                 self._stop_evt.wait(min(remaining, max_wait_step))
             if self._stop_evt.is_set():
                 break
+            eff_mode = mode
             try:
                 eff_mode, eff_args = self._effective_mode_args(mode, args, dynamic)
                 changed = eff_mode != self._last_logged_mode
@@ -257,7 +258,7 @@ class PowerDaemon:
                 if changed:
                     self._last_logged_mode = eff_mode
             except Exception as exc:
-                logging.warning("Failed to apply preset in loop: %s", exc)
+                logging.warning("Failed to apply preset '%s' in loop: %s", eff_mode, exc)
         with self._lock:
             self._running_loop = False
 
