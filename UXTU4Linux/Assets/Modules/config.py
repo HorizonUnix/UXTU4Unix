@@ -6,10 +6,10 @@ import sys
 from configparser import ConfigParser
 
 LOCAL_VERSION = "0.6.0"
-LOCAL_BUILD   = "6-linux-5May26-rc1"
+LOCAL_BUILD   = "6-linux-5May26-r0"
 
-GITHUB_API_URL = "https://api.github.com/repos/HorizonUnix/UXTU4Unix/releases/latest"
-LATEST_VER_URL = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest"
+GITHUB_API_URL = "https://api.github.com/repos/HorizonUnix/UXTU4Linux/releases/latest"
+LATEST_VER_URL = "https://github.com/HorizonUnix/UXTU4Linux/releases/latest"
 
 _ROOT       = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 ASSETS_DIR  = os.path.join(_ROOT, "Assets")
@@ -22,10 +22,10 @@ CMD_FILE  = os.path.realpath(sys.argv[0])
 DMIDECODE = "dmidecode"
 KERNEL    = os.uname().sysname
 
-VENV_DIR    = "/opt/uxtu4unix/venv"
+VENV_DIR    = "/opt/uxtu4linux/venv"
 VENV_PYTHON = os.path.join(VENV_DIR, "bin", "python3")
 
-ZMQ_SOCKET_PATH = "/run/uxtu4unix.sock"
+ZMQ_SOCKET_PATH = "/run/uxtu4linux.sock"
 ZMQ_SOCKET_ADDR = f"ipc://{ZMQ_SOCKET_PATH}"
 
 _cfg           = ConfigParser()

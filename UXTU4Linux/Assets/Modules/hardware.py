@@ -1,7 +1,6 @@
 """
 hardware.py
 """
-
 import glob, os, shutil, subprocess
 from . import config as cfg
 from .ui import clear, pause
@@ -58,8 +57,6 @@ def secure_boot_enabled() -> bool:
             if len(data) >= 5 and data[4] == 1:
                 return True
         except OSError:
-            # efivar entries may be unreadable or disappear between listing and
-            # opening; ignore and continue probing other entries or the fallback.
             pass
     try:
         out = subprocess.run(
@@ -91,7 +88,7 @@ def check_system_compat() -> None:
     print("  Fix options:")
     print("    1. Disable Secure Boot in UEFI firmware")
     print("    2. Sign the module with your MOK key\n")
-    print("  https://github.com/HorizonUnix/UXTU4Unix/wiki/Linux-Troubleshooting#secure-boot-blocking-ryzenadj")
+    print("  https://github.com/HorizonUnix/UXTU4Linux/wiki/Linux-Troubleshooting#secure-boot-blocking-ryzenadj")
     pause()
 
 

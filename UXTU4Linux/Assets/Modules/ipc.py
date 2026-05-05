@@ -85,6 +85,6 @@ def require_daemon() -> DaemonClient:
     if not client.ping():
         raise RuntimeError(
             "Daemon is not running.\n"
-            "Enable it with:  sudo systemctl enable --now uxtu4unix.service"
+            "Enable it with:  sudo systemctl enable --now uxtu4linux.service"
         )
     return client

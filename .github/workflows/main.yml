@@ -18,14 +18,14 @@ jobs:
 
       - name: Make file executable
         run: |
-            chmod +x UXTU4Unix/Assets/Darwin/ryzenadj
-            chmod +x UXTU4Unix/Assets/Darwin/dmidecode
-            chmod +x UXTU4Unix/UXTU4Unix.command
-            chmod +x UXTU4Unix/Assets/Linux/ryzenadj
+            chmod +x UXTU4Linux/Assets/Darwin/ryzenadj
+            chmod +x UXTU4Linux/Assets/Darwin/dmidecode
+            chmod +x UXTU4Linux/UXTU4Linux.command
+            chmod +x UXTU4Linux/Assets/Linux/ryzenadj
 
       - name: Rename and Zip folders
         run: |
-          zip -r UXTU4Unix.zip UXTU4Unix
+          zip -r UXTU4Linux.zip UXTU4Linux
         env:
             TAG: ${{ env.TAG }}
           
@@ -44,6 +44,6 @@ jobs:
           name: v${{ env.TAG }}
           tag_name: ${{ env.TAG }}
           body_path: ${{ github.workspace }}-RELEASE_NOTES.txt
-          files: UXTU4Unix.zip
+          files: UXTU4Linux.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

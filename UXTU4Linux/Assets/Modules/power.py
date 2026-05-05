@@ -96,7 +96,7 @@ def apply_smu(args: str, user_mode: str, *, save_to_config: bool = True) -> None
     if not client.ping():
         clear()
         print("  Daemon is not running.")
-        print("  sudo systemctl enable --now uxtu4unix.service")
+        print("  sudo systemctl enable --now uxtu4linux.service")
         pause()
         return
 
@@ -197,7 +197,7 @@ def _toggle_dynamic_state(state: PowerState, client, presets: dict) -> PowerStat
         cfg.save()
         clear()
         print("  Daemon is not running — cannot change dynamic mode.")
-        print("  sudo systemctl enable --now uxtu4unix.service")
+        print("  sudo systemctl enable --now uxtu4linux.service")
         pause()
         return state
 
@@ -219,7 +219,7 @@ def _daemon_status_screen(client) -> None:
     clear()
     if not client.ping():
         print("  Daemon is not running.")
-        print("  sudo systemctl enable --now uxtu4unix.service")
+        print("  sudo systemctl enable --now uxtu4linux.service")
     else:
         s = client.status()
         print(f"  Auto reapply : {'ON' if s.get('running_loop') else 'OFF'}")

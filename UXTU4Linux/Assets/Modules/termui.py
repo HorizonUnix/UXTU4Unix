@@ -1,6 +1,7 @@
 """
 termui.py
 """
+
 from __future__ import annotations
 import os, select, sys, termios, tty
 
@@ -20,7 +21,7 @@ def is_tty() -> bool:
 def get_key() -> bytes:
     if not sys.stdin.isatty():
         raise RuntimeError(
-            "stdin is not a TTY — UXTU4Unix requires an interactive terminal.\n"
+            "stdin is not a TTY — UXTU4Linux requires an interactive terminal.\n"
             "Do not pipe input or run from a non-interactive shell."
         )
     fd  = sys.stdin.fileno()

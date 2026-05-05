@@ -3,7 +3,7 @@ ui.py
 """
 from __future__ import annotations
 import subprocess, sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Literal
 from . import config as cfg
 from . import termui
@@ -84,7 +84,7 @@ def ask(prompt: str, default: str = "") -> str:
 
 def quit_app() -> None:
     sys.stdout.write(termui.SHOW_CURSOR)
-    sys.exit(f"\n  Thanks for using UXTU4Unix\n  Have a nice day!\n")
+    sys.exit(f"\n  Thanks for using UXTU4Linux\n  Have a nice day!\n")
 
 
 def _clamp_skip(idx: int, items: list[MenuItem]) -> int:
@@ -239,7 +239,7 @@ def about_menu() -> None:
         items.append(MenuItem("Back", key="back"))
 
         subtitle = "Maintainer: oxGorou\nAdvisor: NotchApple1703"
-        choice   = menu("About UXTU4Unix", items, subtitle=subtitle)
+        choice   = menu("About UXTU4Linux", items, subtitle=subtitle)
 
         if choice == -1:
             return
@@ -248,7 +248,7 @@ def about_menu() -> None:
         if item.key == "back":
             return
         elif item.key == "open_github":
-            webbrowser.open("https://www.github.com/HorizonUnix/UXTU4Unix")
+            webbrowser.open("https://www.github.com/HorizonUnix/UXTU4Linux")
         elif item.key == "force_update" and latest:
             show_updater()
             return

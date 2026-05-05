@@ -53,7 +53,7 @@ def run_welcome() -> None:
     TOTAL = 3
 
     _step(1, TOTAL, "Welcome")
-    print("  UXTU4Unix — AMD Zen power management for Linux")
+    print("  UXTU4Linux — AMD Zen power management for Linux")
     print("  Built on RyzenAdj — inspired by UXTU\n")
     pause()
 
@@ -62,7 +62,7 @@ def run_welcome() -> None:
     ensure_binaries_executable()
     cfg.save()
     print("  The power daemon runs in the background keeping your preset active.")
-    print("  It is required for UXTU4Unix to work properly.\n")
+    print("  It is required for UXTU4Linux to work properly.\n")
     if confirm("Install and enable daemon service"):
         if service_running():
             restart_service()
@@ -99,7 +99,7 @@ def run_welcome() -> None:
     pause()
 
     clear()
-    print("  Setup complete. UXTU4Unix is ready.\n")
+    print("  Setup complete. UXTU4Linux is ready.\n")
     pause()
 
 

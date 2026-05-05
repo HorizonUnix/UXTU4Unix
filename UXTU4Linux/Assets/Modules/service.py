@@ -13,7 +13,7 @@ import time
 from . import config as cfg
 from .ui import clear, menu, pause, MenuItem
 
-SERVICE_NAME = "uxtu4unix.service"
+SERVICE_NAME = "uxtu4linux.service"
 SERVICE_FILE = f"/etc/systemd/system/{SERVICE_NAME}"
 
 
@@ -76,7 +76,7 @@ def _python() -> str:
 def _render_unit() -> str:
     return (
         "[Unit]\n"
-        "Description=UXTU4Unix Power Management Daemon\n"
+        "Description=UXTU4Linux Power Management Daemon\n"
         "After=multi-user.target\n\n"
         "[Service]\n"
         "Type=simple\n"

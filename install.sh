@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-INSTALL_DIR="/opt/uxtu4unix"
+INSTALL_DIR="/opt/uxtu4linux"
 VENV_DIR="$INSTALL_DIR/venv"
 VENV_PYTHON="$VENV_DIR/bin/python3"
 SRC_DIR="$INSTALL_DIR/src"
-BIN_WRAPPER="/usr/local/bin/uxtu4unix"
-SERVICE_NAME="uxtu4unix.service"
+BIN_WRAPPER="/usr/local/bin/uxtu4linux"
+SERVICE_NAME="uxtu4linux.service"
 SERVICE_FILE="/etc/systemd/system/$SERVICE_NAME"
-RELEASE_TAG="0.6.0Beta05"
-RELEASE_ZIP="UXTU4Unix-v0.6Beta05.zip"
-RELEASE_URL="https://github.com/HorizonUnix/UXTU4Unix/releases/download/${RELEASE_TAG}/${RELEASE_ZIP}"
+RELEASE_URL="https://github.com/HorizonUnix/UXTU4Linux/releases/latest/download/UXTU4Linux.zip"
 TMP_DIR="$(mktemp -d)"
 
 _R='\033[0m'; _C='\033[0;96m'; _G='\033[0;32m'; _Y='\033[1;33m'; _E='\033[0;31m'
+
 info() { echo -e "${_C}  ·${_R} $*"; }
 ok()   { echo -e "${_G}  ✓${_R} $*"; }
 warn() { echo -e "${_Y}  !${_R} $*"; }
@@ -27,13 +26,27 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 CURRENT_USER="$(whoami)"
 CURRENT_GROUP="$(id -gn)"
 
+resolve_release_tag() {
+    local tag=""
+    if command -v curl &>/dev/null; then
+        tag="$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+            "https://github.com/HorizonUnix/UXTU4Linux/releases/latest" 2>/dev/null \
+            | sed 's|.*/tag/||')" || true
+    elif command -v wget &>/dev/null; then
+        tag="$(wget -q --server-response --spider \
+            "https://github.com/HorizonUnix/UXTU4Linux/releases/latest" 2>&1 \
+            | awk '/Location:/{print $2}' | tail -1 | sed 's|.*/tag/||')" || true
+    fi
+    echo "${tag:-latest}"
+}
+
 detect_pm() {
     if   command -v apt-get &>/dev/null; then echo "apt"
     elif command -v dnf     &>/dev/null; then echo "dnf"
     elif command -v yum     &>/dev/null; then echo "yum"
     elif command -v pacman  &>/dev/null; then echo "pacman"
     elif command -v zypper  &>/dev/null; then echo "zypper"
-    else die "Unsupported distro — https://github.com/HorizonUnix/UXTU4Unix"
+    else die "Unsupported distro — https://github.com/HorizonUnix/UXTU4Unix/wiki/Linux-Installation#manual-installation"
     fi
 }
 
@@ -139,7 +152,7 @@ install_deps() {
 }
 
 download_release() {
-    info "Downloading $RELEASE_TAG ..."
+    info "Downloading release..."
     local err="$TMP_DIR/dl.err"
     if command -v wget &>/dev/null; then
         if wget --version 2>&1 | grep -q "GNU Wget2"; then
@@ -175,9 +188,9 @@ install_files() {
 
 patch_entry_point() {
     info "Patching entry point..."
-    [[ -f "$SRC_DIR/UXTU4Unix.py" ]] || die "UXTU4Unix.py not found in $SRC_DIR"
-    sed -i "1s|.*|#!${VENV_PYTHON}|" "$SRC_DIR/UXTU4Unix.py" || die "sed failed."
-    python3 - "$SRC_DIR/UXTU4Unix.py" "${VENV_PYTHON}" <<'PYEOF' || die "Guard injection failed."
+    [[ -f "$SRC_DIR/UXTU4Linux.py" ]] || die "UXTU4Linux.py not found in $SRC_DIR"
+    sed -i "1s|.*|#!${VENV_PYTHON}|" "$SRC_DIR/UXTU4Linux.py" || die "sed failed."
+    python3 - "$SRC_DIR/UXTU4Linux.py" "${VENV_PYTHON}" <<'PYEOF' || die "Guard injection failed."
 import sys
 path, venv = sys.argv[1], sys.argv[2]
 guard = (
@@ -228,7 +241,7 @@ setup_venv() {
 
 set_permissions() {
     info "Setting permissions..."
-    chmod +x "$SRC_DIR/UXTU4Unix.py"
+    chmod +x "$SRC_DIR/UXTU4Linux.py"
     [[ -f "$SRC_DIR/Assets/Linux/ryzenadj" ]] && chmod +x "$SRC_DIR/Assets/Linux/ryzenadj"
     ok "Done."
 }
@@ -237,13 +250,24 @@ install_wrapper() {
     info "Installing launcher..."
     sudo tee "$BIN_WRAPPER" > /dev/null <<EOF
 #!/usr/bin/env bash
-exec "$VENV_PYTHON" "$SRC_DIR/UXTU4Unix.py" "\$@"
+exec "$VENV_PYTHON" "$SRC_DIR/UXTU4Linux.py" "\$@"
 EOF
     sudo chmod +x "$BIN_WRAPPER"
     [[ -x "$BIN_WRAPPER" ]] || die "Failed to install launcher at $BIN_WRAPPER"
     ok "Launcher → $BIN_WRAPPER"
 }
 
+daemon_is_installed() {
+    [[ -f "$SERVICE_FILE" ]]
+}
+
+restart_daemon() {
+    info "Restarting daemon service..."
+    sudo systemctl daemon-reload
+    sudo systemctl restart "$SERVICE_NAME" \
+        && ok "Daemon restarted." \
+        || warn "Could not restart daemon — check: sudo systemctl status $SERVICE_NAME"
+}
 
 run_setup() {
     echo ""
@@ -251,12 +275,19 @@ run_setup() {
     ok "Installation complete!"
     hr
     echo ""
-    info "Launching UXTU4Unix..."
+
+    if daemon_is_installed; then
+        restart_daemon
+        echo ""
+    fi
+
+    info "Launching UXTU4Linux..."
     echo ""
     exec "$BIN_WRAPPER" </dev/tty
 }
 
 print_banner() {
+    local tag="$1"
     clear
     echo ""
     echo -e "${_C}██╗   ██╗██╗  ██╗████████╗██╗   ██╗██╗  ██╗██╗     ██╗███╗   ██╗██╗   ██╗██╗  ██╗${_R}"
@@ -266,7 +297,7 @@ print_banner() {
     echo -e "${_C}╚██████╔╝██╔╝ ██╗   ██║   ╚██████╔╝     ██║███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗${_R}"
     echo -e "${_C} ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝      ╚═╝╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝${_R}"
     echo ""
-    echo -e "                      ${_Y}Installer  ·  ${RELEASE_TAG}${_R}"
+    echo -e "                      ${_Y}Installer  ·  ${tag}${_R}"
     hr
     echo "  Install path  : $INSTALL_DIR"
     echo "  venv          : $VENV_DIR"
@@ -278,11 +309,18 @@ print_banner() {
 }
 
 main() {
-    print_banner
+    local tag
+    tag="$(resolve_release_tag)"
+
+    print_banner "$tag"
 
     local pm
     pm="$(detect_pm)"
     info "Package manager : $pm"
+
+    if daemon_is_installed; then
+        warn "Existing installation detected — updating files and restarting daemon."
+    fi
     echo ""
 
     ensure_python310 "$pm"

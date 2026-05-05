@@ -1,6 +1,7 @@
 """
 updater.py
 """
+
 import json
 import os
 import shutil
@@ -34,15 +35,15 @@ def get_changelog() -> str:
 
 
 def _do_update() -> None:
-    url = "https://github.com/HorizonUnix/UXTU4Unix/releases/latest/download/UXTU4Unix.zip"
+    url = "https://github.com/HorizonUnix/UXTU4Linux/releases/latest/download/UXTU4Linux.zip"
 
     script_dir  = os.path.dirname(os.path.realpath(__file__))
     assets_dir  = os.path.dirname(script_dir)
     src_dir     = os.path.dirname(assets_dir)
     install_dir = os.path.dirname(src_dir)
 
-    zip_path   = os.path.join(install_dir, "UXTU4Unix.zip")
-    new_folder = os.path.join(install_dir, "UXTU4Unix_new")
+    zip_path   = os.path.join(install_dir, "UXTU4Linux.zip")
+    new_folder = os.path.join(install_dir, "UXTU4Linux_new")
     config_bak = os.path.join(install_dir, "config.toml.bak")
 
     try:
@@ -57,11 +58,11 @@ def _do_update() -> None:
             zf.extractall(new_folder)
 
         shutil.rmtree(src_dir)
-        inner = os.path.join(new_folder, "UXTU4Unix")
+        inner = os.path.join(new_folder, "UXTU4Linux")
         shutil.move(inner, src_dir)
         shutil.rmtree(new_folder, ignore_errors=True)
 
-        launch = os.path.join(src_dir, "UXTU4Unix.py")
+        launch = os.path.join(src_dir, "UXTU4Linux.py")
         ryzen  = os.path.join(src_dir, "Assets", "Linux", "ryzenadj")
         for path in (launch, ryzen):
             if os.path.exists(path):

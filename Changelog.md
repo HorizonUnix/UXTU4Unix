@@ -1,3 +1,27 @@
+## [0.6.0]
+
+## What's new?
+Introduce a background daemon-based architecture for applying Ryzen power presets, modernize the terminal UI.
+
+New Features:
+- Add a systemd-managed background daemon with IPC for applying, looping, and dynamically switching RyzenAdj presets.
+- Introduce a richer terminal menu UI with keyboard navigation, status-aware menus, and an About screen with update integration.
+- Add system checks for Secure Boot blocking ryzen_smu and for dmidecode availability, guiding users with troubleshooting output.
+
+Bug Fixes:
+- Ensure preset and dynamic mode state is sourced from the daemon where possible, reducing drift between UI and applied settings.
+- Harden handling of missing or invalid saved presets by falling back to the setup wizard or reporting clear errors.
+- Validate RyzenAdj arguments in the daemon to avoid applying malformed or unsafe command payloads.
+
+Enhancements:
+- Refactor power management flow to use the daemon for all SMU operations, simplifying apply/reapply logic and centralizing dynamic mode handling.
+- Improve hardware info parsing and presentation, including better dmidecode access via the daemon and clearer, styled output.
+- Streamline settings into a single menu with toggleable options and an interval editor that immediately re-applies saved presets when changed.
+- Update startup logic to verify and repair the systemd service path, auto-apply presets only when no mode is active, and enforce Linux-only support.
+- Simplify and modernize config handling, version metadata, and menu structures across modules.
+
+### Updating from `v0.5.x` may cause issues. Please refer to [Linux Installation Guide](https://github.com/HorizonUnix/UXTU4Unix/wiki/Linux-Installation)
+
 ## [0.5.22]
 
 ### macOS Deprecation Notice
