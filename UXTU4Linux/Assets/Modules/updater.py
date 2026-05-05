@@ -81,7 +81,6 @@ def _do_update() -> None:
         if cmd not in allowed_commands:
             raise ValueError(f"Disallowed sudo command: {cmd}")
         safe_value_re = re.compile(r"^[A-Za-z0-9._/\-]+$")
-        safe_value_re = re.compile(r"^[A-Za-z0-9._/\-]+$")
         for arg in args:
             if any(ch in arg for ch in ("\x00", "\n", "\r")):
                 raise ValueError(f"Invalid character detected in argument: {arg!r}")
