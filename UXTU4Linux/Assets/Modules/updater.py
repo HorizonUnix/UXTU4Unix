@@ -1,7 +1,6 @@
 """
 updater.py
 """
-
 import json
 import os
 import shutil
@@ -46,6 +45,9 @@ def _do_update() -> None:
     new_folder = os.path.join(install_dir, "UXTU4Linux_new")
     config_bak = os.path.join(install_dir, "config.toml.bak")
 
+    def _sudo(*args: str) -> int:
+        return subprocess.run(["sudo", *args]).returncode
+
     try:
         if os.path.exists(cfg.CONFIG_PATH):
             shutil.copy2(cfg.CONFIG_PATH, config_bak)
@@ -57,10 +59,14 @@ def _do_update() -> None:
         with zipfile.ZipFile(zip_path, "r") as zf:
             zf.extractall(new_folder)
 
-        shutil.rmtree(src_dir)
+        if _sudo("rm", "-rf", src_dir) != 0:
+            raise PermissionError(f"Could not remove {src_dir} — try running with sudo")
+
         inner = os.path.join(new_folder, "UXTU4Linux")
-        shutil.move(inner, src_dir)
-        shutil.rmtree(new_folder, ignore_errors=True)
+        if _sudo("mv", inner, src_dir) != 0:
+            raise PermissionError(f"Could not move new release into {src_dir}")
+
+        _sudo("rm", "-rf", new_folder)
 
         launch = os.path.join(src_dir, "UXTU4Linux.py")
         ryzen  = os.path.join(src_dir, "Assets", "Linux", "ryzenadj")
@@ -85,7 +91,7 @@ def _do_update() -> None:
     except Exception as e:
         print(f"Update failed: {e}")
         pause()
-
+        
 
 def show_updater() -> None:
     while True:
