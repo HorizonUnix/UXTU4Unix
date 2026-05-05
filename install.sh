@@ -208,7 +208,7 @@ PYEOF
 }
 
 find_python_executable() {
-    command -v python3.13 || command -v python3.12 || command -v python3.11 || command -v python3.10 || command -v python3 || true
+    command -v python3.14 || command -v python3.13 || command -v python3.12 || command -v python3.11 || command -v python3.10 || command -v python3 || true
 }
 
 setup_venv() {
