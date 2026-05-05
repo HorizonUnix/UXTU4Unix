@@ -86,7 +86,20 @@ def _do_update() -> None:
             if any(ch in arg for ch in ("\x00", "\n", "\r")):
         cmd_args = list(args[1:])
 
+        install_root = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", ".."))
         def _validate_args(allowed_flags: set, min_paths: int) -> None:
+        def _is_within_install_root(path_value: str) -> bool:
+            real_target = os.path.realpath(path_value)
+            try:
+                return os.path.commonpath([install_root, real_target]) == install_root
+            except ValueError:
+                return False
+
+        def _assert_paths_within_install_root(paths: list) -> None:
+            for p in paths:
+                if not _is_within_install_root(p):
+                    raise ValueError(f"Path escapes installation directory: {p}")
+
             nonlocal cmd_args
             paths = []
             for a in cmd_args:
@@ -103,18 +116,26 @@ def _do_update() -> None:
                     paths.append(a)
             if len(paths) < min_paths:
                 raise ValueError(f"Insufficient path/value arguments for {cmd}")
+        path_args = [a for a in cmd_args if not a.startswith("-")]
+
 
         if cmd == "rm":
+            _assert_paths_within_install_root(path_args)
             _validate_args({"-f", "-r", "-rf", "-fr"}, 1)
         elif cmd == "cp":
+            _assert_paths_within_install_root(path_args)
             _validate_args({"-r", "-f", "-a"}, 2)
         elif cmd == "mv":
+            _assert_paths_within_install_root(path_args)
             _validate_args({"-f", "-n"}, 2)
         elif cmd == "chmod":
+            _assert_paths_within_install_root(path_args[1:])
             _validate_args({"-R"}, 2)
         elif cmd == "chown":
+            _assert_paths_within_install_root(path_args[1:])
             _validate_args({"-R"}, 2)
         elif cmd == "mkdir":
+            _assert_paths_within_install_root(path_args)
             _validate_args({"-p"}, 1)
 
         return subprocess.run(["sudo", *args], check=False).returncode
@@ -215,8 +236,14 @@ def _do_update() -> None:
 
         print("Update complete. Relaunching - please close this window.")
         raw_executable = sys.executable
-        if not launch or not os.path.isabs(launch) or not os.path.isfile(launch) or not os.access(launch, os.R_OK):
-            raise RuntimeError(f"Refusing to relaunch with invalid launch target: {launch!r}")
+        if not launch:
+            raise RuntimeError("Refusing to relaunch: launch target is not set")
+        if not os.path.isabs(launch):
+            raise RuntimeError(f"Refusing to relaunch: launch target is not an absolute path: {launch!r}")
+        if not os.path.isfile(launch):
+            raise RuntimeError(f"Refusing to relaunch: launch target does not exist or is not a file: {launch!r}")
+        if not os.access(launch, os.R_OK):
+            raise RuntimeError(f"Refusing to relaunch: launch target is not readable: {launch!r}")
         try:
             subprocess.Popen([python_exec, launch])
         except (OSError, PermissionError, subprocess.SubprocessError) as e:
