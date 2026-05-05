@@ -229,8 +229,14 @@ def _do_update() -> None:
         python_exec = os.path.realpath(raw_executable)
         if not python_exec or not os.path.isabs(python_exec) or not os.path.isfile(python_exec) or not os.access(python_exec, os.X_OK):
             raise RuntimeError(f"Refusing to relaunch with untrusted interpreter path: {python_exec!r}")
-        if not launch or not os.path.isabs(launch) or not os.path.isfile(launch) or not os.access(launch, os.R_OK):
-            raise RuntimeError(f"Refusing to relaunch with invalid launch target: {launch!r}")
+        if not launch:
+            raise RuntimeError("Refusing to relaunch: launch target is not set")
+        if not os.path.isabs(launch):
+            raise RuntimeError(f"Refusing to relaunch with non-absolute launch target: {launch!r}")
+        if not os.path.isfile(launch):
+            raise RuntimeError(f"Refusing to relaunch with missing launch target file: {launch!r}")
+        if not os.access(launch, os.R_OK):
+            raise RuntimeError(f"Refusing to relaunch with unreadable launch target: {launch!r}")
         try:
             subprocess.Popen([python_exec, launch])
         except (OSError, PermissionError, subprocess.SubprocessError) as e:
