@@ -44,7 +44,7 @@ MAX_INTERVAL_SECONDS: int = 3600
 COMMAND_TIMEOUT_SECONDS: int = 10
 
 _RYZENADJ_TOKEN_RE = re.compile(
-    r'^--?[a-zA-Z][a-zA-Z0-9_-]*(=\S+)?$'
+    r'^--?[a-zA-Z][a-zA-Z0-9_-]*(=[A-Za-z0-9.-]+)?$'
 )
 
 def _validate_ryzenadj_payload(tokens: list[str]) -> list[str]:
@@ -250,6 +250,7 @@ class PowerDaemon:
                 self._stop_evt.wait(min(remaining, max_wait_step))
             if self._stop_evt.is_set():
                 break
+            eff_mode = mode
             try:
                 eff_mode, eff_args = self._effective_mode_args(mode, args, dynamic)
                 changed = eff_mode != self._last_logged_mode
@@ -257,7 +258,7 @@ class PowerDaemon:
                 if changed:
                     self._last_logged_mode = eff_mode
             except Exception as exc:
-                logging.warning("Failed to apply preset in loop: %s", exc)
+                logging.warning("Failed to apply preset '%s' in loop: %s", eff_mode, exc)
         with self._lock:
             self._running_loop = False
 
@@ -381,7 +382,7 @@ class PowerDaemon:
         if dmi_type not in _DMI_ALLOWED_TYPES:
             return {"ok": False, "error": f"disallowed dmidecode type: {dmi_type!r}"}
         try:
-            out = _run_cmd(f"{cfg.DMIDECODE} -t {dmi_type}")
+            out = _run_cmd([cfg.DMIDECODE, "-t", dmi_type])
             return {"ok": True, "output": out}
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
