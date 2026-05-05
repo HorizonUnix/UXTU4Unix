@@ -125,7 +125,7 @@ def _run_ryzenadj(args: str, mode: str) -> str:
             [cfg.RYZENADJ] + payload,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            timeout=10,
+            timeout=COMMAND_TIMEOUT_SECONDS,
         )
     except subprocess.TimeoutExpired:
         logging.error("ryzenadj timed out")
