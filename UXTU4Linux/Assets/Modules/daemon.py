@@ -18,6 +18,7 @@ from dataclasses import dataclass
 
 _HERE = os.path.dirname(os.path.realpath(__file__))
 _ROOT = os.path.dirname(os.path.dirname(_HERE))
+ZMQ_POLL_TIMEOUT_MS = 500
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
@@ -424,7 +425,7 @@ class PowerDaemon:
         stop_requested = threading.Event()
         # Poll every 500ms so shutdown signals are handled within at most ~0.5s
         # while avoiding a tight loop that would wake the CPU too frequently.
-        poll_timeout_ms = 500
+        poll_timeout_ms = ZMQ_POLL_TIMEOUT_MS
 
         signal.signal(signal.SIGTERM, lambda *args: self._sig_handler(stop_requested, *args))
         signal.signal(signal.SIGINT,  lambda *args: self._sig_handler(stop_requested, *args))
