@@ -119,7 +119,12 @@ def check_integrity() -> None:
 
     cfg.load()
 
-    required = cfg.REQUIRED if isinstance(cfg.REQUIRED, dict) else {s: () for s in cfg.REQUIRED}
+    if isinstance(cfg.REQUIRED, dict):
+        required = cfg.REQUIRED
+    elif isinstance(cfg.REQUIRED, (list, tuple, set)):
+        required = {s: () for s in cfg.REQUIRED}
+    else:
+        required = {}
 
     def has_all_sections() -> bool:
         return all(cfg.instance().has_section(section) for section in required)
@@ -128,7 +133,8 @@ def check_integrity() -> None:
         for section, keys in required.items():
             if not cfg.instance().has_section(section):
                 continue
-            if any(key not in cfg.instance()[section] for key in keys):
+            section_data = cfg.instance()[section]
+            if any(key not in section_data for key in keys):
                 return False
         return True
 
