@@ -53,7 +53,7 @@ def _step(n: int, total: int, title: str) -> None:
 
 
 def run_welcome() -> None:
-    if cfg.KERNEL not in ("Linux",):
+    if cfg.KERNEL != "Linux":
         clear()
         print(f"  Unsupported OS: {cfg.KERNEL}")
         return
