@@ -208,10 +208,14 @@ PYEOF
     ok "Done."
 }
 
+find_python_executable() {
+    command -v python3.13 || command -v python3.12 || command -v python3.11 || command -v python3.10 || command -v python3 || true
+}
+
 setup_venv() {
     info "Setting up Python venv..."
     local py
-    py="$(command -v python3.13 || command -v python3.12 || command -v python3.11 || command -v python3.10 || command -v python3 || true)"
+    py="$(find_python_executable)"
     [[ -n "$py" ]] || die "python3 not found."
 
     if [[ -d "$VENV_DIR" ]] && ! "$VENV_PYTHON" -c "" &>/dev/null 2>&1; then
