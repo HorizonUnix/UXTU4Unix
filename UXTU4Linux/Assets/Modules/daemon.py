@@ -387,6 +387,10 @@ class PowerDaemon:
             resp = {"ok": False, "error": str(exc)}
         return json.dumps(resp)
 
+    @staticmethod
+    def _sig_handler(stop_requested: threading.Event, *_: object) -> None:
+        stop_requested.set()
+
     def run(self) -> None:
         if os.path.exists(cfg.ZMQ_SOCKET_PATH):
             try:
@@ -415,11 +419,8 @@ class PowerDaemon:
         # while avoiding a tight loop that would wake the CPU too frequently.
         poll_timeout_ms = 500
 
-        def _sig_handler(*_):
-            stop_requested.set()
-
-        signal.signal(signal.SIGTERM, _sig_handler)
-        signal.signal(signal.SIGINT,  _sig_handler)
+        signal.signal(signal.SIGTERM, lambda *args: self._sig_handler(stop_requested, *args))
+        signal.signal(signal.SIGINT,  lambda *args: self._sig_handler(stop_requested, *args))
 
         while True:
             if stop_requested.is_set():
